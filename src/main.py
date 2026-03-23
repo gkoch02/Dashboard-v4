@@ -9,13 +9,14 @@ from src._version import __version__
 from src.config import load_config, validate_config, print_validation_report
 from src.filters import filter_events
 from src.data.models import (
-    DashboardData, CalendarEvent, StalenessLevel, WeatherData, Birthday,
+    AirQualityData, DashboardData, CalendarEvent, StalenessLevel, WeatherData, Birthday,
 )
 from src.dummy_data import generate_dummy_data
 from src.fetchers.cache import check_staleness, load_cached_source, save_source
 from src.fetchers.circuit_breaker import CircuitBreaker
 from src.fetchers.quota_tracker import QuotaTracker
 from src.fetchers.calendar import fetch_events, fetch_birthdays
+from src.fetchers.purpleair import fetch_air_quality
 from src.fetchers.weather import fetch_weather
 from src.render.canvas import render_dashboard
 from src.render.theme import load_theme
@@ -72,6 +73,7 @@ def fetch_live_data(
     events: list[CalendarEvent] = []
     weather: WeatherData | None = None
     birthdays: list[Birthday] = []
+    air_quality: AirQualityData | None = None
 
     stale_sources: list[str] = []
     source_staleness: dict[str, StalenessLevel] = {}
@@ -88,11 +90,13 @@ def fetch_live_data(
         "events": cache_cfg.events_ttl_minutes,
         "weather": cache_cfg.weather_ttl_minutes,
         "birthdays": cache_cfg.birthdays_ttl_minutes,
+        "air_quality": cache_cfg.air_quality_ttl_minutes,
     }
     interval_map = {
         "events": cache_cfg.events_fetch_interval,
         "weather": cache_cfg.weather_fetch_interval,
         "birthdays": cache_cfg.birthdays_fetch_interval,
+        "air_quality": cache_cfg.air_quality_fetch_interval,
     }
 
     def _use_cache(source: str):
@@ -154,21 +158,35 @@ def fetch_live_data(
     weather_cached, weather_skip = _should_skip("weather")
     birthdays_cached, birthdays_skip = _should_skip("birthdays")
 
+    # PurpleAir is optional — only participate when both key and sensor are configured
+    purpleair_enabled = bool(cfg.purpleair.api_key and cfg.purpleair.sensor_id)
+    if purpleair_enabled:
+        aq_cached, aq_skip = _should_skip("air_quality")
+    else:
+        aq_cached, aq_skip = None, True
+
     if events_skip:
         events = events_cached
     if weather_skip:
         weather = weather_cached
     if birthdays_skip:
         birthdays = birthdays_cached
+    if aq_skip and aq_cached is not None:
+        air_quality = aq_cached
 
     # Launch fetchers only for sources that need refreshing
     events_future: Future | None = None
     weather_future: Future | None = None
     birthdays_future: Future | None = None
+    aq_future: Future | None = None
 
-    needs_fetch = not events_skip or not weather_skip or not birthdays_skip
+    needs_fetch = (
+        not events_skip or not weather_skip or not birthdays_skip
+        or (purpleair_enabled and not aq_skip)
+    )
     if needs_fetch:
-        with ThreadPoolExecutor(max_workers=3) as pool:
+        max_workers = 4 if purpleair_enabled and not aq_skip else 3
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
             if not events_skip:
                 events_future = pool.submit(
                     _retry_fetch, "Calendar",
@@ -183,6 +201,11 @@ def fetch_live_data(
                 birthdays_future = pool.submit(
                     _retry_fetch, "Birthdays",
                     lambda: fetch_birthdays(cfg.google, cfg.birthdays, tz=tz),
+                )
+            if purpleair_enabled and not aq_skip:
+                aq_future = pool.submit(
+                    _retry_fetch, "AirQuality",
+                    lambda: fetch_air_quality(cfg.purpleair),
                 )
 
     # --- Calendar events ---
@@ -239,6 +262,27 @@ def fetch_live_data(
                 logger.warning("Using cached birthdays (%s)",
                                source_staleness["birthdays"].value)
 
+    # --- Air Quality (PurpleAir) ---
+    if aq_future is not None:
+        try:
+            air_quality = aq_future.result(timeout=120)
+            save_source("air_quality", air_quality, fetched_at, cache_dir)
+            source_staleness["air_quality"] = StalenessLevel.FRESH
+            breaker.record_success("air_quality")
+            logger.info(
+                "Fetched air quality: AQI=%d (%s)", air_quality.aqi, air_quality.category,
+            )
+        except Exception as exc:
+            logger.error("Air quality fetch failed: %s", exc)
+            breaker.record_failure("air_quality")
+            cached_data = _use_cache("air_quality")
+            if cached_data is not None:
+                air_quality = cached_data  # type: ignore[assignment]
+                logger.warning(
+                    "Using cached air quality (%s)",
+                    source_staleness.get("air_quality", StalenessLevel.STALE).value,
+                )
+
     # Check quota warnings
     quota_threshold = cfg.google.daily_quota_warning
     for src in ("events", "weather", "birthdays"):
@@ -248,6 +292,7 @@ def fetch_live_data(
         events=events,
         weather=weather,
         birthdays=birthdays,
+        air_quality=air_quality,
         fetched_at=fetched_at,
         is_stale=bool(stale_sources),
         stale_sources=stale_sources,

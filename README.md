@@ -209,13 +209,14 @@ moon phase.
 Full-screen weather station. Devotes the entire 800×480 canvas to a rich weather display
 inspired by iOS Weather and Foreca Weather. The upper two-thirds show current conditions at
 a glance — an 80px weather icon, hero temperature in bold 72px DM Sans, description, and
-hi/lo line. Below the hero sits a row of four metric cards: feels-like, wind speed and
-direction, humidity, and UV index. A details bar spans the full width with sunrise/sunset
-times, barometric pressure, and moon phase. If an active weather alert is present it appears
-as a prominent inverted full-width banner. The lower third shows a clean five-day forecast
-grid with icon, hi/lo temperatures, and precipitation probability for each day. All standard
-components (header, calendar, birthdays, quote) are hidden — the display is weather only.
-Font: DM Sans throughout.
+hi/lo line. Below the hero sits a row of metric cards: feels-like, wind speed and direction,
+humidity, UV index, and — when a PurpleAir sensor is configured — an AQI card showing the
+EPA air quality index and category (Good / Moderate / Unhealthy / etc.). A details bar spans
+the full width with sunrise/sunset times, barometric pressure, and moon phase. If an active
+weather alert is present it appears as a prominent inverted full-width banner. The lower
+third shows a clean five-day forecast grid with icon, hi/lo temperatures, and precipitation
+probability for each day. All standard components (header, calendar, birthdays, quote) are
+hidden — the display is weather only. Font: DM Sans throughout.
 
 ![Weather theme](output/theme_weather.png)
 
@@ -350,6 +351,14 @@ make deploy
 ssh pi@raspberrypi.local "cd ~/home-dashboard && make setup"
 make install        # reinstall systemd timer (unit file has changed)
 ```
+
+### What's new in v4.1
+
+Your existing config is fully compatible. These are opt-in additions:
+
+| Feature | How to enable |
+|---|---|
+| **PurpleAir air quality** | Add `purpleair.api_key` and `purpleair.sensor_id` to `config.yaml`; an AQI metric card appears in the `weather` theme |
 
 ### What's new in v4
 
@@ -606,6 +615,10 @@ weather:
   longitude: 0.0
   units: "imperial"                # "imperial", "metric", or "standard"
 
+purpleair:                         # optional — adds AQI card to the weather theme
+  api_key: ""                      # get a free key at develop.purpleair.com
+  sensor_id: 0                     # find at map.purpleair.com (click sensor → URL)
+
 birthdays:
   source: "file"                   # "file", "calendar", or "contacts"
   file_path: "config/birthdays.json"
@@ -624,13 +637,19 @@ random_theme:                      # only used when theme: random
   include: []                      # allowlist (empty = all themes eligible)
   exclude: []                      # denylist (e.g. ["fantasy", "qotd"])
 
+purpleair:
+  api_key: ""
+  sensor_id: 0
+
 cache:
   weather_ttl_minutes: 60          # data older than 4x TTL is discarded
   events_ttl_minutes: 120
   birthdays_ttl_minutes: 1440
+  air_quality_ttl_minutes: 30
   weather_fetch_interval: 30       # skip API call if cache is younger
   events_fetch_interval: 120
   birthdays_fetch_interval: 1440
+  air_quality_fetch_interval: 15
   max_failures: 3                  # circuit breaker: failures before tripping
   cooldown_minutes: 30             # circuit breaker: wait before probing
 
@@ -667,6 +686,7 @@ interval, the API call is skipped entirely. This reduces API quota usage signifi
 | Weather | 30 min | 60 min |
 | Calendar events | 120 min | 120 min |
 | Birthdays | 1440 min (24h) | 1440 min |
+| Air quality (PurpleAir) | 15 min | 30 min |
 
 ### Event filtering
 
@@ -715,7 +735,7 @@ to `output/calendar_sync_state.json`.
 |---|---|
 | `make setup` | Create venv, install dependencies, create config from template |
 | `make dry` | Render with dummy data to `output/latest.png` |
-| `make test` | Run `pytest tests/ -v` (800 tests across 32 files) |
+| `make test` | Run `pytest tests/ -v` (850+ tests across 34 files) |
 | `make check` | Validate config file and exit |
 | `make version` | Print the current version (e.g. `main.py 3.0.0`) |
 | `make deploy` | rsync project to Raspberry Pi (`PI_USER`, `PI_HOST`, `PI_DIR` configurable) |
@@ -778,6 +798,7 @@ Dashboard-v4/
 │   ├── fetchers/
 │   │   ├── calendar.py           # Google Calendar + incremental sync + birthdays
 │   │   ├── weather.py            # OpenWeatherMap (current + forecast + alerts + UV)
+│   │   ├── purpleair.py          # PurpleAir sensor → PM2.5 / AQI
 │   │   ├── cache.py              # Per-source JSON cache with TTL staleness
 │   │   ├── circuit_breaker.py    # Per-source circuit breaker
 │   │   └── quota_tracker.py      # Daily API call counter
@@ -809,7 +830,7 @@ Dashboard-v4/
 │           ├── info_panel.py
 │           ├── qotd_panel.py
 │           └── fuzzyclock_panel.py
-├── tests/                        # 32 test files, 800 tests
+├── tests/                        # 34 test files, 850+ tests
 ├── Makefile
 ├── requirements.txt              # Core dependencies
 └── requirements-pi.txt           # Raspberry Pi hardware dependencies

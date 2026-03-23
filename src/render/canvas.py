@@ -92,6 +92,7 @@ def render_dashboard(
         ),
         "weather_full": lambda: weather_full_comp.draw_weather_full(
             draw, data.weather, today,
+            air_quality=data.air_quality,
             region=layout.weather_full,
             style=style,
         ),

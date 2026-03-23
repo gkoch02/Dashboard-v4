@@ -35,6 +35,12 @@ class BirthdayConfig:
 
 
 @dataclass
+class PurpleAirConfig:
+    api_key: str = ""
+    sensor_id: int = 0  # numeric sensor_index (shown in map.purpleair.com URL)
+
+
+@dataclass
 class DisplayConfig:
     model: str = "epd7in5_V2"
     width: int = 800
@@ -65,6 +71,9 @@ class CacheConfig:
     # Circuit breaker: stop hitting an API after repeated failures
     max_failures: int = 3                  # consecutive failures before opening breaker
     cooldown_minutes: int = 30             # minutes to wait before retrying
+    # PurpleAir air quality cache settings
+    air_quality_ttl_minutes: int = 30
+    air_quality_fetch_interval: int = 15
 
 
 @dataclass
@@ -90,6 +99,7 @@ class Config:
     google: GoogleConfig = field(default_factory=GoogleConfig)
     weather: WeatherConfig = field(default_factory=WeatherConfig)
     birthdays: BirthdayConfig = field(default_factory=BirthdayConfig)
+    purpleair: PurpleAirConfig = field(default_factory=PurpleAirConfig)
     display: DisplayConfig = field(default_factory=DisplayConfig)
     schedule: ScheduleConfig = field(default_factory=ScheduleConfig)
     filters: FilterConfig = field(default_factory=FilterConfig)
@@ -187,6 +197,8 @@ def load_config(path: str = "config/config.yaml") -> Config:
             birthdays_fetch_interval=ca.get("birthdays_fetch_interval", 1440),
             max_failures=ca.get("max_failures", 3),
             cooldown_minutes=ca.get("cooldown_minutes", 30),
+            air_quality_ttl_minutes=ca.get("air_quality_ttl_minutes", 30),
+            air_quality_fetch_interval=ca.get("air_quality_fetch_interval", 15),
         )
 
     if "filters" in raw:
@@ -195,6 +207,13 @@ def load_config(path: str = "config/config.yaml") -> Config:
             exclude_calendars=fl.get("exclude_calendars", []),
             exclude_keywords=fl.get("exclude_keywords", []),
             exclude_all_day=fl.get("exclude_all_day", False),
+        )
+
+    if "purpleair" in raw:
+        pa = raw["purpleair"]
+        cfg.purpleair = PurpleAirConfig(
+            api_key=pa.get("api_key", ""),
+            sensor_id=int(pa.get("sensor_id", 0)),
         )
 
     if "random_theme" in raw:
@@ -405,6 +424,23 @@ def validate_config(
             field="weather.units",
             message=f"Unknown weather units: '{cfg.weather.units}'",
             hint="Must be one of: imperial, metric, standard",
+        ))
+
+    # --- PurpleAir ---
+    if cfg.purpleair.api_key and not cfg.purpleair.sensor_id:
+        warnings.append(ConfigWarning(
+            field="purpleair.sensor_id",
+            message="PurpleAir api_key is set but sensor_id is missing.",
+            hint=(
+                "Find your sensor_index at map.purpleair.com "
+                "(click your sensor — the ID appears in the URL as ?select=XXXXX)."
+            ),
+        ))
+    if cfg.purpleair.sensor_id and not cfg.purpleair.api_key:
+        warnings.append(ConfigWarning(
+            field="purpleair.api_key",
+            message="PurpleAir sensor_id is set but api_key is missing.",
+            hint="Get a free API key at develop.purpleair.com.",
         ))
 
     return errors, warnings

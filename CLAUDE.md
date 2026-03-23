@@ -8,7 +8,7 @@ Python eInk dashboard for Raspberry Pi. Displays a weekly calendar (Google Calen
 
 ```bash
 make setup          # Create venv, install deps, copy config template
-make test           # Run pytest (800 tests across 32 files)
+make test           # Run pytest (850+ tests across 34 files)
 make dry            # Preview with dummy data → output/latest.png
 make check          # Validate config/config.yaml
 make version        # Print current version (e.g. main.py 3.0.0)
@@ -32,17 +32,18 @@ flake8 src/ tests/ --max-line-length=100   # Lint
 ```
 src/
 ├── main.py                    # CLI entry point + orchestration
-├── _version.py                # Single source of truth: __version__ = "3.0.0"
+├── _version.py                # Single source of truth: __version__ = "4.1.0"
 ├── config.py                  # YAML → typed dataclasses
 ├── dummy_data.py              # Realistic dummy data for --dummy / dev previews
 ├── filters.py                 # Event filtering (calendar, keyword, all-day)
-├── data/models.py             # Pure dataclasses (CalendarEvent, WeatherData, Birthday, DashboardData)
+├── data/models.py             # Pure dataclasses (CalendarEvent, WeatherData, AirQualityData, Birthday, DashboardData)
 ├── display/
 │   ├── driver.py              # DisplayDriver ABC → DryRunDisplay, WaveshareDisplay
 │   └── refresh_tracker.py     # Partial vs full refresh state machine
 ├── fetchers/
 │   ├── calendar.py            # Google Calendar API + incremental sync + birthdays
 │   ├── weather.py             # OpenWeatherMap (current + forecast + alerts)
+│   ├── purpleair.py           # PurpleAir sensor → PM2.5 / EPA AQI
 │   ├── cache.py               # Multi-source JSON cache with per-source TTL
 │   ├── circuit_breaker.py     # Per-source circuit breaker
 │   └── quota_tracker.py       # Daily API call counter
@@ -62,7 +63,7 @@ config/
 ├── config.example.yaml        # Template (copy to config.yaml)
 └── quotes.json                # Bundled daily quotes
 
-tests/                         # 32 test files, extensive mocking
+tests/                         # 34 test files, extensive mocking
 fonts/                         # Bundled TTF fonts
 deploy/                        # Systemd service + timer
 output/                        # Generated PNGs + cache files (git-ignored except latest.png)
@@ -72,7 +73,7 @@ credentials/                   # Google service account JSON (git-ignored)
 ## Architecture Patterns
 
 ### Per-source independence
-Fetchers, caching, circuit breaking, and staleness are all per-source (calendar, weather, birthdays). A weather API failure doesn't block calendar rendering.
+Fetchers, caching, circuit breaking, and staleness are all per-source (calendar, weather, birthdays, air_quality). A weather API failure doesn't block calendar rendering. PurpleAir is fully optional — when `purpleair.api_key` and `purpleair.sensor_id` are absent, the source is silently skipped.
 
 ### Theme system
 Three-layer design: **ComponentRegion** (bounding box) → **ThemeLayout** (canvas + regions + draw order) → **ThemeStyle** (colors, fonts, spacing). Components receive region + style and draw only within bounds. Themes are frozen dataclasses.
@@ -105,7 +106,7 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 --date YYYY-MM-DD      Override today's date for dry-run previews (requires --dry-run)
 --force-full-refresh   Bypass fetch intervals and circuit breaker
 --check-config         Validate config and exit
---version              Print version and exit (e.g. "main.py 3.0.0")
+--version              Print version and exit (e.g. "main.py 4.1.0")
 ```
 
 ## Adding New Features
@@ -114,7 +115,7 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 
 **New theme**: Create `src/render/themes/my_theme.py` → implement `my_theme() -> Theme` factory → register in `load_theme()` in `theme.py` → add name to `AVAILABLE_THEMES`. New themes are automatically included in the `random` rotation pool.
 
-**New fetcher**: Create `src/fetchers/my_fetcher.py` → use `cache.py` and `circuit_breaker.py` → integrate into `main.py` orchestration → extend `DashboardData` if needed.
+**New fetcher**: Create `src/fetchers/my_fetcher.py` → use `cache.py` and `circuit_breaker.py` → integrate into `main.py` orchestration → extend `DashboardData` if needed → add ser/deser branch to `cache.py` `save_source()`/`load_cached_source()`. See `purpleair.py` as a reference implementation.
 
 **New config option**: Add field to relevant dataclass in `config.py` → add to `config.example.yaml` → use in main or components.
 
@@ -169,3 +170,6 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - `fuzzyclock` theme: time phrases snap to the nearest 5-minute bucket; the default systemd timer runs every 5 minutes; the image-hash check prevents eInk refreshes when the phrase hasn't changed
 - `fuzzyclock` component uses `style.font_bold` / `style.font_medium` for the phrase / date — font-agnostic so the theme can be re-skinned by swapping the style callables
 - Theme preview PNGs (`output/theme_*.png`) are git-ignored by `.gitignore` (`output/*.png`) but tracked as exceptions; use `git add -f output/theme_<name>.png` when adding a new one
+- PurpleAir AQI card only appears in the `weather` theme; other themes have access to `DashboardData.air_quality` for future use
+- `_pm25_to_aqi()` in `purpleair.py` implements the EPA NowCast piecewise linear formula with standard breakpoints; the result is stored on `AirQualityData.aqi` at fetch time
+- When `purpleair.api_key` or `purpleair.sensor_id` is `0`/`""`, the source is skipped silently (no circuit breaker entry, no cache miss); validation emits warnings only when one is set without the other

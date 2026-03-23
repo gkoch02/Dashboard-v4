@@ -65,10 +65,20 @@ class Birthday:
 
 
 @dataclass
+class AirQualityData:
+    aqi: int                          # 0–500 EPA AQI computed from PM2.5
+    category: str                     # "Good" / "Moderate" / "Unhealthy for Sensitive Groups" / ...
+    pm25: float                       # Raw PM2.5 µg/m³ from sensor
+    pm10: Optional[float] = None      # PM10 µg/m³ (may be absent)
+    sensor_id: Optional[int] = None   # PurpleAir sensor_index
+
+
+@dataclass
 class DashboardData:
     events: list[CalendarEvent] = field(default_factory=list)
     weather: Optional[WeatherData] = None
     birthdays: list[Birthday] = field(default_factory=list)
+    air_quality: Optional[AirQualityData] = None
     fetched_at: datetime = field(default_factory=datetime.now)
     is_stale: bool = False  # True when any component was filled from cache
     stale_sources: list[str] = field(default_factory=list)  # e.g. ["events", "weather"]

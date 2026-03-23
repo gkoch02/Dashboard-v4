@@ -29,6 +29,15 @@ weather:
   longitude: -74.0060
   units: "imperial"  # "imperial" or "metric"
 
+# PurpleAir air quality (optional).
+# When configured, an AQI metric card appears in the weather theme.
+purpleair:
+  # Get a free API key at develop.purpleair.com
+  api_key: "YOUR_PURPLEAIR_API_KEY"
+  # Find your sensor index at map.purpleair.com — click your sensor and note
+  # the number in the URL (e.g. ?select=12345 → sensor_id: 12345)
+  sensor_id: 12345
+
 birthdays:
   source: "file"  # "file", "calendar", or "contacts"
   file_path: "config/birthdays.json"   # used when source is "file"
@@ -61,6 +70,8 @@ logging:
 #   weather_fetch_interval: 30    # 30 minutes
 #   events_fetch_interval: 120    # 2 hours
 #   birthdays_fetch_interval: 1440  # 24 hours
+#   air_quality_ttl_minutes: 30        # 30 minutes
+#   air_quality_fetch_interval: 15     # 15 minutes
 
 # Event filtering — hide events from the display without removing them from cache.
 # filters:
