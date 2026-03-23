@@ -76,7 +76,7 @@ Reports errors (must fix) and warnings (may cause issues) in your configuration.
 Switch the entire dashboard layout and visual style with one line in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | weather | random
+theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | random
 ```
 
 Or override it from the command line without editing your config:
@@ -203,18 +203,6 @@ bottom 80px: current conditions, hi/lo, feels-like, wind, a 3-day forecast strip
 moon phase.
 
 ![QOTD theme](output/theme_qotd.png)
-
-#### lcars
-
-Star Trek LCARS computer interface aesthetic. Black canvas with white structural chrome:
-a thick 24px spine bar runs the full left edge, framed top and bottom by elbow caps — each
-with a characteristic curved inner sweep where the vertical spine meets the full-width
-horizontal bars. Three bold pill labels (**STELLAR CONDITIONS**, **CREW MANIFEST**,
-**STARFLEET QUERY**) jut right from the spine, separating the stacked sidebar panels.
-The week view fills the right 600px. Header title and timestamp appear in the elbow gap
-between the top bar and cap. DM Sans font throughout.
-
-![LCARS theme](output/theme_lcars.png)
 
 #### weather
 
@@ -355,7 +343,7 @@ Your existing config is fully compatible. These are opt-in additions:
 | Feature | How to enable |
 |---|---|
 | **Versioning** (`--version` flag) | Run `python -m src.main --version` or `make version` to print the current version |
-| **Themes** (9 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`, `weather`) to `config.yaml`, or pass `--theme THEME` on the command line |
+| **Themes** (8 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`) to `config.yaml`, or pass `--theme THEME` on the command line |
 | **Random daily theme rotation** | Set `theme: random`; optionally add a `random_theme:` block to include/exclude specific themes |
 | **Event filtering** | Add a `filters:` block — hide events by calendar name, keyword, or all-day status |
 | **Configurable cache TTLs** | Add a `cache:` block to tune per-source TTL and fetch intervals |
@@ -615,7 +603,7 @@ schedule:
 
 timezone: "local"                  # IANA name or "local"
 title: "Home Dashboard"            # text shown in the header bar
-theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | weather | random
+theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | random
 
 random_theme:                      # only used when theme: random
   include: []                      # allowlist (empty = all themes eligible)
@@ -725,7 +713,7 @@ to `output/calendar_sync_state.json`.
 | `--dry-run` | Save to PNG instead of writing to display |
 | `--dummy` | Use built-in dummy data (no API calls needed) |
 | `--config PATH` | Config file path (default: `config/config.yaml`) |
-| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`, `weather`, `random` |
+| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`, `random` |
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
 | `--force-full-refresh` | Force full eInk refresh; bypasses fetch intervals and circuit breaker |
 | `--check-config` | Validate config and exit |
@@ -793,7 +781,6 @@ Dashboard-v4/
 │       │   ├── today.py
 │       │   ├── fantasy.py
 │       │   ├── qotd.py
-│       │   ├── lcars.py
 │       │   └── weather.py
 │       └── components/           # One file per UI region
 │           ├── header.py

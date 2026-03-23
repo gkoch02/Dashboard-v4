@@ -172,7 +172,7 @@ class Theme:
 AVAILABLE_THEMES: frozenset[str] = frozenset(
     {
         "default", "terminal", "minimalist", "old_fashioned", "today",
-        "fantasy", "qotd", "lcars", "weather", "random",
+        "fantasy", "qotd", "weather", "random",
     }
 )
 
@@ -233,9 +233,6 @@ def load_theme(name: str) -> Theme:
     if name == "qotd":
         from src.render.themes.qotd import qotd_theme
         return qotd_theme()
-    if name == "lcars":
-        from src.render.themes.lcars import lcars_theme
-        return lcars_theme()
     if name == "weather":
         from src.render.themes.weather import weather_theme
         return weather_theme()
