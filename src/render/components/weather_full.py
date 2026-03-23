@@ -19,7 +19,7 @@ from datetime import date
 
 from PIL import ImageDraw
 
-from src.data.models import WeatherData
+from src.data.models import AirQualityData, WeatherData
 from src.render.fonts import weather_icon as weather_icon_font
 from src.render.icons import OWM_ICON_MAP, FALLBACK_ICON
 from src.render.moon import moon_phase_glyph, moon_phase_name
@@ -37,6 +37,7 @@ _GLYPH_UV = "\uf06e"
 _GLYPH_BAROMETER = "\uf079"
 _GLYPH_SUNRISE = "\uf051"
 _GLYPH_SUNSET = "\uf052"
+_GLYPH_AIR_QUALITY = "\uf062"  # wi-smoke — used for the AQI metric card
 
 
 def draw_weather_full(
@@ -44,6 +45,7 @@ def draw_weather_full(
     weather: WeatherData | None,
     today: date | None = None,
     *,
+    air_quality: AirQualityData | None = None,
     region: ComponentRegion | None = None,
     style: ThemeStyle | None = None,
 ) -> None:
@@ -83,7 +85,7 @@ def draw_weather_full(
 
     # ── Draw each zone ───────────────────────────────────────────────
     _draw_hero(draw, weather, x0, hero_top, W, hero_h, style)
-    _draw_metric_cards(draw, weather, x0, cards_top, W, cards_h, style)
+    _draw_metric_cards(draw, weather, x0, cards_top, W, cards_h, style, air_quality=air_quality)
     _draw_detail_strip(draw, weather, today, x0, detail_top, W, detail_h, style)
 
     if has_alerts and alert_top is not None:
@@ -152,7 +154,7 @@ def _draw_hero(draw, weather, x0, y0, W, H, style):
     draw.text((hilo_x, hilo_y), hilo_str, font=hilo_font, fill=fg)
 
 
-def _draw_metric_cards(draw, weather, x0, y0, W, H, style):
+def _draw_metric_cards(draw, weather, x0, y0, W, H, style, *, air_quality=None):
     """Four evenly-spaced rounded-rect metric cards."""
     fg = style.fg
 
@@ -185,7 +187,15 @@ def _draw_metric_cards(draw, weather, x0, y0, W, H, style):
     else:
         cards.append((_GLYPH_UV, "—", "UV index"))
 
-    # Layout: 4 cards with gaps
+    # Air quality (optional 5th card from PurpleAir)
+    if air_quality is not None:
+        cards.append((
+            _GLYPH_AIR_QUALITY,
+            f"AQI {air_quality.aqi}",
+            air_quality.category[:11],  # truncate "Unhealthy for Sensitive Groups" → "Unhealthy f"
+        ))
+
+    # Layout: variable card count with equal widths
     n = len(cards)
     margin = 30
     gap = 16

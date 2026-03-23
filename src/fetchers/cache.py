@@ -16,7 +16,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from src.data.models import (
-    Birthday, CalendarEvent, DashboardData, DayForecast, StalenessLevel,
+    AirQualityData, Birthday, CalendarEvent, DashboardData, DayForecast, StalenessLevel,
     WeatherAlert, WeatherData,
 )
 
@@ -69,7 +69,7 @@ def load_cached(cache_dir: str) -> DashboardData | None:
 
 def load_cached_source(
     source: str, cache_dir: str
-) -> tuple[list | WeatherData | None, datetime] | None:
+) -> tuple[list | WeatherData | AirQualityData | None, datetime] | None:
     """Load data for a single source from the cache.
 
     Returns ``(data, fetched_at)`` if the source exists in the cache, else
@@ -97,11 +97,15 @@ def load_cached_source(
         try:
             fetched_at = datetime.fromisoformat(block["fetched_at"])
             if source == "events":
-                data: list | WeatherData | None = [_deser_event(e) for e in block.get("data", [])]
+                data: list | WeatherData | AirQualityData | None = (
+                    [_deser_event(e) for e in block.get("data", [])]
+                )
             elif source == "weather":
                 data = _deser_weather(block["data"]) if block.get("data") else None
             elif source == "birthdays":
                 data = [_deser_birthday(b) for b in block.get("data", [])]
+            elif source == "air_quality":
+                data = _deser_air_quality(block["data"]) if block.get("data") else None
             else:
                 return None
             return data, fetched_at
@@ -125,7 +129,7 @@ def load_cached_source(
 
 def save_source(
     source: str,
-    data: list | WeatherData | None,
+    data: list | WeatherData | AirQualityData | None,
     fetched_at: datetime,
     cache_dir: str,
 ) -> None:
@@ -143,6 +147,8 @@ def save_source(
         serialized = _ser_weather(data) if data else None  # type: ignore[arg-type]
     elif source == "birthdays":
         serialized = [_ser_birthday(b) for b in (data or [])]  # type: ignore[union-attr]
+    elif source == "air_quality":
+        serialized = _ser_air_quality(data) if data else None  # type: ignore[arg-type]
     else:
         logger.warning("Unknown cache source: %r", source)
         return
@@ -354,4 +360,24 @@ def _deser_birthday(b: dict) -> Birthday:
         name=b["name"],
         date=date.fromisoformat(b["date"]),
         age=b.get("age"),
+    )
+
+
+def _ser_air_quality(aq: AirQualityData) -> dict:
+    return {
+        "aqi": aq.aqi,
+        "category": aq.category,
+        "pm25": aq.pm25,
+        "pm10": aq.pm10,
+        "sensor_id": aq.sensor_id,
+    }
+
+
+def _deser_air_quality(d: dict) -> AirQualityData:
+    return AirQualityData(
+        aqi=d["aqi"],
+        category=d["category"],
+        pm25=d["pm25"],
+        pm10=d.get("pm10"),
+        sensor_id=d.get("sensor_id"),
     )
