@@ -498,7 +498,7 @@ def main():
     )
     parser.add_argument(
         "--theme",
-        choices=["default", "fantasy", "minimalist", "old_fashioned", "qotd",
+        choices=["default", "fantasy", "lcars", "minimalist", "old_fashioned", "qotd",
                  "random", "terminal", "today"],
         default=None,
         metavar="THEME",
