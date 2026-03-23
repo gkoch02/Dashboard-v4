@@ -566,21 +566,26 @@ class TestLcarsTheme:
         assert t.layout.info.x < t.layout.week_view.x
         assert t.layout.week_view.w > t.layout.weather.w
 
-    def test_lcars_week_view_starts_at_sidebar_edge(self):
-        """Week view x-position matches the sidebar width."""
+    def test_lcars_week_view_starts_past_sidebar(self):
+        """Week view x-position is past the sidebar pill right edge."""
         t = load_theme("lcars")
-        assert t.layout.week_view.x == 200
+        assert t.layout.week_view.x == 192
 
-    def test_lcars_sidebar_panels_do_not_overlap_vbar(self):
-        """Sidebar component regions must not extend past x=182 (vertical bar at x=188)."""
+    def test_lcars_sidebar_panels_within_pill_bounds(self):
+        """Sidebar component regions must not extend past the pill right edge."""
         t = load_theme("lcars")
         for region in (t.layout.weather, t.layout.birthdays, t.layout.info):
-            assert region.x + region.w <= 182
+            assert region.x + region.w <= 185
 
-    def test_lcars_panels_cover_body_height(self):
-        """Weather + birthday + info content heights fit within the 425px body."""
+    def test_lcars_sidebar_panels_right_of_spine(self):
+        """Sidebar component regions start to the right of the 24px spine bar."""
         t = load_theme("lcars")
-        body_h = t.layout.canvas_h - t.layout.week_view.y  # 480 - 55 = 425
+        for region in (t.layout.weather, t.layout.birthdays, t.layout.info):
+            assert region.x >= 24
+
+    def test_lcars_panels_fit_within_canvas(self):
+        """All sidebar content fits within the canvas height."""
+        t = load_theme("lcars")
         panels_bottom = max(
             t.layout.weather.y + t.layout.weather.h,
             t.layout.birthdays.y + t.layout.birthdays.h,

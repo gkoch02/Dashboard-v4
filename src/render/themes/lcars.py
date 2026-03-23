@@ -1,12 +1,13 @@
 """LCARS theme — Star Trek computer interface aesthetic for the eInk dashboard.
 
-Layout: left sidebar (200px) with stacked panels (weather, crew manifest, info)
-separated by LCARS-style rounded pill labels.  The main 600px area holds the week
-view.  A characteristic elbow cap in the top-left, a crossbar spanning the header
-bottom, and a vertical connecting bar form the iconic LCARS chrome.
+Layout: a thick vertical bar ("spine") on the left connects to a horizontal bar
+at the top via a characteristic curved elbow sweep.  Section label pills jut out
+to the right from the spine, separating stacked sidebar panels (weather, crew
+manifest, info).  The week view occupies the main 600px area to the right.
+Top and bottom elbows frame the display with rounded caps.
 
 Visual style:
-- Black canvas, white structural elements (pills, connecting bars, elbow cap).
+- Black canvas, white structural chrome (bars, caps, pills, elbow sweeps).
 - DM Sans for all text — clean, geometric, screen-optimised.
 - White body/event text; black-on-white text on pill labels.
 - Inverted today column (white fill + black text).
@@ -31,40 +32,56 @@ if TYPE_CHECKING:
 _CANVAS_W = 800
 _CANVAS_H = 480
 
-# Header
-_HEADER_H = 55          # total header height
-_HDR_BAR_H = 10         # thickness of bottom crossbar
-_ELBOW_CAP_W = 155      # right edge of left header cap pill (x: 5 → 155)
-_ELBOW_RADIUS = 14      # corner radius for the header cap pill
+# Structural bar thicknesses
+_HBAR_H = 18          # top / bottom horizontal bars
+_VBAR_W = 24          # left vertical bar ("spine")
 
-# Sidebar / vertical connecting bar
-_SIDEBAR_W = 200        # total sidebar width (content + bar)
-_VBAR_X = 188           # left edge of vertical connecting bar
-_VBAR_W = 12            # bar width; right edge x=199, main area starts x=200
+# Elbow caps (rounded end pieces at top-left and bottom-left)
+_CAP_W = 130          # cap extends this far to the right
+_TOP_CAP_H = 54       # total height of top cap area (includes hbar)
+_BOT_CAP_H = 36       # total height of bottom cap area (includes hbar)
+_OUTER_R = 20         # outer corner radius for caps
+_INNER_R = 18         # inner sweep corner radius (the LCARS curve)
 
-# Sidebar section label pills (x: 5 → 182, width=177)
-_PILL_X = 5
-_PILL_RIGHT = 182
-_PILL_H = 24
-_PILL_RADIUS = 5
+_BOT_ELBOW_Y = _CANVAS_H - _BOT_CAP_H   # 444
 
-# Section y-positions within the body (body starts at y=_HEADER_H=55)
-# Layout arithmetic: 10 + 24 + 155 + 5 + 24 + 100 + 5 + 24 + 68 + 10 = 425 = 480-55 ✓
-_WEATHER_PILL_Y = 65        # pill: y=65..88
-_WEATHER_CONT_Y = 89        # content: y=89..243  (h=155)
-_WEATHER_CONT_H = 155
+# Section label pills (jut right from the spine)
+_PILL_X = _VBAR_W + 1    # 25 — flush with spine right edge
+_PILL_RIGHT = 185         # right edge of pills
+_PILL_H = 28              # pill height
+_PILL_R = 4               # pill corner radius
 
-_BIRTHDAY_PILL_Y = 249      # gap 5px; pill: y=249..272
-_BIRTHDAY_CONT_Y = 273      # content: y=273..372 (h=100)
-_BIRTHDAY_CONT_H = 100
+# Main content area (right of sidebar)
+_MAIN_X = 192             # week view left edge
+_MAIN_W = _CANVAS_W - _MAIN_X - 4   # 604
 
-_INFO_PILL_Y = 378          # gap 5px; pill: y=378..401
-_INFO_CONT_Y = 402          # content: y=402..469 (h=68); 10px bottom margin to 480
-_INFO_CONT_H = 68
+# Header text area (in the gap between top bar and cap bottom, right of cap)
+_HEADER_X = _CAP_W + 8    # 138
+_HEADER_Y = _HBAR_H + 2   # 20
+_HEADER_W = _CANVAS_W - _HEADER_X - 4   # 658
+_HEADER_H = _TOP_CAP_H - _HBAR_H - 4    # 32
 
-# Main area (right of sidebar)
-_MAIN_X = _SIDEBAR_W        # 200
-_MAIN_W = _CANVAS_W - _MAIN_X  # 600
+# Body area (between top and bottom elbows)
+_BODY_Y = _TOP_CAP_H + 2      # 56
+_BODY_BOTTOM = _BOT_ELBOW_Y - 2   # 442
+# Available height: 442 - 56 = 386
+# Fixed overhead: top_margin(4) + 3×pill(28) + 3×gap_after_pill(2)
+#                 + 2×gap_between_sections(4) + bottom_margin(4) = 106
+# Content: 386 - 106 = 280
+
+_PILL_1_Y = _BODY_Y + 4       # 60
+_CONT_1_Y = _PILL_1_Y + _PILL_H + 2   # 90
+_CONT_1_H = 125               # ends at 215
+
+_PILL_2_Y = _CONT_1_Y + _CONT_1_H + 4   # 219
+_CONT_2_Y = _PILL_2_Y + _PILL_H + 2       # 249
+_CONT_2_H = 90                # ends at 339
+
+_PILL_3_Y = _CONT_2_Y + _CONT_2_H + 4   # 343
+_CONT_3_Y = _PILL_3_Y + _PILL_H + 2       # 373
+_CONT_3_H = 65                # ends at 438; bottom margin = 442 - 438 = 4 ✓
+
+# Verification: 125 + 90 + 65 = 280 ✓
 
 # Default pill label text (overridable via style.component_labels)
 _DEFAULT_LABELS: dict[str, str] = {
@@ -89,47 +106,75 @@ def _draw_lcars_overlay(
     fg = style.fg   # WHITE (1)
     bg = style.bg   # BLACK (0)
 
-    # ------------------------------------------------------------------
-    # 1. Header left elbow cap pill
-    # ------------------------------------------------------------------
-    # Clear the cap area first (component content should not reach here, but
-    # resetting ensures the black gap between cap and crossbar is always clean).
-    draw.rectangle([0, 0, _ELBOW_CAP_W + 5, _HEADER_H - _HDR_BAR_H - 1], fill=bg)
+    # ==================================================================
+    # TOP ELBOW — horizontal bar + cap + inner sweep
+    # ==================================================================
+
+    # Horizontal bar across the full width (rounded right end)
     draw.rounded_rectangle(
-        [5, 5, _ELBOW_CAP_W, _HEADER_H - _HDR_BAR_H - 4],
-        radius=_ELBOW_RADIUS,
-        fill=fg,
+        [0, 0, W - 6, _HBAR_H - 1], radius=_HBAR_H // 2, fill=fg,
     )
+    # Square off the left end (it merges into the cap)
+    draw.rectangle([0, 0, _HBAR_H, _HBAR_H - 1], fill=fg)
 
-    # ------------------------------------------------------------------
-    # 2. Header crossbar (thin bar at the bottom of the header strip)
-    # ------------------------------------------------------------------
+    # Cap: large rounded rectangle extending below the bar on the left
+    draw.rounded_rectangle(
+        [0, 0, _CAP_W, _TOP_CAP_H - 1], radius=_OUTER_R, fill=fg,
+    )
+    # Square off the cap's right side (only the left corners should be rounded)
     draw.rectangle(
-        [_MAIN_X, _HEADER_H - _HDR_BAR_H, W - 5, _HEADER_H - 1],
-        fill=fg,
+        [_CAP_W - _OUTER_R, 0, _CAP_W, _TOP_CAP_H - 1], fill=fg,
     )
 
-    # ------------------------------------------------------------------
-    # 3. Vertical sidebar connecting bar
-    # ------------------------------------------------------------------
+    # Inner sweep: carve out the interior of the elbow to create the
+    # characteristic LCARS curve.  The rounded_rectangle extends past the cap
+    # edges so that only the top-left corner (the sweep) is visible.
+    draw.rounded_rectangle(
+        [_VBAR_W, _HBAR_H,
+         _CAP_W + _INNER_R, _TOP_CAP_H + _INNER_R],
+        radius=_INNER_R, fill=bg,
+    )
+
+    # ==================================================================
+    # BOTTOM ELBOW — mirror of the top
+    # ==================================================================
+
+    # Horizontal bar across the full width (rounded right end)
+    draw.rounded_rectangle(
+        [0, H - _HBAR_H, W - 6, H - 1], radius=_HBAR_H // 2, fill=fg,
+    )
+    draw.rectangle([0, H - _HBAR_H, _HBAR_H, H - 1], fill=fg)
+
+    # Cap: rounded rectangle extending above the bar on the left
+    draw.rounded_rectangle(
+        [0, _BOT_ELBOW_Y, _CAP_W, H - 1], radius=_OUTER_R, fill=fg,
+    )
     draw.rectangle(
-        [_VBAR_X, _HEADER_H, _VBAR_X + _VBAR_W - 1, H - 17],
-        fill=fg,
+        [_CAP_W - _OUTER_R, _BOT_ELBOW_Y, _CAP_W, H - 1], fill=fg,
     )
 
-    # ------------------------------------------------------------------
-    # 4. Bottom sidebar cap pill
-    # ------------------------------------------------------------------
-    draw.rounded_rectangle([5, H - 15, _ELBOW_CAP_W, H - 5], radius=6, fill=fg)
+    # Inner sweep for bottom elbow (bottom-left corner is the sweep)
+    draw.rounded_rectangle(
+        [_VBAR_W, _BOT_ELBOW_Y - _INNER_R,
+         _CAP_W + _INNER_R, H - _HBAR_H],
+        radius=_INNER_R, fill=bg,
+    )
 
-    # ------------------------------------------------------------------
-    # 5. Section label pills: white pill + black centred label text
-    # ------------------------------------------------------------------
-    label_font = style.font_bold(9)
+    # ==================================================================
+    # LEFT VERTICAL BAR (spine connecting the two elbows)
+    # ==================================================================
+    draw.rectangle(
+        [0, _TOP_CAP_H, _VBAR_W - 1, _BOT_ELBOW_Y - 1], fill=fg,
+    )
+
+    # ==================================================================
+    # SECTION LABEL PILLS (jut right from the spine, with label text)
+    # ==================================================================
+    label_font = style.font_bold(11)
     pill_specs = [
-        (_WEATHER_PILL_Y, "weather"),
-        (_BIRTHDAY_PILL_Y, "birthdays"),
-        (_INFO_PILL_Y, "info"),
+        (_PILL_1_Y, "weather"),
+        (_PILL_2_Y, "birthdays"),
+        (_PILL_3_Y, "info"),
     ]
     for pill_y, key in pill_specs:
         label = style.component_labels.get(key) or _DEFAULT_LABELS[key]
@@ -138,8 +183,7 @@ def _draw_lcars_overlay(
         # White pill background
         draw.rounded_rectangle(
             [_PILL_X, pill_y, _PILL_RIGHT, pill_bottom],
-            radius=_PILL_RADIUS,
-            fill=fg,
+            radius=_PILL_R, fill=fg,
         )
 
         # Black label text, centred on the pill
@@ -161,19 +205,21 @@ def lcars_theme() -> Theme:
     layout = ThemeLayout(
         canvas_w=_CANVAS_W,
         canvas_h=_CANVAS_H,
-        # Header title area sits to the right of the left elbow cap
-        header=ComponentRegion(_MAIN_X, 0, _MAIN_W, _HEADER_H - _HDR_BAR_H),
-        # Week view occupies the full right area below the header
-        week_view=ComponentRegion(_MAIN_X, _HEADER_H, _MAIN_W, _CANVAS_H - _HEADER_H),
-        # Sidebar panels: positioned below their respective LCARS pill labels
+        # Header text area: right of cap, below top bar
+        header=ComponentRegion(_HEADER_X, _HEADER_Y, _HEADER_W, _HEADER_H),
+        # Week view: main content area right of sidebar
+        week_view=ComponentRegion(
+            _MAIN_X, _BODY_Y, _MAIN_W, _BODY_BOTTOM - _BODY_Y,
+        ),
+        # Sidebar panels: below their respective LCARS pill labels
         weather=ComponentRegion(
-            _PILL_X, _WEATHER_CONT_Y, _PILL_RIGHT - _PILL_X, _WEATHER_CONT_H,
+            _PILL_X, _CONT_1_Y, _PILL_RIGHT - _PILL_X, _CONT_1_H,
         ),
         birthdays=ComponentRegion(
-            _PILL_X, _BIRTHDAY_CONT_Y, _PILL_RIGHT - _PILL_X, _BIRTHDAY_CONT_H,
+            _PILL_X, _CONT_2_Y, _PILL_RIGHT - _PILL_X, _CONT_2_H,
         ),
         info=ComponentRegion(
-            _PILL_X, _INFO_CONT_Y, _PILL_RIGHT - _PILL_X, _INFO_CONT_H,
+            _PILL_X, _CONT_3_Y, _PILL_RIGHT - _PILL_X, _CONT_3_H,
         ),
         today_view=ComponentRegion(0, 0, 0, 0, visible=False),
         draw_order=["header", "weather", "birthdays", "info", "week_view"],
@@ -183,10 +229,10 @@ def lcars_theme() -> Theme:
     style = ThemeStyle(
         fg=1,                           # WHITE on black canvas
         bg=0,                           # BLACK background
-        invert_header=False,            # header: white text on black (not a white bar)
+        invert_header=False,            # header: white text on black
         invert_today_col=True,          # today column: white fill + black text
         invert_allday_bars=True,        # all-day event bars: solid white
-        spacing_scale=0.9,              # slightly compact for narrow sidebar panels
+        spacing_scale=0.9,              # slightly compact for narrow sidebar
         label_font_size=8,
         label_font_weight="bold",
         # DM Sans — geometric, screen-optimised (same family as minimalist theme)
@@ -198,8 +244,8 @@ def lcars_theme() -> Theme:
         font_date_number=dm_bold,
         font_month_title=dm_bold,
         font_section_label=dm_bold,
-        # Suppress the components' built-in section labels; the overlay pills serve
-        # as the sole section identifiers.
+        # Suppress the components' built-in section labels; the overlay pills
+        # serve as the sole section identifiers.
         component_labels={"weather": " ", "birthdays": " ", "info": " "},
     )
 
