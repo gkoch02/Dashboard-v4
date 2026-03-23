@@ -1,9 +1,12 @@
-.PHONY: dry test deploy setup install check previews
+.PHONY: dry test deploy setup install check previews version
 
 VENV = venv/bin/python
 
 _check-venv:
 	@test -f $(VENV) || { echo "ERROR: venv not found. Run 'make setup' first."; exit 1; }
+
+version: _check-venv
+	@$(VENV) -m src.main --version
 
 dry: _check-venv
 	$(VENV) -m src.main --dry-run --dummy
