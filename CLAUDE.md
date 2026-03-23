@@ -54,8 +54,8 @@ src/
     ├── icons.py               # OWM icon code → Weather Icons glyph
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors)
-    ├── themes/                # 7 themes: default, terminal, minimalist, old_fashioned, today, fantasy, qotd
-    └── components/            # One file per UI region (header, week_view, weather_panel, birthday_bar, today_view, info_panel)
+    ├── themes/                # 9 themes: default, terminal, minimalist, old_fashioned, today, fantasy, qotd, lcars, weather
+    └── components/            # One file per UI region (header, week_view, weather_panel, weather_full, birthday_bar, today_view, info_panel)
 
 config/
 ├── config.example.yaml        # Template (copy to config.yaml)
@@ -129,7 +129,7 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 | `Maratype.otf` | `maratype` | `terminal` — dashboard title, day column headers, quote body |
 | `UESC Display.otf` | `uesc_display` | `terminal` — month band, section labels, quote attribution |
 | `Synthetic Genesis.otf` | `synthetic_genesis` | `terminal` — large today date numeral |
-| `DMSans.ttf` | `dm_regular/medium/semibold/bold` | `minimalist` |
+| `DMSans.ttf` | `dm_regular/medium/semibold/bold` | `minimalist`, `weather` |
 | `PlayfairDisplay-*.ttf` | `playfair_regular/medium/semibold/bold` | `old_fashioned`, `qotd` |
 | `Cinzel.ttf` | `cinzel_regular/semibold/bold/black` | `fantasy`, `old_fashioned` section labels |
 | `NuCore.otf` / `NuCore Condensed.otf` | *(unused — available for new themes)* | — |
