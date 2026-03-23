@@ -72,7 +72,7 @@ logging:
 # title: "Home Dashboard"
 
 # UI theme — controls overall layout, proportions, and visual style.
-# Options: default, minimalist, terminal, old_fashioned, today, fantasy, qotd
+# Options: default, minimalist, terminal, old_fashioned, today, fantasy, qotd, fuzzyclock
 # Set to "random" to rotate themes daily (see random_theme below).
 # theme: default
 
