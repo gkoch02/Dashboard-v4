@@ -499,12 +499,13 @@ def main():
     parser.add_argument(
         "--theme",
         choices=["default", "fantasy", "lcars", "minimalist", "old_fashioned", "qotd",
-                 "random", "terminal", "today"],
+                 "random", "terminal", "today", "weather"],
         default=None,
         metavar="THEME",
         help=(
             "Override the theme from config. "
-            "Choices: default, fantasy, minimalist, old_fashioned, qotd, random, terminal, today"
+            "Choices: default, fantasy, lcars, minimalist, old_fashioned, qotd, random, "
+            "terminal, today, weather"
         ),
     )
     parser.add_argument(

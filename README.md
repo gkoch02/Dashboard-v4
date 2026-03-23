@@ -76,7 +76,7 @@ Reports errors (must fix) and warnings (may cause issues) in your configuration.
 Switch the entire dashboard layout and visual style with one line in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | random
+theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | weather | random
 ```
 
 Or override it from the command line without editing your config:
@@ -85,7 +85,7 @@ Or override it from the command line without editing your config:
 venv/bin/python -m src.main --dry-run --dummy --theme terminal
 ```
 
-The `--theme` flag takes precedence over `config.yaml`. All nine values are accepted,
+The `--theme` flag takes precedence over `config.yaml`. All ten values are accepted,
 including `random` (which triggers the daily rotation logic as normal).
 
 Themes control component positions, proportions, fonts, and visual style -- not just
@@ -125,7 +125,7 @@ random_theme:
 ```
 
 - `include` is applied first; `exclude` is applied after.
-- If both are empty, all 8 themes are eligible.
+- If both are empty, all 9 themes are eligible.
 - If the pool is empty after filtering, the dashboard falls back to `"default"`.
 - Run `make check` to catch invalid theme names in either list.
 
@@ -215,6 +215,21 @@ The week view fills the right 600px. Header title and timestamp appear in the el
 between the top bar and cap. DM Sans font throughout.
 
 ![LCARS theme](output/theme_lcars.png)
+
+#### weather
+
+Full-screen weather station. Devotes the entire 800×480 canvas to a rich weather display
+inspired by iOS Weather and Foreca Weather. The upper two-thirds show current conditions at
+a glance — an 80px weather icon, hero temperature in bold 72px DM Sans, description, and
+hi/lo line. Below the hero sits a row of four metric cards: feels-like, wind speed and
+direction, humidity, and UV index. A details bar spans the full width with sunrise/sunset
+times, barometric pressure, and moon phase. If an active weather alert is present it appears
+as a prominent inverted full-width banner. The lower third shows a clean five-day forecast
+grid with icon, hi/lo temperatures, and precipitation probability for each day. All standard
+components (header, calendar, birthdays, quote) are hidden — the display is weather only.
+Font: DM Sans throughout.
+
+![Weather theme](output/theme_weather.png)
 
 ### Creating your own theme
 
@@ -340,7 +355,7 @@ Your existing config is fully compatible. These are opt-in additions:
 | Feature | How to enable |
 |---|---|
 | **Versioning** (`--version` flag) | Run `python -m src.main --version` or `make version` to print the current version |
-| **Themes** (8 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`) to `config.yaml`, or pass `--theme THEME` on the command line |
+| **Themes** (9 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`, `weather`) to `config.yaml`, or pass `--theme THEME` on the command line |
 | **Random daily theme rotation** | Set `theme: random`; optionally add a `random_theme:` block to include/exclude specific themes |
 | **Event filtering** | Add a `filters:` block — hide events by calendar name, keyword, or all-day status |
 | **Configurable cache TTLs** | Add a `cache:` block to tune per-source TTL and fetch intervals |
@@ -600,7 +615,7 @@ schedule:
 
 timezone: "local"                  # IANA name or "local"
 title: "Home Dashboard"            # text shown in the header bar
-theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | random
+theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | weather | random
 
 random_theme:                      # only used when theme: random
   include: []                      # allowlist (empty = all themes eligible)
@@ -710,7 +725,7 @@ to `output/calendar_sync_state.json`.
 | `--dry-run` | Save to PNG instead of writing to display |
 | `--dummy` | Use built-in dummy data (no API calls needed) |
 | `--config PATH` | Config file path (default: `config/config.yaml`) |
-| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`, `random` |
+| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`, `weather`, `random` |
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
 | `--force-full-refresh` | Force full eInk refresh; bypasses fetch intervals and circuit breaker |
 | `--check-config` | Validate config and exit |
@@ -778,11 +793,13 @@ Dashboard-v4/
 │       │   ├── today.py
 │       │   ├── fantasy.py
 │       │   ├── qotd.py
-│       │   └── lcars.py
+│       │   ├── lcars.py
+│       │   └── weather.py
 │       └── components/           # One file per UI region
 │           ├── header.py
 │           ├── week_view.py
 │           ├── weather_panel.py
+│           ├── weather_full.py
 │           ├── birthday_bar.py
 │           ├── today_view.py
 │           ├── info_panel.py
@@ -805,7 +822,7 @@ Dashboard-v4/
 | Maratype | `terminal` theme — dashboard title, day column headers, quote body |
 | UESC Display | `terminal` theme — month band, section labels, quote attribution |
 | Synthetic Genesis | `terminal` theme — large today date numeral |
-| [DM Sans](https://fonts.google.com/specimen/DM+Sans) | `minimalist` theme |
+| [DM Sans](https://fonts.google.com/specimen/DM+Sans) | `minimalist` theme; `weather` theme |
 | [Playfair Display](https://fonts.google.com/specimen/Playfair+Display) | `old_fashioned` theme; `qotd` quote text |
 | [Cinzel](https://fonts.google.com/specimen/Cinzel) | `fantasy` theme |
 
