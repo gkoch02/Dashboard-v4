@@ -1,4 +1,4 @@
-# CLAUDE.md — Dashboard-v3
+# CLAUDE.md — Dashboard-v4
 
 ## Project Overview
 
@@ -11,6 +11,7 @@ make setup          # Create venv, install deps, copy config template
 make test           # Run pytest (775 tests across 31 files)
 make dry            # Preview with dummy data → output/latest.png
 make check          # Validate config/config.yaml
+make version        # Print current version (e.g. main.py 3.0.0)
 make deploy         # Rsync to Pi (configurable: PI_USER, PI_HOST, PI_DIR)
 make install        # Install systemd timer on Pi
 flake8 src/ tests/ --max-line-length=100   # Lint
@@ -31,6 +32,7 @@ flake8 src/ tests/ --max-line-length=100   # Lint
 ```
 src/
 ├── main.py                    # CLI entry point + orchestration
+├── _version.py                # Single source of truth: __version__ = "3.0.0"
 ├── config.py                  # YAML → typed dataclasses
 ├── filters.py                 # Event filtering (calendar, keyword, all-day)
 ├── data/models.py             # Pure dataclasses (CalendarEvent, WeatherData, Birthday, DashboardData)
@@ -102,6 +104,7 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 --date YYYY-MM-DD      Override today's date for dry-run previews (requires --dry-run)
 --force-full-refresh   Bypass fetch intervals and circuit breaker
 --check-config         Validate config and exit
+--version              Print version and exit (e.g. "main.py 3.0.0")
 ```
 
 ## Adding New Features
