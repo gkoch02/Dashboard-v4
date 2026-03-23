@@ -13,8 +13,8 @@ display.
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/gkoch02/Dashboard-v3.git
-cd Dashboard-v3
+git clone https://github.com/gkoch02/Dashboard-v4.git
+cd Dashboard-v4
 make setup
 ```
 
@@ -258,28 +258,28 @@ See the theme reference tables and font customization guide in [`CLAUDE.md`](CLA
 
 ---
 
-## Upgrading from v2
+## Upgrading from v3
 
-v3 is a drop-in upgrade. Your existing credentials and `config.yaml` work without changes.
+v4 is a drop-in upgrade. Your existing credentials and `config.yaml` work without changes.
 
 ### Step 1 -- Clone the new repo
 
 ```bash
-git clone https://github.com/gkoch02/Dashboard-v3.git
-cd Dashboard-v3
+git clone https://github.com/gkoch02/Dashboard-v4.git
+cd Dashboard-v4
 ```
 
 ### Step 2 -- Copy your config and credentials
 
 ```bash
-cp /path/to/Dashboard-v2/config/config.yaml config/config.yaml
-cp /path/to/Dashboard-v2/credentials/service_account.json credentials/service_account.json
+cp /path/to/Dashboard-v3/config/config.yaml config/config.yaml
+cp /path/to/Dashboard-v3/credentials/service_account.json credentials/service_account.json
 ```
 
 If you had a `config/birthdays.json`, copy that too:
 
 ```bash
-cp /path/to/Dashboard-v2/config/birthdays.json config/birthdays.json
+cp /path/to/Dashboard-v3/config/birthdays.json config/birthdays.json
 ```
 
 ### Step 3 -- Install dependencies
@@ -288,11 +288,11 @@ cp /path/to/Dashboard-v2/config/birthdays.json config/birthdays.json
 make setup
 ```
 
-The dependency list is identical to v2; `make setup` creates a fresh venv.
+The dependency list is identical to v3; `make setup` creates a fresh venv.
 
 ### Step 4 -- Clear the old cache
 
-v3 uses a different cache format. Delete v2's output files before the first run:
+Delete v3's output files before the first run to avoid stale cache conflicts:
 
 ```bash
 rm -f output/calendar_cache.json output/weather_cache.json \
@@ -305,8 +305,6 @@ rm -f output/calendar_cache.json output/weather_cache.json \
 ```bash
 make check
 ```
-
-This is new in v3. It reports any config errors or warnings before you run the dashboard.
 
 ### Step 6 -- Test
 
@@ -323,12 +321,13 @@ ssh pi@raspberrypi.local "cd ~/home-dashboard && make setup"
 make install        # reinstall systemd timer (unit file has changed)
 ```
 
-### What's new in v3
+### What's new in v4
 
 Your existing config is fully compatible. These are opt-in additions:
 
 | Feature | How to enable |
 |---|---|
+| **Versioning** (`--version` flag) | Run `python -m src.main --version` or `make version` to print the current version |
 | **Themes** (7 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`) to `config.yaml`, or pass `--theme THEME` on the command line |
 | **Random daily theme rotation** | Set `theme: random`; optionally add a `random_theme:` block to include/exclude specific themes |
 | **Event filtering** | Add a `filters:` block — hide events by calendar name, keyword, or all-day status |
@@ -688,6 +687,7 @@ to `output/calendar_sync_state.json`.
 | `make dry` | Render with dummy data to `output/latest.png` |
 | `make test` | Run `pytest tests/ -v` (775 tests across 31 files) |
 | `make check` | Validate config file and exit |
+| `make version` | Print the current version (e.g. `main.py 3.0.0`) |
 | `make deploy` | rsync project to Raspberry Pi (`PI_USER`, `PI_HOST`, `PI_DIR` configurable) |
 | `make install` | Copy systemd timer/service to Pi and enable |
 
@@ -702,6 +702,7 @@ to `output/calendar_sync_state.json`.
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
 | `--force-full-refresh` | Force full eInk refresh; bypasses fetch intervals and circuit breaker |
 | `--check-config` | Validate config and exit |
+| `--version` | Print version and exit |
 
 ### Offline development
 
@@ -722,7 +723,7 @@ flake8 src/ tests/ --max-line-length=100
 ## Project Structure
 
 ```
-Dashboard-v3/
+Dashboard-v4/
 ├── config/
 │   ├── config.example.yaml       # Configuration template
 │   └── quotes.json               # Daily quote pool (125 entries)
@@ -735,6 +736,7 @@ Dashboard-v3/
 │   └── latest.png                # Latest dry-run preview (tracked)
 ├── src/
 │   ├── main.py                   # CLI entry point + fetcher orchestration
+│   ├── _version.py               # Version constant (__version__ = "3.0.0")
 │   ├── config.py                 # YAML -> typed Config dataclass + validation
 │   ├── filters.py                # Event filtering (calendar, keyword, all-day)
 │   ├── data/

@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor, Future
 from datetime import datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 
+from src._version import __version__
 from src.config import load_config, validate_config, print_validation_report
 from src.filters import filter_events
 from src.data.models import (
@@ -505,6 +506,9 @@ def main():
             "Override the theme from config. "
             "Choices: default, fantasy, minimalist, old_fashioned, qotd, random, terminal, today"
         ),
+    )
+    parser.add_argument(
+        "--version", action="version", version=f"%(prog)s {__version__}",
     )
     args = parser.parse_args()
 
