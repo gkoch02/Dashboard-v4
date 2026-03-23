@@ -54,7 +54,7 @@ src/
     ├── icons.py               # OWM icon code → Weather Icons glyph
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors)
-    ├── themes/                # 9 themes: default, terminal, minimalist, old_fashioned, today, fantasy, qotd, lcars, weather
+    ├── themes/                # 8 themes: default, terminal, minimalist, old_fashioned, today, fantasy, qotd, weather
     └── components/            # One file per UI region (header, week_view, weather_panel, weather_full, birthday_bar, today_view, info_panel)
 
 config/
