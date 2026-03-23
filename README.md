@@ -76,7 +76,7 @@ Reports errors (must fix) and warnings (may cause issues) in your configuration.
 Switch the entire dashboard layout and visual style with one line in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | random
+theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | random
 ```
 
 Or override it from the command line without editing your config:
@@ -85,7 +85,7 @@ Or override it from the command line without editing your config:
 venv/bin/python -m src.main --dry-run --dummy --theme terminal
 ```
 
-The `--theme` flag takes precedence over `config.yaml`. All eight values are accepted,
+The `--theme` flag takes precedence over `config.yaml`. All nine values are accepted,
 including `random` (which triggers the daily rotation logic as normal).
 
 Themes control component positions, proportions, fonts, and visual style -- not just
@@ -125,7 +125,7 @@ random_theme:
 ```
 
 - `include` is applied first; `exclude` is applied after.
-- If both are empty, all 7 themes are eligible.
+- If both are empty, all 8 themes are eligible.
 - If the pool is empty after filtering, the dashboard falls back to `"default"`.
 - Run `make check` to catch invalid theme names in either list.
 
@@ -203,6 +203,18 @@ bottom 80px: current conditions, hi/lo, feels-like, wind, a 3-day forecast strip
 moon phase.
 
 ![QOTD theme](output/theme_qotd.png)
+
+#### lcars
+
+Star Trek LCARS computer interface aesthetic. Black canvas with white structural chrome:
+a thick 24px spine bar runs the full left edge, framed top and bottom by elbow caps — each
+with a characteristic curved inner sweep where the vertical spine meets the full-width
+horizontal bars. Three bold pill labels (**STELLAR CONDITIONS**, **CREW MANIFEST**,
+**STARFLEET QUERY**) jut right from the spine, separating the stacked sidebar panels.
+The week view fills the right 600px. Header title and timestamp appear in the elbow gap
+between the top bar and cap. DM Sans font throughout.
+
+![LCARS theme](output/theme_lcars.png)
 
 ### Creating your own theme
 
@@ -328,7 +340,7 @@ Your existing config is fully compatible. These are opt-in additions:
 | Feature | How to enable |
 |---|---|
 | **Versioning** (`--version` flag) | Run `python -m src.main --version` or `make version` to print the current version |
-| **Themes** (7 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`) to `config.yaml`, or pass `--theme THEME` on the command line |
+| **Themes** (8 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`) to `config.yaml`, or pass `--theme THEME` on the command line |
 | **Random daily theme rotation** | Set `theme: random`; optionally add a `random_theme:` block to include/exclude specific themes |
 | **Event filtering** | Add a `filters:` block — hide events by calendar name, keyword, or all-day status |
 | **Configurable cache TTLs** | Add a `cache:` block to tune per-source TTL and fetch intervals |
@@ -588,7 +600,7 @@ schedule:
 
 timezone: "local"                  # IANA name or "local"
 title: "Home Dashboard"            # text shown in the header bar
-theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | random
+theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | lcars | random
 
 random_theme:                      # only used when theme: random
   include: []                      # allowlist (empty = all themes eligible)
@@ -685,7 +697,7 @@ to `output/calendar_sync_state.json`.
 |---|---|
 | `make setup` | Create venv, install dependencies, create config from template |
 | `make dry` | Render with dummy data to `output/latest.png` |
-| `make test` | Run `pytest tests/ -v` (775 tests across 31 files) |
+| `make test` | Run `pytest tests/ -v` (789 tests across 31 files) |
 | `make check` | Validate config file and exit |
 | `make version` | Print the current version (e.g. `main.py 3.0.0`) |
 | `make deploy` | rsync project to Raspberry Pi (`PI_USER`, `PI_HOST`, `PI_DIR` configurable) |
@@ -698,7 +710,7 @@ to `output/calendar_sync_state.json`.
 | `--dry-run` | Save to PNG instead of writing to display |
 | `--dummy` | Use built-in dummy data (no API calls needed) |
 | `--config PATH` | Config file path (default: `config/config.yaml`) |
-| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `random` |
+| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `lcars`, `random` |
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
 | `--force-full-refresh` | Force full eInk refresh; bypasses fetch intervals and circuit breaker |
 | `--check-config` | Validate config and exit |
@@ -765,7 +777,8 @@ Dashboard-v4/
 │       │   ├── old_fashioned.py
 │       │   ├── today.py
 │       │   ├── fantasy.py
-│       │   └── qotd.py
+│       │   ├── qotd.py
+│       │   └── lcars.py
 │       └── components/           # One file per UI region
 │           ├── header.py
 │           ├── week_view.py
