@@ -522,3 +522,96 @@ class TestThemeConfigField:
         errors, warnings = validate_config(cfg)
         warning_fields = [w.field for w in warnings]
         assert "theme" not in warning_fields
+
+
+# ---------------------------------------------------------------------------
+# LCARS theme
+# ---------------------------------------------------------------------------
+
+class TestLcarsTheme:
+    def test_loads_lcars(self):
+        t = load_theme("lcars")
+        assert isinstance(t, Theme)
+        assert t.name == "lcars"
+
+    def test_available_themes_contains_lcars(self):
+        assert "lcars" in AVAILABLE_THEMES
+
+    def test_lcars_produces_valid_image(self):
+        data = _make_data()
+        t = load_theme("lcars")
+        result = render_dashboard(data, DisplayConfig(), theme=t)
+        assert isinstance(result, Image.Image)
+        assert result.mode == "1"
+        assert result.size == (800, 480)
+
+    def test_lcars_canvas_starts_black(self):
+        """LCARS bg=0 means canvas background is BLACK (0)."""
+        t = load_theme("lcars")
+        assert t.style.bg == 0
+        assert t.style.fg == 1
+
+    def test_lcars_has_overlay_fn(self):
+        """LCARS theme wires up the chrome overlay."""
+        t = load_theme("lcars")
+        assert t.layout.overlay_fn is not None
+        assert callable(t.layout.overlay_fn)
+
+    def test_lcars_sidebar_layout(self):
+        """Sidebar panels live on the left; week view on the right."""
+        t = load_theme("lcars")
+        assert t.layout.week_view.x > 0
+        assert t.layout.weather.x < t.layout.week_view.x
+        assert t.layout.birthdays.x < t.layout.week_view.x
+        assert t.layout.info.x < t.layout.week_view.x
+        assert t.layout.week_view.w > t.layout.weather.w
+
+    def test_lcars_week_view_starts_at_sidebar_edge(self):
+        """Week view x-position matches the sidebar width."""
+        t = load_theme("lcars")
+        assert t.layout.week_view.x == 200
+
+    def test_lcars_sidebar_panels_do_not_overlap_vbar(self):
+        """Sidebar component regions must not extend past x=182 (vertical bar at x=188)."""
+        t = load_theme("lcars")
+        for region in (t.layout.weather, t.layout.birthdays, t.layout.info):
+            assert region.x + region.w <= 182
+
+    def test_lcars_panels_cover_body_height(self):
+        """Weather + birthday + info content heights fit within the 425px body."""
+        t = load_theme("lcars")
+        body_h = t.layout.canvas_h - t.layout.week_view.y  # 480 - 55 = 425
+        panels_bottom = max(
+            t.layout.weather.y + t.layout.weather.h,
+            t.layout.birthdays.y + t.layout.birthdays.h,
+            t.layout.info.y + t.layout.info.h,
+        )
+        assert panels_bottom <= t.layout.canvas_h
+
+    def test_lcars_invert_today_col(self):
+        """Today column should be inverted (white fill + black text)."""
+        t = load_theme("lcars")
+        assert t.style.invert_today_col is True
+
+    def test_lcars_renders_without_weather(self):
+        data = _make_data()
+        data.weather = None
+        t = load_theme("lcars")
+        result = render_dashboard(data, DisplayConfig(), theme=t)
+        assert isinstance(result, Image.Image)
+
+    def test_lcars_renders_without_birthdays(self):
+        data = _make_data()
+        data.birthdays = []
+        t = load_theme("lcars")
+        result = render_dashboard(data, DisplayConfig(), theme=t)
+        assert isinstance(result, Image.Image)
+
+    def test_lcars_renders_minimal_data(self):
+        data = _make_data()
+        data.events = []
+        data.weather = None
+        data.birthdays = []
+        t = load_theme("lcars")
+        result = render_dashboard(data, DisplayConfig(), theme=t)
+        assert isinstance(result, Image.Image)
