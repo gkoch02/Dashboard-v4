@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone, tzinfo
 
 from src.data.models import (
     AirQualityData, Birthday, CalendarEvent, DashboardData, DayForecast,
-    StalenessLevel, WeatherAlert, WeatherData,
+    HostData, StalenessLevel, WeatherAlert, WeatherData,
 )
 
 
@@ -230,9 +230,24 @@ def generate_dummy_data(tz: tzinfo | None = None, now: datetime | None = None) -
         pressure=1014.3,
     )
 
+    host_data = HostData(
+        hostname="raspberrypi",
+        uptime_seconds=3 * 86400 + 14 * 3600 + 22 * 60 + 15,  # 3d 14h 22m 15s
+        load_1m=0.42,
+        load_5m=0.38,
+        load_15m=0.31,
+        ram_used_mb=892.0,
+        ram_total_mb=4096.0,
+        disk_used_gb=12.4,
+        disk_total_gb=31.3,
+        cpu_temp_c=52.1,
+        ip_address="192.168.1.105",
+    )
+
     return DashboardData(
         events=events, weather=weather, birthdays=birthdays,
         air_quality=air_quality,
+        host_data=host_data,
         fetched_at=now, is_stale=False,
         source_staleness={
             "weather": StalenessLevel.FRESH,

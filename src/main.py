@@ -9,13 +9,14 @@ from src._version import __version__
 from src.config import load_config, validate_config, print_validation_report
 from src.filters import filter_events
 from src.data.models import (
-    AirQualityData, DashboardData, CalendarEvent, StalenessLevel, WeatherData, Birthday,
+    AirQualityData, DashboardData, CalendarEvent, HostData, StalenessLevel, WeatherData, Birthday,
 )
 from src.dummy_data import generate_dummy_data
 from src.fetchers.cache import check_staleness, load_cached_source, save_source
 from src.fetchers.circuit_breaker import CircuitBreaker
 from src.fetchers.quota_tracker import QuotaTracker
 from src.fetchers.calendar import fetch_events, fetch_birthdays
+from src.fetchers.host import fetch_host_data
 from src.fetchers.purpleair import fetch_air_quality
 from src.fetchers.weather import fetch_weather
 from src.render.canvas import render_dashboard
@@ -288,11 +289,15 @@ def fetch_live_data(
     for src in ("events", "weather", "birthdays"):
         quota.check_warning(src, quota_threshold)
 
+    # Host system metrics — instant, always fresh, no caching needed
+    host_data: HostData | None = fetch_host_data()
+
     return DashboardData(
         events=events,
         weather=weather,
         birthdays=birthdays,
         air_quality=air_quality,
+        host_data=host_data,
         fetched_at=fetched_at,
         is_stale=bool(stale_sources),
         stale_sources=stale_sources,

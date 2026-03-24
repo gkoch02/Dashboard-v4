@@ -78,11 +78,27 @@ class AirQualityData:
 
 
 @dataclass
+class HostData:
+    hostname: Optional[str] = None
+    uptime_seconds: Optional[float] = None   # seconds since boot, from /proc/uptime
+    load_1m: Optional[float] = None          # 1-minute load average
+    load_5m: Optional[float] = None          # 5-minute load average
+    load_15m: Optional[float] = None         # 15-minute load average
+    ram_used_mb: Optional[float] = None      # RAM in use (total - available), MB
+    ram_total_mb: Optional[float] = None     # Total RAM, MB
+    disk_used_gb: Optional[float] = None     # Root filesystem used, GB
+    disk_total_gb: Optional[float] = None    # Root filesystem total, GB
+    cpu_temp_c: Optional[float] = None       # CPU temperature °C, from thermal_zone0
+    ip_address: Optional[str] = None         # Primary outbound IPv4 address
+
+
+@dataclass
 class DashboardData:
     events: list[CalendarEvent] = field(default_factory=list)
     weather: Optional[WeatherData] = None
     birthdays: list[Birthday] = field(default_factory=list)
     air_quality: Optional[AirQualityData] = None
+    host_data: Optional[HostData] = None
     fetched_at: datetime = field(default_factory=datetime.now)
     is_stale: bool = False  # True when any component was filled from cache
     stale_sources: list[str] = field(default_factory=list)  # e.g. ["events", "weather"]
