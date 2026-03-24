@@ -43,7 +43,7 @@ src/
 ├── fetchers/
 │   ├── calendar.py            # Google Calendar API + incremental sync + birthdays
 │   ├── weather.py             # OpenWeatherMap (current + forecast + alerts)
-│   ├── purpleair.py           # PurpleAir sensor → PM1 / PM2.5 / PM10 / EPA AQI
+│   ├── purpleair.py           # PurpleAir sensor → PM1 / PM2.5 / PM10 / AQI + ambient temp/humidity/pressure
 │   ├── cache.py               # Multi-source JSON cache with per-source TTL
 │   ├── circuit_breaker.py     # Per-source circuit breaker
 │   └── quota_tracker.py       # Daily API call counter
@@ -56,8 +56,8 @@ src/
     ├── icons.py               # OWM icon code → Weather Icons glyph
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors, fmt_time, events_for_day, deg_to_compass)
-    ├── themes/                # 9 themes: default, terminal, minimalist, old_fashioned, today, fantasy, qotd, weather, fuzzyclock
-    └── components/            # One file per UI region (header, week_view, weather_panel, weather_full, birthday_bar, today_view, info_panel, qotd_panel, fuzzyclock_panel)
+    ├── themes/                # 10 themes: default, terminal, minimalist, old_fashioned, today, fantasy, qotd, weather, fuzzyclock, diags
+    └── components/            # One file per UI region (header, week_view, weather_panel, weather_full, birthday_bar, today_view, info_panel, qotd_panel, fuzzyclock_panel, diags_panel)
 
 config/
 ├── config.example.yaml        # Template (copy to config.yaml)
@@ -113,7 +113,7 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 
 **New component**: Create `src/render/components/my_component.py` → implement `draw_my_component(draw, data, region, style)` → add `ComponentRegion` to themes → register in `canvas.py` draw dispatch → add to theme `draw_order`.
 
-**New theme**: Create `src/render/themes/my_theme.py` → implement `my_theme() -> Theme` factory → register in `load_theme()` in `theme.py` → add name to `AVAILABLE_THEMES`. New themes are automatically included in the `random` rotation pool.
+**New theme**: Create `src/render/themes/my_theme.py` → implement `my_theme() -> Theme` factory → register in `load_theme()` in `theme.py` → add name to `AVAILABLE_THEMES`. New themes are automatically included in the `random` rotation pool. To exclude a theme from the pool (e.g. utility or diagnostic views), add its name to `_EXCLUDED_FROM_POOL` in `src/render/random_theme.py`.
 
 **New fetcher**: Create `src/fetchers/my_fetcher.py` → use `cache.py` and `circuit_breaker.py` → integrate into `main.py` orchestration → extend `DashboardData` if needed → add ser/deser branch to `cache.py` `save_source()`/`load_cached_source()`. See `purpleair.py` as a reference implementation.
 
@@ -127,11 +127,11 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 |---|---|---|
 | `PlusJakartaSans-*.ttf` | `regular`, `medium`, `semibold`, `bold` | Default font for all themes |
 | `weathericons-regular.ttf` | `weather_icon` | Weather condition icons + moon phase glyphs (all themes) |
-| `ShareTechMono-Regular.ttf` | `cyber_mono` | `terminal` — event body text |
+| `ShareTechMono-Regular.ttf` | `cyber_mono` | `terminal` — event body text; `diags` — all data rows |
 | `Maratype.otf` | `maratype` | `terminal` — dashboard title, day column headers, quote body |
 | `UESC Display.otf` | `uesc_display` | `terminal` — month band, section labels, quote attribution |
 | `Synthetic Genesis.otf` | `synthetic_genesis` | `terminal` — large today date numeral |
-| `DMSans.ttf` | `dm_regular/medium/semibold/bold` | `minimalist`, `weather`, `fuzzyclock` |
+| `DMSans.ttf` | `dm_regular/medium/semibold/bold` | `minimalist`, `weather`, `fuzzyclock`, `diags` (section labels) |
 | `PlayfairDisplay-*.ttf` | `playfair_regular/medium/semibold/bold` | `old_fashioned`, `qotd` |
 | `Cinzel.ttf` | `cinzel_regular/semibold/bold/black` | `fantasy`, `old_fashioned` section labels |
 | `NuCore.otf` / `NuCore Condensed.otf` | *(unused — available for new themes)* | — |
@@ -173,3 +173,5 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - PurpleAir AQI card only appears in the `weather` theme; other themes have access to `DashboardData.air_quality` for future use
 - `_pm25_to_aqi()` in `purpleair.py` implements the EPA AQI piecewise linear formula with standard breakpoints; it is applied to the 60-minute PM2.5 average (`pm2.5_60minute`) for a smoother, less noisy reading — the result is stored on `AirQualityData.aqi` at fetch time; `AirQualityData` also carries `pm1` (PM1.0) and `pm10` (PM10) for display in the `weather` theme detail strip
 - When `purpleair.api_key` or `purpleair.sensor_id` is `0`/`""`, the source is skipped silently (no circuit breaker entry, no cache miss); validation emits warnings only when one is set without the other
+- `AirQualityData` now includes optional `temperature` (°F), `humidity` (%), and `pressure` (hPa) fields populated from the PurpleAir sensor's ambient readings; these appear in the `diags` panel alongside particulate data; old cache entries missing these fields deserialize safely as `None`
+- `diags` theme is a utility/diagnostic view and is permanently excluded from the `random` rotation pool via `_EXCLUDED_FROM_POOL` in `random_theme.py`; it cannot be added via `random_theme.include` — use `theme: diags` directly instead

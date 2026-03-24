@@ -6,7 +6,8 @@ Used by ``main.py --dummy`` to render a dashboard without API credentials.
 from datetime import datetime, timedelta, timezone, tzinfo
 
 from src.data.models import (
-    AirQualityData, Birthday, CalendarEvent, DashboardData, DayForecast, WeatherAlert, WeatherData,
+    AirQualityData, Birthday, CalendarEvent, DashboardData, DayForecast,
+    StalenessLevel, WeatherAlert, WeatherData,
 )
 
 
@@ -224,10 +225,18 @@ def generate_dummy_data(tz: tzinfo | None = None, now: datetime | None = None) -
         pm10=14.2,
         sensor_id=99999,
         pm1=6.1,
+        temperature=68.4,
+        humidity=52.0,
+        pressure=1014.3,
     )
 
     return DashboardData(
         events=events, weather=weather, birthdays=birthdays,
         air_quality=air_quality,
         fetched_at=now, is_stale=False,
+        source_staleness={
+            "weather": StalenessLevel.FRESH,
+            "events": StalenessLevel.FRESH,
+            "air_quality": StalenessLevel.FRESH,
+        },
     )

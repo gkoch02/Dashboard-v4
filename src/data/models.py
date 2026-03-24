@@ -72,6 +72,9 @@ class AirQualityData:
     pm10: Optional[float] = None      # PM10 µg/m³ (may be absent)
     sensor_id: Optional[int] = None   # PurpleAir sensor_index
     pm1: Optional[float] = None       # PM1.0 µg/m³ (may be absent)
+    temperature: Optional[float] = None  # °F — PurpleAir ambient sensor reading
+    humidity: Optional[float] = None     # % relative humidity — PurpleAir ambient
+    pressure: Optional[float] = None     # hPa atmospheric pressure — PurpleAir ambient
 
 
 @dataclass

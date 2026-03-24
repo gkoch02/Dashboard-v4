@@ -76,7 +76,7 @@ Reports errors (must fix) and warnings (may cause issues) in your configuration.
 Switch the entire dashboard layout and visual style with one line in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | fuzzyclock | random
+theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | fuzzyclock | diags | random
 ```
 
 Or override it from the command line without editing your config:
@@ -85,7 +85,7 @@ Or override it from the command line without editing your config:
 venv/bin/python -m src.main --dry-run --dummy --theme terminal
 ```
 
-The `--theme` flag takes precedence over `config.yaml`. All ten values are accepted,
+The `--theme` flag takes precedence over `config.yaml`. All eleven values are accepted,
 including `random` (which triggers the daily rotation logic as normal).
 
 Themes control component positions, proportions, fonts, and visual style -- not just
@@ -125,7 +125,8 @@ random_theme:
 ```
 
 - `include` is applied first; `exclude` is applied after.
-- If both are empty, all 10 themes are eligible.
+- If both are empty, all 9 standard themes are eligible (`diags` is always excluded — it is a
+  utility view, not a daily aesthetic).
 - If the pool is empty after filtering, the dashboard falls back to `"default"`.
 - Run `make check` to catch invalid theme names in either list.
 
@@ -236,6 +237,28 @@ ensures no eInk refresh occurs when the phrase hasn't changed.
 
 ![Fuzzyclock theme](output/theme_fuzzyclock.png)
 
+#### diags
+
+Diagnostic text readout. Devotes the entire 800×480 canvas to a structured two-column
+key-value display of every available data field. No icons, no decorations — only labeled
+sections rendered in a clean monospace font (Share Tech Mono for data rows, DM Sans Bold for
+section labels).
+
+**Left column:** WEATHER (condition, temperature, hi/lo, feels-like, humidity, wind speed and
+direction, barometric pressure, UV index, sunrise/sunset, active alerts) followed by a
+FORECAST strip (up to six days of date, hi/lo, description, and precipitation probability).
+
+**Right column (top-to-bottom):** CALENDAR (per-day event counts for the current Mon–Sun week),
+AIR QUALITY (AQI, PM2.5, PM1.0, PM10, plus PurpleAir ambient temperature/humidity/pressure
+when configured), BIRTHDAYS (name, date, and age for upcoming birthdays), and STATUS (data
+freshness level per source: Fresh / Aging / Stale / Expired).
+
+Each section label includes a right-aligned source attribution (`OpenWeatherMap`, `Google
+Calendar`, `PurpleAir`). `diags` is intentionally excluded from the `random` rotation pool —
+it is a utility/sanity-check view, not a daily aesthetic.
+
+![Diags theme](output/theme_diags.png)
+
 ### Creating your own theme
 
 Two steps -- no changes to any component code:
@@ -267,7 +290,10 @@ def retro_theme() -> Theme:
 
 **2. Register in `src/render/theme.py`:**
 
-Add a clause to `load_theme()` and add the name to `AVAILABLE_THEMES`.
+Add a clause to `load_theme()` and add the name to `AVAILABLE_THEMES`. New themes are
+automatically included in the `random` rotation pool. To exclude a theme from the pool (e.g.
+utility or diagnostic views), add its name to `_EXCLUDED_FROM_POOL` in
+`src/render/random_theme.py`.
 
 Then preview:
 
@@ -632,7 +658,7 @@ schedule:
 
 timezone: "local"                  # IANA name or "local"
 title: "Home Dashboard"            # text shown in the header bar
-theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | fuzzyclock | random
+theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | fuzzyclock | diags | random
 
 random_theme:                      # only used when theme: random
   include: []                      # allowlist (empty = all themes eligible)
@@ -749,7 +775,7 @@ to `output/calendar_sync_state.json`.
 | `--dry-run` | Save to PNG instead of writing to display |
 | `--dummy` | Use built-in dummy data (no API calls needed) |
 | `--config PATH` | Config file path (default: `config/config.yaml`) |
-| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`, `fuzzyclock`, `random` |
+| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`, `fuzzyclock`, `diags`, `random` |
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
 | `--force-full-refresh` | Force full eInk refresh; bypasses fetch intervals and circuit breaker |
 | `--check-config` | Validate config and exit |
@@ -820,7 +846,8 @@ Dashboard-v4/
 │       │   ├── fantasy.py
 │       │   ├── qotd.py
 │       │   ├── weather.py
-│       │   └── fuzzyclock.py
+│       │   ├── fuzzyclock.py
+│       │   └── diags.py
 │       └── components/           # One file per UI region
 │           ├── header.py
 │           ├── week_view.py
@@ -830,7 +857,8 @@ Dashboard-v4/
 │           ├── today_view.py
 │           ├── info_panel.py
 │           ├── qotd_panel.py
-│           └── fuzzyclock_panel.py
+│           ├── fuzzyclock_panel.py
+│           └── diags_panel.py
 ├── tests/                        # 34 test files, 850+ tests
 ├── Makefile
 ├── requirements.txt              # Core dependencies
@@ -845,11 +873,11 @@ Dashboard-v4/
 |---|---|
 | [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) | Default UI text (all themes) |
 | [Weather Icons](https://erikflowers.github.io/weather-icons/) | Weather condition icons + moon phase glyphs |
-| [Share Tech Mono](https://fonts.google.com/specimen/Share+Tech+Mono) | `terminal` theme — event body text |
+| [Share Tech Mono](https://fonts.google.com/specimen/Share+Tech+Mono) | `terminal` theme — event body text; `diags` theme — all data rows |
 | Maratype | `terminal` theme — dashboard title, day column headers, quote body |
 | UESC Display | `terminal` theme — month band, section labels, quote attribution |
 | Synthetic Genesis | `terminal` theme — large today date numeral |
-| [DM Sans](https://fonts.google.com/specimen/DM+Sans) | `minimalist` theme; `weather` theme; `fuzzyclock` theme |
+| [DM Sans](https://fonts.google.com/specimen/DM+Sans) | `minimalist` theme; `weather` theme; `fuzzyclock` theme; `diags` theme — section labels |
 | [Playfair Display](https://fonts.google.com/specimen/Playfair+Display) | `old_fashioned` theme; `qotd` quote text |
 | [Cinzel](https://fonts.google.com/specimen/Cinzel) | `fantasy` theme |
 
