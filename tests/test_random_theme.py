@@ -7,11 +7,11 @@ from unittest.mock import patch
 
 import pytest
 
-from src.render.random_theme import eligible_themes, pick_random_theme
+from src.render.random_theme import _EXCLUDED_FROM_POOL, eligible_themes, pick_random_theme
 from src.render.theme import AVAILABLE_THEMES
 
-# Themes that can actually appear in a pool (everything except "random")
-_REAL_THEMES = AVAILABLE_THEMES - {"random"}
+# Themes that can actually appear in a pool (everything except hard-excluded themes)
+_REAL_THEMES = AVAILABLE_THEMES - _EXCLUDED_FROM_POOL
 
 
 # ---------------------------------------------------------------------------

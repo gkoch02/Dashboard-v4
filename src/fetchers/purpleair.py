@@ -22,7 +22,7 @@ from src.data.models import AirQualityData
 logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://api.purpleair.com/v1/sensors"
-_FIELDS = "pm2.5_60minute,pm1.0_atm,pm10.0_atm"
+_FIELDS = "pm2.5_60minute,pm1.0_atm,pm10.0_atm,temperature,humidity,pressure"
 _TIMEOUT = 10
 
 # EPA PM2.5 AQI breakpoints: (C_lo, C_hi, I_lo, I_hi)
@@ -96,6 +96,12 @@ def fetch_air_quality(cfg: PurpleAirConfig) -> AirQualityData:
     pm1 = float(pm1_raw) if pm1_raw is not None else None
     pm10_raw = sensor.get("pm10.0_atm")
     pm10 = float(pm10_raw) if pm10_raw is not None else None
+    temp_raw = sensor.get("temperature")
+    temperature = float(temp_raw) if temp_raw is not None else None
+    humidity_raw = sensor.get("humidity")
+    humidity = float(humidity_raw) if humidity_raw is not None else None
+    pressure_raw = sensor.get("pressure")
+    pressure = float(pressure_raw) if pressure_raw is not None else None
     aqi, category = _pm25_to_aqi(pm25_60min)
 
     logger.info(
@@ -110,4 +116,7 @@ def fetch_air_quality(cfg: PurpleAirConfig) -> AirQualityData:
         pm10=pm10,
         sensor_id=cfg.sensor_id,
         pm1=pm1,
+        temperature=temperature,
+        humidity=humidity,
+        pressure=pressure,
     )

@@ -371,6 +371,9 @@ def _ser_air_quality(aq: AirQualityData) -> dict:
         "pm10": aq.pm10,
         "sensor_id": aq.sensor_id,
         "pm1": aq.pm1,
+        "temperature": aq.temperature,
+        "humidity": aq.humidity,
+        "pressure": aq.pressure,
     }
 
 
@@ -382,4 +385,7 @@ def _deser_air_quality(d: dict) -> AirQualityData:
         pm10=d.get("pm10"),
         sensor_id=d.get("sensor_id"),
         pm1=d.get("pm1"),
+        temperature=d.get("temperature"),
+        humidity=d.get("humidity"),
+        pressure=d.get("pressure"),
     )
