@@ -196,7 +196,7 @@ def generate_dummy_data(tz: tzinfo | None = None, now: datetime | None = None) -
                 icon="09d", description="drizzle", precip_chance=0.60,
             ),
         ],
-        alerts=[WeatherAlert(event="Dense Fog Advisory")],
+        alerts=[],
         feels_like=38.0,
         wind_speed=12.0,
         wind_deg=315.0,
@@ -223,6 +223,7 @@ def generate_dummy_data(tz: tzinfo | None = None, now: datetime | None = None) -
         pm25=9.8,
         pm10=14.2,
         sensor_id=99999,
+        pm1=6.1,
     )
 
     return DashboardData(
