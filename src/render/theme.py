@@ -182,7 +182,8 @@ class Theme:
 AVAILABLE_THEMES: frozenset[str] = frozenset(
     {
         "default", "terminal", "minimalist", "old_fashioned", "today",
-        "fantasy", "qotd", "weather", "fuzzyclock", "diags", "random",
+        "fantasy", "qotd", "qotd_invert", "weather", "fuzzyclock", "fuzzyclock_invert",
+        "diags", "random",
     }
 )
 
@@ -243,12 +244,18 @@ def load_theme(name: str) -> Theme:
     if name == "qotd":
         from src.render.themes.qotd import qotd_theme
         return qotd_theme()
+    if name == "qotd_invert":
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        return qotd_invert_theme()
     if name == "weather":
         from src.render.themes.weather import weather_theme
         return weather_theme()
     if name == "fuzzyclock":
         from src.render.themes.fuzzyclock import fuzzyclock_theme
         return fuzzyclock_theme()
+    if name == "fuzzyclock_invert":
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        return fuzzyclock_invert_theme()
     if name == "diags":
         from src.render.themes.diags import diags_theme
         return diags_theme()
