@@ -330,14 +330,14 @@ def main():
     )
     parser.add_argument(
         "--theme",
-        choices=["default", "diags", "fantasy", "fuzzyclock", "minimalist", "old_fashioned",
-                 "qotd", "random", "terminal", "today", "weather"],
+        choices=["default", "diags", "fantasy", "fuzzyclock", "fuzzyclock_invert", "minimalist",
+                 "old_fashioned", "qotd", "qotd_invert", "random", "terminal", "today", "weather"],
         default=None,
         metavar="THEME",
         help=(
             "Override the theme from config. "
-            "Choices: default, diags, fantasy, fuzzyclock, minimalist, old_fashioned, qotd, "
-            "random, terminal, today, weather"
+            "Choices: default, diags, fantasy, fuzzyclock, fuzzyclock_invert, minimalist, "
+            "old_fashioned, qotd, qotd_invert, random, terminal, today, weather"
         ),
     )
     parser.add_argument(

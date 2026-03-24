@@ -210,6 +210,14 @@ moon phase.
 
 ![QOTD theme](output/theme_qotd.png)
 
+#### qotd_invert
+
+Same layout as `qotd` — full-screen centered quote with compact weather banner — but with the
+color scheme inverted: white Playfair Display text on a black canvas. The high-contrast strokes
+of this transitional serif read especially well reversed out of a dark ground.
+
+![QOTD Invert theme](output/theme_qotd_invert.png)
+
 #### weather
 
 Full-screen weather station. Devotes the entire 800×480 canvas to a rich weather display
@@ -241,6 +249,15 @@ times per hour. The default systemd timer runs every 5 minutes; the image-hash c
 ensures no eInk refresh occurs when the phrase hasn't changed.
 
 ![Fuzzyclock theme](output/theme_fuzzyclock.png)
+
+#### fuzzyclock_invert
+
+Same layout as `fuzzyclock` — full-screen natural-language clock phrase with compact weather
+banner — but with the color scheme inverted: white DM Sans text on a black canvas. The geometric
+shapes of this screen-optimised sans-serif hold up well at large sizes when reversed out of a
+dark background.
+
+![Fuzzyclock Invert theme](output/theme_fuzzyclock_invert.png)
 
 #### diags
 
