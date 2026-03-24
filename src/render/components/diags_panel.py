@@ -1,7 +1,7 @@
 """Diagnostics (diags) component — full-canvas text readout of all data sources.
 
 Two-column layout:
-  Left:  WEATHER (all fields) + FORECAST strip
+  Left:  WEATHER (all fields) + HOST SYSTEM + FORECAST strip
   Right: CALENDAR (per-day event counts, Mon–Sun) + AIR QUALITY + BIRTHDAYS + STATUS
 """
 
@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta
 from PIL import ImageDraw
 
 from src._version import __version__
-from src.data.models import AirQualityData, DashboardData, StalenessLevel
+from src.data.models import AirQualityData, DashboardData, HostData, StalenessLevel
 from src.render.primitives import (
     deg_to_compass, draw_text_truncated, fmt_time,
     hline, text_height, text_width, vline,
@@ -79,7 +79,9 @@ def draw_diags(
     lx = rx + _L_X_PAD
     ly = content_y
     ly = _weather_section(draw, lx, ly, _L_W, data.weather, style)
-    ly += _SECTION_GAP
+    ly = _sep(draw, lx, ly, _L_W, fg)
+    ly = _host_section(draw, lx, ly, _L_W, data.host_data, style)
+    ly = _sep(draw, lx, ly, _L_W, fg)
     _forecast_section(draw, lx, ly, _L_W, data.weather, style)
 
     # Version number pinned to bottom of left column
@@ -193,6 +195,47 @@ def _weather_section(draw, x, y, w, weather, style) -> int:
     if weather.alerts:
         names = ", ".join(a.event for a in weather.alerts[:_MAX_ALERTS])
         y = _kv(draw, x, y, "Alerts", names, style, w)
+    return y
+
+
+def _fmt_uptime(seconds: float) -> str:
+    """Format uptime seconds as 'Xd Yh Zm'."""
+    total = int(seconds)
+    days, rem = divmod(total, 86400)
+    hours, rem = divmod(rem, 3600)
+    minutes = rem // 60
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    parts.append(f"{hours}h")
+    parts.append(f"{minutes}m")
+    return " ".join(parts)
+
+
+def _host_section(draw, x, y, w, host: HostData | None, style) -> int:
+    y = _label(draw, x, y, w, "HOST SYSTEM", style)
+    if host is None:
+        return _kv(draw, x, y, "", "unavailable", style, w)
+
+    if host.hostname is not None:
+        y = _kv(draw, x, y, "Hostname", host.hostname, style, w)
+    if host.uptime_seconds is not None:
+        y = _kv(draw, x, y, "Uptime", _fmt_uptime(host.uptime_seconds), style, w)
+    if host.load_1m is not None and host.load_5m is not None and host.load_15m is not None:
+        load_str = f"{host.load_1m:.2f} / {host.load_5m:.2f} / {host.load_15m:.2f}"
+        y = _kv(draw, x, y, "Load", load_str, style, w)
+    if host.ram_used_mb is not None and host.ram_total_mb is not None:
+        pct = int(host.ram_used_mb / host.ram_total_mb * 100)
+        ram_str = f"{host.ram_used_mb:.0f} / {host.ram_total_mb:.0f} MB  ({pct}%)"
+        y = _kv(draw, x, y, "RAM", ram_str, style, w)
+    if host.disk_used_gb is not None and host.disk_total_gb is not None:
+        pct = int(host.disk_used_gb / host.disk_total_gb * 100)
+        disk_str = f"{host.disk_used_gb:.1f} / {host.disk_total_gb:.1f} GB  ({pct}%)"
+        y = _kv(draw, x, y, "Disk", disk_str, style, w)
+    if host.cpu_temp_c is not None:
+        y = _kv(draw, x, y, "CPU Temp", f"{host.cpu_temp_c:.1f}\u00b0C", style, w)
+    if host.ip_address is not None:
+        y = _kv(draw, x, y, "IP", host.ip_address, style, w)
     return y
 
 
