@@ -240,7 +240,7 @@ def _host_section(draw, x, y, w, host: HostData | None, style) -> int:
 
 
 def _forecast_section(draw, x, y, w, weather, style) -> int:
-    y = _label(draw, x, y, w, "FORECAST", style)
+    y = _label(draw, x, y, w, "FORECAST", style, source="OpenWeatherMap")
     if weather is None or not weather.forecast:
         return _kv(draw, x, y, "", "unavailable", style, w)
 
