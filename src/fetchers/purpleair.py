@@ -13,6 +13,7 @@ API reference: https://community.purpleair.com/t/making-api-calls/180
 """
 
 import logging
+from typing import Any
 
 import requests
 
@@ -22,7 +23,20 @@ from src.data.models import AirQualityData
 logger = logging.getLogger(__name__)
 
 _BASE_URL = "https://api.purpleair.com/v1/sensors"
-_FIELDS = "pm2.5_60minute,pm1.0_atm,pm10.0_atm,temperature,humidity,pressure"
+_FIELD_NAMES = [
+    "pm2.5_60minute",
+    "pm2.5_60minute_a",
+    "pm2.5_60minute_b",
+    "pm2.5_atm",
+    "pm2.5_atm_a",
+    "pm2.5_atm_b",
+    "pm1.0_atm",
+    "pm10.0_atm",
+    "temperature",
+    "humidity",
+    "pressure",
+]
+_FIELDS = ",".join(_FIELD_NAMES)
 _TIMEOUT = 10
 
 # EPA PM2.5 AQI breakpoints: (C_lo, C_hi, I_lo, I_hi)
@@ -64,6 +78,44 @@ def _aqi_category(aqi: int) -> str:
     return "Hazardous"
 
 
+def _sensor_payload_to_dict(payload: dict[str, Any]) -> dict[str, Any]:
+    """Normalize PurpleAir response into a single key/value mapping.
+
+    PurpleAir can return either:
+    1) {"sensor": {...}} for single-sensor lookups
+    2) {"fields": [...], "data": [[...]]} for row/column payloads
+    """
+    sensor = payload.get("sensor")
+    if isinstance(sensor, dict):
+        return sensor
+
+    fields = payload.get("fields")
+    data = payload.get("data")
+    if not isinstance(fields, list):
+        return {}
+    if not isinstance(data, list) or not data:
+        return {}
+
+    # data can be a single row list or a list of rows; use the first row.
+    row = data[0] if isinstance(data[0], list) else data
+    if not isinstance(row, list):
+        return {}
+    return dict(zip(fields, row))
+
+
+def _first_float(sensor: dict[str, Any], keys: list[str]) -> float | None:
+    """Return the first parseable float found for any key in `keys`."""
+    for key in keys:
+        value = sensor.get(key)
+        if value is None:
+            continue
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def fetch_air_quality(cfg: PurpleAirConfig) -> AirQualityData:
     """Fetch current air quality from a PurpleAir sensor.
 
@@ -90,18 +142,32 @@ def fetch_air_quality(cfg: PurpleAirConfig) -> AirQualityData:
         raise RuntimeError(f"PurpleAir sensor {cfg.sensor_id} not found")
     resp.raise_for_status()
 
-    sensor = resp.json().get("sensor", {})
-    pm25_60min = float(sensor["pm2.5_60minute"])
-    pm1_raw = sensor.get("pm1.0_atm")
-    pm1 = float(pm1_raw) if pm1_raw is not None else None
-    pm10_raw = sensor.get("pm10.0_atm")
-    pm10 = float(pm10_raw) if pm10_raw is not None else None
-    temp_raw = sensor.get("temperature")
-    temperature = float(temp_raw) if temp_raw is not None else None
-    humidity_raw = sensor.get("humidity")
-    humidity = float(humidity_raw) if humidity_raw is not None else None
-    pressure_raw = sensor.get("pressure")
-    pressure = float(pressure_raw) if pressure_raw is not None else None
+    payload = resp.json()
+    sensor = _sensor_payload_to_dict(payload)
+
+    pm25_60min = _first_float(
+        sensor,
+        [
+            "pm2.5_60minute",
+            "pm2.5_60minute_a",
+            "pm2.5_60minute_b",
+            "pm2.5_atm",
+            "pm2.5_atm_a",
+            "pm2.5_atm_b",
+        ],
+    )
+    if pm25_60min is None:
+        available = sorted(sensor.keys())
+        raise RuntimeError(
+            "PurpleAir response did not include a usable PM2.5 reading. "
+            f"Available keys: {available}"
+        )
+
+    pm1 = _first_float(sensor, ["pm1.0_atm", "pm1.0_atm_a", "pm1.0_atm_b"])
+    pm10 = _first_float(sensor, ["pm10.0_atm", "pm10.0_atm_a", "pm10.0_atm_b"])
+    temperature = _first_float(sensor, ["temperature"])
+    humidity = _first_float(sensor, ["humidity"])
+    pressure = _first_float(sensor, ["pressure"])
     aqi, category = _pm25_to_aqi(pm25_60min)
 
     logger.info(

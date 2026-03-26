@@ -138,6 +138,51 @@ class TestFetchAirQuality:
         assert result.pm10 is None
         assert result.category == "Moderate"
 
+    def test_fetch_supports_fields_data_shape(self, cfg):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {
+            "fields": ["sensor_index", "pm2.5_60minute", "pm1.0_atm", "pm10.0_atm"],
+            "data": [[12345, 15.2, 7.1, 20.3]],
+        }
+        with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
+            mock_session = MagicMock()
+            mock_session_cls.return_value.__enter__.return_value = mock_session
+            mock_session.get.return_value = resp
+
+            result = fetch_air_quality(cfg)
+
+        assert result.pm25 == 15.2
+        assert result.pm1 == 7.1
+        assert result.pm10 == 20.3
+        assert result.category == "Moderate"
+
+    def test_fetch_falls_back_to_pm25_atm(self, cfg):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"sensor": {"pm2.5_atm": 22.8}}
+        with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
+            mock_session = MagicMock()
+            mock_session_cls.return_value.__enter__.return_value = mock_session
+            mock_session.get.return_value = resp
+
+            result = fetch_air_quality(cfg)
+
+        assert result.pm25 == 22.8
+        assert result.category == "Moderate"
+
+    def test_fetch_raises_when_pm25_missing(self, cfg):
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {"sensor": {"temperature": 70}}
+        with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
+            mock_session = MagicMock()
+            mock_session_cls.return_value.__enter__.return_value = mock_session
+            mock_session.get.return_value = resp
+
+            with pytest.raises(RuntimeError, match="usable PM2.5 reading"):
+                fetch_air_quality(cfg)
+
     def test_403_raises_runtime_error(self, cfg):
         resp = _make_response(status=403)
         with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
