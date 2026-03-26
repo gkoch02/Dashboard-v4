@@ -27,8 +27,8 @@ check: _check-venv
 	$(VENV) -m src.main --check-config
 
 PI_USER ?= pi
-PI_HOST ?= raspberrypi.local
-PI_DIR  ?= ~/home-dashboard
+PI_HOST ?= dashboard
+PI_DIR  ?= /home/$(PI_USER)/home-dashboard
 
 deploy:
 	rsync -avz --exclude='venv' --exclude='output/*.png' \
@@ -40,10 +40,16 @@ install:
 	@echo "Copying systemd units to Pi..."
 	scp deploy/dashboard.service deploy/dashboard.timer $(PI_USER)@$(PI_HOST):/tmp/
 	ssh $(PI_USER)@$(PI_HOST) " \
-		sudo cp /tmp/dashboard.service /etc/systemd/system/ && \
+		sudo systemctl stop dashboard.timer 2>/dev/null || true; \
+		REMOTE_DIR='$(PI_DIR)'; \
+		sed -e \"s|__INSTALL_DIR__|\$$REMOTE_DIR|g\" \
+		    -e \"s|__USER__|$(PI_USER)|g\" \
+		    /tmp/dashboard.service | sudo tee /etc/systemd/system/dashboard.service > /dev/null && \
 		sudo cp /tmp/dashboard.timer /etc/systemd/system/ && \
 		sudo systemctl daemon-reload && \
-		sudo systemctl enable --now dashboard.timer && \
+		sudo systemctl reset-failed dashboard.service dashboard.timer 2>/dev/null || true; \
+		sudo systemctl enable dashboard.timer && \
+		sudo systemctl restart dashboard.timer && \
 		echo 'Timer enabled. Status:' && \
 		sudo systemctl status dashboard.timer --no-pager"
 
