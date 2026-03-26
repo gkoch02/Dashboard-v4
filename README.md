@@ -404,7 +404,8 @@ Your existing config is fully compatible. These are opt-in additions:
 | **Circuit breaker tuning** | `cache.max_failures` and `cache.cooldown_minutes` |
 | **API quota warnings** | `google.daily_quota_warning: 500` logs a warning when calls exceed the threshold |
 | **`--check-config` flag** | Validate config and exit without running the dashboard |
-| **`--force-full-refresh` flag** | Bypass fetch intervals and circuit breaker for a one-off forced refresh |
+| **`--force-full-refresh` flag** | Bypass fetch intervals and force a full eInk refresh for a one-off run |
+| **`--ignore-breakers` flag** | Ignore OPEN circuit breakers for one run and attempt live fetches anyway |
 
 ---
 
@@ -744,6 +745,8 @@ After 3 consecutive failures (configurable), a source is "tripped" and goes stra
 cache on subsequent runs. After the cooldown period, a single probe request is sent. If it
 succeeds, normal fetching resumes.
 
+Use `--ignore-breakers` to bypass OPEN breaker state for one run (useful for manual recovery checks).
+
 ### Conditional display refresh
 
 The dashboard computes a SHA-256 hash of each rendered image and compares it to the
@@ -800,7 +803,8 @@ to `output/calendar_sync_state.json`.
 | `--config PATH` | Config file path (default: `config/config.yaml`) |
 | `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`, `fuzzyclock`, `diags`, `random` |
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
-| `--force-full-refresh` | Force full eInk refresh; bypasses fetch intervals and circuit breaker |
+| `--force-full-refresh` | Force full eInk refresh and bypass fetch intervals |
+| `--ignore-breakers` | Ignore OPEN circuit breakers for this run and attempt fetches anyway |
 | `--check-config` | Validate config and exit |
 | `--version` | Print version and exit |
 
