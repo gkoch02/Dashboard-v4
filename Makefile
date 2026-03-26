@@ -59,7 +59,8 @@ pi-install:
 		echo "WARNING: This does not appear to be a Raspberry Pi. Continuing anyway."; \
 	fi
 	sudo apt-get update -qq
-	sudo apt-get install -y python3-dev python3-venv libopenjp2-7 libtiff5 git swig liblgpio-dev
+	@TIFF_PKG="$$(apt-cache show libtiff5 >/dev/null 2>&1 && echo libtiff5 || echo libtiff6)"; \
+	sudo apt-get install -y python3-dev python3-venv libopenjp2-7 $$TIFF_PKG git swig liblgpio-dev
 	@echo ""
 	@echo "==> Enabling SPI interface..."
 	sudo raspi-config nonint do_spi 0
