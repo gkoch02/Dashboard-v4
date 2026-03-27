@@ -177,7 +177,7 @@ class TestFetchIntervals:
         with tempfile.TemporaryDirectory() as tmpdir:
             save_source("weather", _make_weather(), recent_ts, tmpdir)
             with patch("src.data_pipeline.fetch_events", return_value=[]), \
-                 patch("src.data_pipeline.fetch_weather") as mock_weather, \
+                 patch("src.data_pipeline.fetch_weather"), \
                  patch("src.data_pipeline.fetch_birthdays", return_value=[]):
                 data = fetch_live_data(cfg, tmpdir)
             assert data.source_staleness.get("weather") == StalenessLevel.FRESH
