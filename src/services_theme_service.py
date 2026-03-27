@@ -13,5 +13,5 @@ def resolve_theme_name(cfg, override_theme: str | None) -> str:
     return theme_name
 
 
-def resolve_theme(cfg, override_theme: str | None):
-    return load_theme(resolve_theme_name(cfg, override_theme))
+def resolve_theme(theme_name: str):
+    return load_theme(theme_name)
