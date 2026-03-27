@@ -89,7 +89,7 @@ first and come back here for customization.
 Switch the entire dashboard layout and visual style with one line in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | fuzzyclock | diags | random
+theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | diags | random
 ```
 
 Or override it from the command line without editing your config:
@@ -98,7 +98,7 @@ Or override it from the command line without editing your config:
 venv/bin/python -m src.main --dry-run --dummy --theme terminal
 ```
 
-The `--theme` flag takes precedence over `config.yaml`. All eleven values are accepted,
+The `--theme` flag takes precedence over `config.yaml`. All thirteen values are accepted,
 including `random` (which triggers the daily rotation logic as normal).
 
 Themes control component positions, proportions, fonts, and visual style -- not just
@@ -138,7 +138,7 @@ random_theme:
 ```
 
 - `include` is applied first; `exclude` is applied after.
-- If both are empty, all 9 standard themes are eligible (`diags` is always excluded — it is a
+- If both are empty, all 11 standard themes are eligible (`diags` is always excluded — it is a
   utility view, not a daily aesthetic).
 - If the pool is empty after filtering, the dashboard falls back to `"default"`.
 - Run `make check` to catch invalid theme names in either list.
@@ -424,7 +424,7 @@ Your existing config is fully compatible. These are opt-in additions:
 | Feature | How to enable |
 |---|---|
 | **Versioning** (`--version` flag) | Run `python -m src.main --version` or `make version` to print the current version |
-| **Themes** (9 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`, `fuzzyclock`) to `config.yaml`, or pass `--theme THEME` on the command line |
+| **Themes** (11 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `qotd_invert`, `weather`, `fuzzyclock`, `fuzzyclock_invert`) to `config.yaml`, or pass `--theme THEME` on the command line |
 | **Random daily theme rotation** | Set `theme: random`; optionally add a `random_theme:` block to include/exclude specific themes |
 | **Event filtering** | Add a `filters:` block — hide events by calendar name, keyword, or all-day status |
 | **Configurable cache TTLs** | Add a `cache:` block to tune per-source TTL and fetch intervals |
@@ -547,7 +547,8 @@ Or interactively: **Interface Options > SPI > Yes > reboot**.
 ### Step 2 -- System dependencies
 
 ```bash
-sudo apt-get install -y python3-dev python3-venv libopenjp2-7 libtiff5 git swig liblgpio-dev
+TIFF_PKG=$(apt-cache show libtiff5 2>/dev/null | grep -q "^Package" && echo libtiff5 || echo libtiff6)
+sudo apt-get install -y python3-dev python3-venv libopenjp2-7 $TIFF_PKG git swig liblgpio-dev
 ```
 
 ### Step 3 -- Python environment
@@ -606,7 +607,7 @@ schedule:
 If you prefer to develop on a separate machine and push to the Pi via rsync:
 
 ```bash
-make deploy                                          # rsync to pi@raspberrypi.local:~/home-dashboard
+make deploy                                          # rsync to pi@dashboard:~/home-dashboard
 make deploy PI_USER=myuser PI_HOST=mypi.local        # override target
 ```
 
@@ -697,15 +698,11 @@ schedule:
 
 timezone: "local"                  # IANA name or "local"
 title: "Home Dashboard"            # text shown in the header bar
-theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | weather | fuzzyclock | diags | random
+theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | diags | random
 
 random_theme:                      # only used when theme: random
   include: []                      # allowlist (empty = all themes eligible)
   exclude: []                      # denylist (e.g. ["fantasy", "qotd"])
-
-purpleair:
-  api_key: ""
-  sensor_id: 0
 
 cache:
   weather_ttl_minutes: 60          # data older than 4x TTL is discarded
@@ -854,7 +851,7 @@ venv/bin/python -m src.main --dry-run --theme diags --force-full-refresh --ignor
 | `--dry-run` | Save to PNG instead of writing to display |
 | `--dummy` | Use built-in dummy data (no API calls needed) |
 | `--config PATH` | Config file path (default: `config/config.yaml`) |
-| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `weather`, `fuzzyclock`, `diags`, `random` |
+| `--theme THEME` | Override the theme set in `config.yaml`. Choices: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `qotd_invert`, `weather`, `fuzzyclock`, `fuzzyclock_invert`, `diags`, `random` |
 | `--date YYYY-MM-DD` | Override today's date for the dry-run preview (requires `--dry-run`) |
 | `--force-full-refresh` | Force full eInk refresh and bypass fetch intervals |
 | `--ignore-breakers` | Ignore OPEN circuit breakers for this run and attempt fetches anyway |
@@ -912,6 +909,7 @@ Dashboard-v4/
 │   │   ├── calendar.py           # Google Calendar + incremental sync + birthdays
 │   │   ├── weather.py            # OpenWeatherMap (current + forecast + alerts + UV)
 │   │   ├── purpleair.py          # PurpleAir sensor → PM1 / PM2.5 / PM10 / AQI
+│   │   ├── host.py               # System metrics via /proc (uptime, load, RAM, disk, CPU temp, IP)
 │   │   ├── cache.py              # Per-source JSON cache with TTL staleness
 │   │   ├── circuit_breaker.py    # Per-source circuit breaker
 │   │   └── quota_tracker.py      # Daily API call counter
@@ -931,8 +929,10 @@ Dashboard-v4/
 │       │   ├── today.py
 │       │   ├── fantasy.py
 │       │   ├── qotd.py
+│       │   ├── qotd_invert.py
 │       │   ├── weather.py
 │       │   ├── fuzzyclock.py
+│       │   ├── fuzzyclock_invert.py
 │       │   └── diags.py
 │       └── components/           # One file per UI region
 │           ├── header.py
