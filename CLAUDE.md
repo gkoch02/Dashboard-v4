@@ -71,7 +71,7 @@ src/
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors, fmt_time,
     │                          #   events_for_day, deg_to_compass)
-    ├── themes/                # 12 themes: default, terminal, minimalist, old_fashioned, today,
+    ├── themes/                # themes: default, terminal, minimalist, old_fashioned, today,
     │                          #   fantasy, qotd, qotd_invert, weather, fuzzyclock, fuzzyclock_invert,
     │                          #   diags
     └── components/            # One file per UI region: header, week_view, weather_panel,

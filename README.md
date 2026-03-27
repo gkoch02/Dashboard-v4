@@ -98,7 +98,7 @@ Or override it from the command line without editing your config:
 venv/bin/python -m src.main --dry-run --dummy --theme terminal
 ```
 
-The `--theme` flag takes precedence over `config.yaml`. All thirteen values are accepted,
+The `--theme` flag takes precedence over `config.yaml`. All values are accepted,
 including `random` (which triggers the daily rotation logic as normal).
 
 Themes control component positions, proportions, fonts, and visual style -- not just
@@ -138,7 +138,7 @@ random_theme:
 ```
 
 - `include` is applied first; `exclude` is applied after.
-- If both are empty, all 11 standard themes are eligible (`diags` is always excluded — it is a
+- If both are empty, all standard themes are eligible (`diags` is always excluded — it is a
   utility view, not a daily aesthetic).
 - If the pool is empty after filtering, the dashboard falls back to `"default"`.
 - Run `make check` to catch invalid theme names in either list.
@@ -424,7 +424,7 @@ Your existing config is fully compatible. These are opt-in additions:
 | Feature | How to enable |
 |---|---|
 | **Versioning** (`--version` flag) | Run `python -m src.main --version` or `make version` to print the current version |
-| **Themes** (11 built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `qotd_invert`, `weather`, `fuzzyclock`, `fuzzyclock_invert`) to `config.yaml`, or pass `--theme THEME` on the command line |
+| **Themes** (built-in layouts) | Add `theme: terminal` (or `minimalist`, `old_fashioned`, `today`, `fantasy`, `qotd`, `qotd_invert`, `weather`, `fuzzyclock`, `fuzzyclock_invert`) to `config.yaml`, or pass `--theme THEME` on the command line |
 | **Random daily theme rotation** | Set `theme: random`; optionally add a `random_theme:` block to include/exclude specific themes |
 | **Event filtering** | Add a `filters:` block — hide events by calendar name, keyword, or all-day status |
 | **Configurable cache TTLs** | Add a `cache:` block to tune per-source TTL and fetch intervals |
