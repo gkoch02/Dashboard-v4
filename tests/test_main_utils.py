@@ -169,6 +169,37 @@ class TestIsMorningStartup:
         assert is_morning_startup(self._dt(6, 10), quiet_hours_end=7) is False
 
 
+class TestResolveThemeName:
+    def test_explicit_theme_returned_unchanged(self):
+        from src.services_theme_service import resolve_theme_name
+        from src.config import Config
+        cfg = Config()
+        cfg.theme = "minimalist"
+        assert resolve_theme_name(cfg, override_theme=None) == "minimalist"
+
+    def test_override_takes_precedence_over_config(self):
+        from src.services_theme_service import resolve_theme_name
+        from src.config import Config
+        cfg = Config()
+        cfg.theme = "default"
+        assert resolve_theme_name(cfg, override_theme="terminal") == "terminal"
+
+    def test_random_theme_delegates_to_pick(self, tmp_path):
+        """theme='random' calls pick_random_theme and returns a concrete name."""
+        from unittest.mock import patch
+        from src.services_theme_service import resolve_theme_name
+        from src.config import Config
+        cfg = Config()
+        cfg.theme = "random"
+        cfg.random_theme.include = []
+        cfg.random_theme.exclude = []
+        cfg.output_dir = str(tmp_path)
+        with patch("src.render.random_theme.pick_random_theme", return_value="minimalist") as mock_pick:
+            result = resolve_theme_name(cfg, override_theme=None)
+        assert result == "minimalist"
+        mock_pick.assert_called_once()
+
+
 class TestResolveTz:
     def test_local_returns_tzinfo(self):
         tz = resolve_tz("local")

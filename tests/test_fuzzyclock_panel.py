@@ -179,3 +179,10 @@ class TestDrawFuzzyclock:
         """'twenty five past eleven' is among the longest phrases — must not crash."""
         img, draw = _make_draw()
         draw_fuzzyclock(draw, _dt(11, 25))
+
+    def test_overflow_block_falls_back_to_minimum_sizes(self):
+        """A very short region triggers the block-overflow fallback (lines 137-144)."""
+        img, draw = _make_draw()
+        # height=60 means threshold = 60 - 2*24 = 12px, far smaller than any rendered block
+        region = ComponentRegion(0, 0, 800, 60)
+        draw_fuzzyclock(draw, _dt(7, 30), region=region)  # must not raise
