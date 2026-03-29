@@ -248,3 +248,26 @@ class TestLoadConfig:
         p.write_text(yaml.dump({"title": "My Custom Dashboard"}))
         cfg = load_config(str(p))
         assert cfg.title == "My Custom Dashboard"
+
+    def test_purpleair_section_parsed(self, tmp_path):
+        """load_config() parses the purpleair: section into PurpleAirConfig."""
+        p = tmp_path / "config.yaml"
+        p.write_text(yaml.dump({"purpleair": {"api_key": "abc123", "sensor_id": 99999}}))
+        cfg = load_config(str(p))
+        assert cfg.purpleair.api_key == "abc123"
+        assert cfg.purpleair.sensor_id == 99999
+
+    def test_random_theme_section_parsed(self, tmp_path):
+        """load_config() parses the random_theme: section into RandomThemeConfig."""
+        p = tmp_path / "config.yaml"
+        p.write_text(yaml.dump({
+            "theme": "random",
+            "random_theme": {
+                "include": ["minimalist", "today"],
+                "exclude": ["terminal"],
+            },
+        }))
+        cfg = load_config(str(p))
+        assert cfg.theme == "random"
+        assert cfg.random_theme.include == ["minimalist", "today"]
+        assert cfg.random_theme.exclude == ["terminal"]

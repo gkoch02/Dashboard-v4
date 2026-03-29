@@ -141,3 +141,65 @@ class TestFuzzyclockRender:
         theme = load_theme("fuzzyclock")
         result = render_dashboard(data, config, theme=theme)
         assert isinstance(result, Image.Image)
+
+
+# ---------------------------------------------------------------------------
+# fuzzyclock_invert theme
+# ---------------------------------------------------------------------------
+
+class TestFuzzyclockInvertTheme:
+    def test_name(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        assert fuzzyclock_invert_theme().name == "fuzzyclock_invert"
+
+    def test_in_available_themes(self):
+        assert "fuzzyclock_invert" in AVAILABLE_THEMES
+
+    def test_load_theme(self):
+        assert load_theme("fuzzyclock_invert").name == "fuzzyclock_invert"
+
+    def test_inverted_colors(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        t = fuzzyclock_invert_theme()
+        assert t.style.fg == 1   # white text on black
+        assert t.style.bg == 0
+
+    def test_fuzzyclock_region_visible(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        assert fuzzyclock_invert_theme().layout.fuzzyclock.visible is True
+
+    def test_weather_region_visible(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        assert fuzzyclock_invert_theme().layout.weather.visible is True
+
+    def test_standard_regions_hidden(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        layout = fuzzyclock_invert_theme().layout
+        assert layout.header.visible is False
+        assert layout.week_view.visible is False
+        assert layout.birthdays.visible is False
+        assert layout.info.visible is False
+
+    def test_draw_order(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        assert fuzzyclock_invert_theme().layout.draw_order == ["fuzzyclock", "fuzzyclock_weather"]
+
+    def test_weather_at_bottom(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        layout = fuzzyclock_invert_theme().layout
+        assert layout.weather.y + layout.weather.h == 480
+
+    def test_clock_and_weather_fill_canvas(self):
+        from src.render.themes.fuzzyclock_invert import fuzzyclock_invert_theme
+        layout = fuzzyclock_invert_theme().layout
+        assert layout.fuzzyclock.h + layout.weather.h == 480
+
+    def test_render_returns_image(self):
+        result = render_dashboard(_make_data(), DisplayConfig(), theme=load_theme("fuzzyclock_invert"))
+        assert isinstance(result, Image.Image)
+        assert result.size == (800, 480)
+
+    def test_render_no_weather(self):
+        data = _make_data()
+        data.weather = None
+        render_dashboard(data, DisplayConfig(), theme=load_theme("fuzzyclock_invert"))

@@ -138,6 +138,79 @@ class TestPrintValidationReport:
         assert "try this" in captured.err
 
 
+class TestIcalUrlValidation:
+    def test_ical_url_bad_scheme_is_error(self):
+        from src.config import GoogleConfig
+        cfg = Config(google=GoogleConfig(ical_url="webcal://calendar.google.com/abc"))
+        errors, _ = validate_config(cfg)
+        assert any(e.field == "google.ical_url" for e in errors)
+
+    def test_ical_url_https_is_valid(self):
+        from src.config import GoogleConfig
+        cfg = Config(google=GoogleConfig(ical_url="https://calendar.google.com/abc"))
+        errors, _ = validate_config(cfg)
+        assert not any(e.field == "google.ical_url" for e in errors)
+
+    def test_ical_url_with_existing_service_account_warns(self, tmp_path):
+        from src.config import GoogleConfig
+        sa = tmp_path / "sa.json"
+        sa.write_text("{}")
+        cfg = Config(google=GoogleConfig(
+            ical_url="https://calendar.google.com/abc",
+            service_account_path=str(sa),
+        ))
+        _, warnings = validate_config(cfg)
+        assert any(w.field == "google.ical_url" for w in warnings)
+
+
+class TestRandomThemeValidation:
+    def test_invalid_theme_in_include_warns(self):
+        cfg = Config()
+        cfg.theme = "random"
+        cfg.random_theme.include = ["nonexistent_xyz"]
+        _, warnings = validate_config(cfg)
+        assert any(w.field == "random_theme.include" for w in warnings)
+
+    def test_invalid_theme_in_exclude_warns(self):
+        cfg = Config()
+        cfg.theme = "random"
+        cfg.random_theme.exclude = ["nonexistent_xyz"]
+        _, warnings = validate_config(cfg)
+        assert any(w.field == "random_theme.exclude" for w in warnings)
+
+    def test_empty_pool_warns(self):
+        from src.render.theme import AVAILABLE_THEMES
+        cfg = Config()
+        cfg.theme = "random"
+        # Exclude every real theme to empty the pool
+        cfg.random_theme.exclude = list(AVAILABLE_THEMES - {"random"})
+        _, warnings = validate_config(cfg)
+        assert any(w.field == "random_theme" for w in warnings)
+
+
+class TestPurpleAirValidation:
+    def test_api_key_without_sensor_id_warns(self):
+        from src.config import PurpleAirConfig
+        cfg = Config()
+        cfg.purpleair = PurpleAirConfig(api_key="mykey", sensor_id=0)
+        _, warnings = validate_config(cfg)
+        assert any(w.field == "purpleair.sensor_id" for w in warnings)
+
+    def test_sensor_id_without_api_key_warns(self):
+        from src.config import PurpleAirConfig
+        cfg = Config()
+        cfg.purpleair = PurpleAirConfig(api_key="", sensor_id=99999)
+        _, warnings = validate_config(cfg)
+        assert any(w.field == "purpleair.api_key" for w in warnings)
+
+    def test_both_configured_no_purpleair_warning(self):
+        from src.config import PurpleAirConfig
+        cfg = Config()
+        cfg.purpleair = PurpleAirConfig(api_key="mykey", sensor_id=99999)
+        _, warnings = validate_config(cfg)
+        assert not any(w.field.startswith("purpleair") for w in warnings)
+
+
 class TestLoadConfigWarnsOnMissingFile:
     def test_missing_file_logs_warning(self, tmp_path, caplog):
         import logging

@@ -306,6 +306,95 @@ class TestAirQualityCacheRoundtrip:
 # Random pool exclusion
 # ---------------------------------------------------------------------------
 
+class TestDiagsPanelDefaults:
+    """Call draw_diags directly to cover default region/style/today branches."""
+
+    def _make_draw(self):
+        from PIL import ImageDraw
+        img = Image.new("1", (800, 480), 1)
+        return img, ImageDraw.Draw(img)
+
+    def test_default_region_and_style(self):
+        """region=None and style=None trigger the default assignment branches."""
+        from src.render.components.diags_panel import draw_diags
+        _, draw = self._make_draw()
+        draw_diags(draw, _make_data(), region=None, style=None)
+
+    def test_today_derived_from_datetime_fetched_at(self):
+        """today=None with a datetime fetched_at uses now.date()."""
+        from src.render.components.diags_panel import draw_diags
+        from src.render.theme import ComponentRegion, ThemeStyle
+        _, draw = self._make_draw()
+        data = _make_data()
+        draw_diags(draw, data, today=None, region=ComponentRegion(0, 0, 800, 480), style=ThemeStyle())
+
+    def test_today_derived_from_date_fetched_at(self):
+        """today=None with a plain date fetched_at falls back to date.today() (line 60)."""
+        from src.render.components.diags_panel import draw_diags
+        from datetime import date
+        _, draw = self._make_draw()
+        data = _make_data()
+        data.fetched_at = date(2026, 3, 24)   # plain date, not datetime
+        draw_diags(draw, data, today=None)
+
+    def test_header_non_datetime_fetched_at(self):
+        """fetched_at as a plain date renders header via str(now) branch (line 126)."""
+        from datetime import date
+        data = _make_data()
+        data.fetched_at = date(2026, 3, 24)
+        render_dashboard(data, DisplayConfig(), theme=diags_theme())
+
+
+class TestFmtUptime:
+    def test_with_days(self):
+        from src.render.components.diags_panel import _fmt_uptime
+        result = _fmt_uptime(90061)  # 1 day, 1 hour, 1 minute
+        assert "1d" in result
+        assert "1h" in result
+        assert "1m" in result
+
+    def test_without_days(self):
+        from src.render.components.diags_panel import _fmt_uptime
+        result = _fmt_uptime(3661)   # 1 hour, 1 minute, no days
+        assert "d" not in result
+        assert "1h" in result
+        assert "1m" in result
+
+    def test_zero_seconds(self):
+        from src.render.components.diags_panel import _fmt_uptime
+        result = _fmt_uptime(0)
+        assert "0h" in result
+        assert "0m" in result
+
+
+class TestHostSectionFullData:
+    """Render diags with a fully populated HostData to cover _host_section lines."""
+
+    def test_render_with_all_host_fields(self):
+        from src.data.models import HostData
+        data = _make_data()
+        data.host_data = HostData(
+            hostname="pi-dashboard",
+            uptime_seconds=90061.0,   # 1d 1h 1m — exercises the days branch
+            load_1m=0.42,
+            load_5m=0.38,
+            load_15m=0.31,
+            ram_total_mb=4096.0,
+            ram_used_mb=1024.0,
+            disk_total_gb=32.0,
+            disk_used_gb=12.0,
+            cpu_temp_c=42.7,
+            ip_address="192.168.1.100",
+        )
+        render_dashboard(data, DisplayConfig(), theme=diags_theme())
+
+    def test_render_with_none_host_data(self):
+        """host_data=None renders the 'unavailable' row."""
+        data = _make_data()
+        data.host_data = None
+        render_dashboard(data, DisplayConfig(), theme=diags_theme())
+
+
 class TestDiagsNotInRandomPool:
     def test_diags_excluded_from_pool_by_default(self):
         from src.render.random_theme import eligible_themes  # noqa: PLC0415

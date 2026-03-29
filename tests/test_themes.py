@@ -493,6 +493,81 @@ class TestRenderDashboardWithThemes:
 # Config wiring
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# qotd_invert theme
+# ---------------------------------------------------------------------------
+
+class TestQotdInvertTheme:
+    def _cfg(self):
+        return DisplayConfig()
+
+    def test_name(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        assert qotd_invert_theme().name == "qotd_invert"
+
+    def test_in_available_themes(self):
+        assert "qotd_invert" in AVAILABLE_THEMES
+
+    def test_load_theme(self):
+        assert load_theme("qotd_invert").name == "qotd_invert"
+
+    def test_inverted_colors(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        t = qotd_invert_theme()
+        assert t.style.fg == 1   # white text on black
+        assert t.style.bg == 0
+
+    def test_qotd_region_visible(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        assert qotd_invert_theme().layout.qotd.visible is True
+
+    def test_weather_region_visible(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        assert qotd_invert_theme().layout.weather.visible is True
+
+    def test_standard_regions_hidden(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        layout = qotd_invert_theme().layout
+        assert layout.header.visible is False
+        assert layout.week_view.visible is False
+        assert layout.birthdays.visible is False
+        assert layout.info.visible is False
+
+    def test_draw_order(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        assert qotd_invert_theme().layout.draw_order == ["qotd", "qotd_weather"]
+
+    def test_canvas_fills_fully(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        layout = qotd_invert_theme().layout
+        assert layout.qotd.h + layout.weather.h == 480
+
+    def test_weather_at_bottom(self):
+        from src.render.themes.qotd_invert import qotd_invert_theme
+        layout = qotd_invert_theme().layout
+        assert layout.weather.y + layout.weather.h == 480
+
+    def test_render_returns_image(self):
+        result = render_dashboard(_make_data(), self._cfg(), theme=load_theme("qotd_invert"))
+        assert isinstance(result, Image.Image)
+        assert result.size == (800, 480)
+
+    def test_render_no_weather(self):
+        data = _make_data()
+        data.weather = None
+        render_dashboard(data, self._cfg(), theme=load_theme("qotd_invert"))
+
+    def test_uses_playfair_fonts(self):
+        from PIL import ImageFont
+        t = load_theme("qotd_invert")
+        for fn in (t.style.font_regular, t.style.font_bold):
+            assert isinstance(fn(24), ImageFont.FreeTypeFont)
+
+
+# ---------------------------------------------------------------------------
+# Config wiring
+# ---------------------------------------------------------------------------
+
 class TestThemeConfigField:
     def test_config_default_theme_is_default(self):
         from src.config import Config
