@@ -297,28 +297,6 @@ dark background.
 
 ![Fuzzyclock Invert theme](output/theme_fuzzyclock_invert.png)
 
-#### diags
-
-Diagnostic text readout. Devotes the entire 800×480 canvas to a structured two-column
-key-value display of every available data field. No icons, no decorations — only labeled
-sections rendered in a clean monospace font (Share Tech Mono for data rows, DM Sans Bold for
-section labels).
-
-**Left column:** WEATHER (condition, temperature, hi/lo, feels-like, humidity, wind speed and
-direction, barometric pressure, UV index, sunrise/sunset, active alerts) followed by a
-FORECAST strip (up to six days of date, hi/lo, description, and precipitation probability).
-
-**Right column (top-to-bottom):** CALENDAR (per-day event counts for the current Mon–Sun week),
-AIR QUALITY (AQI, PM2.5, PM1.0, PM10, plus PurpleAir ambient temperature/humidity/pressure
-when configured), BIRTHDAYS (name, date, and age for upcoming birthdays), and STATUS (data
-freshness level per source: Fresh / Aging / Stale / Expired).
-
-Each section label includes a right-aligned source attribution (`OpenWeatherMap`, `Google
-Calendar`, `PurpleAir`). `diags` is intentionally excluded from the `random` rotation pool —
-it is a utility/sanity-check view, not a daily aesthetic.
-
-![Diags theme](output/theme_diags.png)
-
 #### air_quality
 
 Full-screen environmental health dashboard. Devotes the entire 800×480 canvas to PurpleAir
@@ -346,6 +324,28 @@ letterforms (a, G, R, t) give the data-dashboard layout personality while remain
 at all eInk display sizes.
 
 ![Air Quality theme](output/theme_air_quality.png)
+
+#### diags
+
+Diagnostic text readout. Devotes the entire 800×480 canvas to a structured two-column
+key-value display of every available data field. No icons, no decorations — only labeled
+sections rendered in a clean monospace font (Share Tech Mono for data rows, DM Sans Bold for
+section labels).
+
+**Left column:** WEATHER (condition, temperature, hi/lo, feels-like, humidity, wind speed and
+direction, barometric pressure, UV index, sunrise/sunset, active alerts) followed by a
+FORECAST strip (up to six days of date, hi/lo, description, and precipitation probability).
+
+**Right column (top-to-bottom):** CALENDAR (per-day event counts for the current Mon–Sun week),
+AIR QUALITY (AQI, PM2.5, PM1.0, PM10, plus PurpleAir ambient temperature/humidity/pressure
+when configured), BIRTHDAYS (name, date, and age for upcoming birthdays), and STATUS (data
+freshness level per source: Fresh / Aging / Stale / Expired).
+
+Each section label includes a right-aligned source attribution (`OpenWeatherMap`, `Google
+Calendar`, `PurpleAir`). `diags` is intentionally excluded from the `random` rotation pool —
+it is a utility/sanity-check view, not a daily aesthetic.
+
+![Diags theme](output/theme_diags.png)
 
 ### Creating your own theme
 
