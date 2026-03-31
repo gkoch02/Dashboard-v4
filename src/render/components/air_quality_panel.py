@@ -127,7 +127,7 @@ def _draw_aqi_hero(
     """Left: large AQI number + category label.  Right: 6-zone scale bar."""
     fg = style.fg
 
-    split = int(W * 0.40)   # left column width
+    split = int(W * 0.33)   # left column width
     pad = 20
 
     # ── Left: AQI number, category, section label ────────────────────────
@@ -169,10 +169,10 @@ def _draw_aqi_hero(
 
     # ── Right: 6-zone scale bar ──────────────────────────────────────────
     rx0 = x0 + split
-    rx_pad = 24
+    rx_pad = 12
     bar_x = rx0 + rx_pad
     bar_w = W - split - rx_pad * 2
-    bar_h = 34
+    bar_h = 40
     # Centre bar vertically in top ~60% of zone
     bar_y = y0 + int(H * 0.28)
 
