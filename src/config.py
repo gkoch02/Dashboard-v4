@@ -406,8 +406,8 @@ def validate_config(
             hint=f"Available themes: {', '.join(sorted(AVAILABLE_THEMES))}",
         ))
 
-    if cfg.theme == "random":
-        real_themes = AVAILABLE_THEMES - {"random"}
+    if cfg.theme in ("random", "random_daily", "random_hourly"):
+        real_themes = AVAILABLE_THEMES - {"random", "random_daily", "random_hourly"}
         for label, lst in [
             ("random_theme.include", cfg.random_theme.include),
             ("random_theme.exclude", cfg.random_theme.exclude),
