@@ -141,8 +141,8 @@ random_theme:
 ```
 
 - `include` is applied first; `exclude` is applied after.
-- If both are empty, all standard themes are eligible (`diags` and `air_quality` are always
-  excluded — they are specialised views, not general-purpose daily aesthetics).
+- If both are empty, all standard themes are eligible (`diags` is always
+  excluded — it is a utility/diagnostic view, not a general-purpose daily aesthetic).
 - If the pool is empty after filtering, the dashboard falls back to `"default"`.
 - Run `make check` to catch invalid theme names in either list.
 
@@ -318,8 +318,7 @@ sensor data, organised into four horizontal zones:
 
 Requires a configured PurpleAir sensor (`purpleair.api_key` + `purpleair.sensor_id` in
 `config.yaml`). Weather data is optional — the strip degrades gracefully if unavailable.
-`air_quality` is excluded from the `random` rotation pool; activate it with `theme: air_quality`
-directly. Font: Space Grotesk — a proportional sans derived from Space Mono whose quirky
+Font: Space Grotesk — a proportional sans derived from Space Mono whose quirky
 letterforms (a, G, R, t) give the data-dashboard layout personality while remaining legible
 at all eInk display sizes.
 
