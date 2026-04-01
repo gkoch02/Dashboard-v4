@@ -1,11 +1,16 @@
-"""Tests for src/render/random_theme.py — daily random theme rotation."""
+"""Tests for src/render/random_theme.py — daily and hourly random theme rotation."""
 
 import json
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import patch
 
 
-from src.render.random_theme import _EXCLUDED_FROM_POOL, eligible_themes, pick_random_theme
+from src.render.random_theme import (
+    _EXCLUDED_FROM_POOL,
+    eligible_themes,
+    pick_random_theme,
+    pick_random_theme_hourly,
+)
 from src.render.theme import AVAILABLE_THEMES
 
 # Themes that can actually appear in a pool (everything except hard-excluded themes)
@@ -147,4 +152,121 @@ class TestPickRandomTheme:
         today = date(2026, 3, 22)
         with patch("src.render.random_theme.Path.write_text", side_effect=OSError("disk full")):
             chosen = pick_random_theme([], [], str(tmp_path), today=today)
+        assert chosen in _REAL_THEMES
+
+
+# ---------------------------------------------------------------------------
+# _EXCLUDED_FROM_POOL — pseudo-themes must never appear
+# ---------------------------------------------------------------------------
+
+class TestExcludedFromPool:
+    def test_random_variants_excluded(self):
+        assert "random" in _EXCLUDED_FROM_POOL
+        assert "random_daily" in _EXCLUDED_FROM_POOL
+        assert "random_hourly" in _EXCLUDED_FROM_POOL
+
+    def test_diags_excluded(self):
+        assert "diags" in _EXCLUDED_FROM_POOL
+
+    def test_pool_never_contains_pseudo_themes(self):
+        pool = set(eligible_themes([], []))
+        assert pool.isdisjoint(_EXCLUDED_FROM_POOL)
+
+
+# ---------------------------------------------------------------------------
+# pick_random_theme_hourly — persistence logic
+# ---------------------------------------------------------------------------
+
+class TestPickRandomThemeHourly:
+    def test_new_hour_picks_and_persists(self, tmp_path):
+        now = datetime(2026, 3, 22, 14, 30)
+        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        assert chosen in _REAL_THEMES
+
+        state = json.loads((tmp_path / "random_theme_hourly_state.json").read_text())
+        assert state["hour"] == "2026-03-22T14"
+        assert state["theme"] == chosen
+
+    def test_same_hour_reuses_persisted_theme(self, tmp_path):
+        state_path = tmp_path / "random_theme_hourly_state.json"
+        state_path.write_text(json.dumps({"hour": "2026-03-22T14", "theme": "terminal"}))
+
+        now = datetime(2026, 3, 22, 14, 55)
+        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        assert chosen == "terminal"
+
+    def test_new_hour_overwrites_old_state(self, tmp_path):
+        state_path = tmp_path / "random_theme_hourly_state.json"
+        state_path.write_text(json.dumps({"hour": "2026-03-22T13", "theme": "terminal"}))
+
+        now = datetime(2026, 3, 22, 14, 0)
+        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        assert chosen in _REAL_THEMES
+
+        state = json.loads(state_path.read_text())
+        assert state["hour"] == "2026-03-22T14"
+
+    def test_new_day_triggers_new_pick(self, tmp_path):
+        state_path = tmp_path / "random_theme_hourly_state.json"
+        state_path.write_text(json.dumps({"hour": "2026-03-22T23", "theme": "terminal"}))
+
+        now = datetime(2026, 3, 23, 0, 0)
+        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        state = json.loads(state_path.read_text())
+        assert state["hour"] == "2026-03-23T00"
+
+    def test_persisted_invalid_theme_ignored(self, tmp_path):
+        state_path = tmp_path / "random_theme_hourly_state.json"
+        state_path.write_text(json.dumps({"hour": "2026-03-22T14", "theme": "nonexistent"}))
+
+        now = datetime(2026, 3, 22, 14, 5)
+        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        assert chosen in _REAL_THEMES
+
+    def test_corrupt_state_file_handled(self, tmp_path):
+        state_path = tmp_path / "random_theme_hourly_state.json"
+        state_path.write_text("not valid json{{{")
+
+        now = datetime(2026, 3, 22, 14, 0)
+        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        assert chosen in _REAL_THEMES
+
+    def test_empty_pool_falls_back_to_default(self, tmp_path):
+        now = datetime(2026, 3, 22, 14, 0)
+        chosen = pick_random_theme_hourly([], list(_REAL_THEMES), str(tmp_path), now=now)
+        assert chosen == "default"
+
+    def test_daily_and_hourly_state_files_are_independent(self, tmp_path):
+        """Daily and hourly picks use separate state files."""
+        today = date(2026, 3, 22)
+        now = datetime(2026, 3, 22, 14, 0)
+        pick_random_theme([], [], str(tmp_path), today=today)
+        pick_random_theme_hourly([], [], str(tmp_path), now=now)
+
+        assert (tmp_path / "random_theme_state.json").exists()
+        assert (tmp_path / "random_theme_hourly_state.json").exists()
+
+    def test_include_restricts_choice(self, tmp_path):
+        now = datetime(2026, 3, 22, 14, 0)
+        for _ in range(20):
+            state_path = tmp_path / "random_theme_hourly_state.json"
+            if state_path.exists():
+                state_path.unlink()
+            chosen = pick_random_theme_hourly(["terminal"], [], str(tmp_path), now=now)
+            assert chosen == "terminal"
+
+    def test_exclude_never_chosen(self, tmp_path):
+        now = datetime(2026, 3, 22, 14, 0)
+        exclude = ["fantasy", "qotd", "today"]
+        for _ in range(30):
+            state_path = tmp_path / "random_theme_hourly_state.json"
+            if state_path.exists():
+                state_path.unlink()
+            chosen = pick_random_theme_hourly([], exclude, str(tmp_path), now=now)
+            assert chosen not in exclude
+
+    def test_unwritable_state_does_not_crash(self, tmp_path):
+        now = datetime(2026, 3, 22, 14, 0)
+        with patch("src.render.random_theme.Path.write_text", side_effect=OSError("disk full")):
+            chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
         assert chosen in _REAL_THEMES

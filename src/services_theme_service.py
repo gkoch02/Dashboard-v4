@@ -37,11 +37,19 @@ def resolve_theme_name(
     else:
         theme_name = cfg.theme
 
-    if theme_name == "random":
+    if theme_name in ("random", "random_daily"):
         from src.render.random_theme import pick_random_theme
         theme_name = pick_random_theme(
             include=cfg.random_theme.include,
             exclude=cfg.random_theme.exclude,
             output_dir=cfg.output_dir,
+        )
+    elif theme_name == "random_hourly":
+        from src.render.random_theme import pick_random_theme_hourly
+        theme_name = pick_random_theme_hourly(
+            include=cfg.random_theme.include,
+            exclude=cfg.random_theme.exclude,
+            output_dir=cfg.output_dir,
+            now=now,
         )
     return theme_name

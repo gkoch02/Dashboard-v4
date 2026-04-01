@@ -100,13 +100,17 @@ logging:
 
 # UI theme — controls overall layout, proportions, and visual style.
 # Options: default | terminal | minimalist | old_fashioned | today | fantasy |
-#          qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | diags | random
-# Set to "random" to rotate themes daily (see random_theme below).
+#          qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | diags |
+#          random_daily | random_hourly
+# "random_daily"  — rotate once per day (first refresh after midnight).
+# "random_hourly" — rotate once per hour (first refresh after the hour turns).
+# "random" is an alias for "random_daily".
+# Both random modes respect the include/exclude lists in random_theme below.
 # theme: default
 
-# Daily random theme rotation — only relevant when theme is "random".
-# The theme is chosen once per day at the first refresh after midnight and
-# persisted in output/random_theme_state.json for the rest of the day.
+# Random theme rotation — only relevant when theme is "random_daily" or "random_hourly".
+# Daily state persists in output/random_theme_state.json.
+# Hourly state persists in output/random_theme_hourly_state.json.
 # random_theme:
 #   include: []  # Allowlist: only rotate among these themes (empty = all themes)
 #   exclude: []  # Denylist: never use these themes

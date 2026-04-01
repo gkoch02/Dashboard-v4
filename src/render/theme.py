@@ -188,7 +188,7 @@ AVAILABLE_THEMES: frozenset[str] = frozenset(
     {
         "default", "terminal", "minimalist", "old_fashioned", "today",
         "fantasy", "qotd", "qotd_invert", "weather", "fuzzyclock", "fuzzyclock_invert",
-        "diags", "air_quality", "random",
+        "diags", "air_quality", "random", "random_daily", "random_hourly",
     }
 )
 
