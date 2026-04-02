@@ -84,11 +84,20 @@ config/
 ├── config.example.yaml        # Template (copy to config.yaml)
 └── quotes.json                # Bundled daily quotes
 
+docs/
+├── setup.md                   # Google Calendar, ICS feed, birthdays, Pi hardware setup
+├── themes.md                  # All themes, random rotation, schedule, custom themes
+├── configuration.md           # Full config.yaml reference
+├── development.md             # Makefile, CLI, project structure, dependencies
+└── upgrading-from-v3.md       # Migration guide from v3
+
 tests/                         # test files, extensive mocking
 fonts/                         # Bundled TTF fonts
-deploy/                        # Systemd service + timer + configure.sh
+deploy/                        # Systemd service + timer + configure.sh + logrotate
 output/                        # Generated PNGs + cache files (git-ignored except latest.png)
 credentials/                   # Google service account JSON (git-ignored)
+requirements.txt               # Core Python dependencies
+requirements-pi.txt            # Raspberry Pi-specific deps (gpiozero, lgpio, Waveshare EPD)
 ```
 
 ## Architecture Patterns
@@ -215,6 +224,7 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - `air_quality` theme uses `draw_air_quality_full()` in `air_quality_panel.py`, which receives the full `DashboardData` object (same pattern as `diags_panel`); the component dispatches via the `air_quality_full` region on `ThemeLayout`
 - `retry_fetch()` in `data_pipeline.py` retries only likely transient failures and does not retry likely permanent config/data errors (`RuntimeError`, `ValueError`, `TypeError`, `KeyError`)
 - `gpiozero` pin factory is set to `lgpio` for Pi hardware runtime (required for modern Pi OS)
+- Supported Waveshare display models: `epd7in5` (640×384), `epd7in5_V2` (800×480, default), `epd7in5_V3` (800×480), `epd7in5b_V2` (800×480), `epd7in5_HD` (880×528), `epd9in7` (1200×825), `epd13in3k` (1600×1200). Model is set via `display.model` in config; canvas renders at 800×480 and scales to the target resolution via LANCZOS.
 - **ICS feed**: when `google.ical_url` is set, `fetch_events()` dispatches to `_fetch_from_ical()` instead of the Google API path — `service_account_path` is ignored for event fetching; the Google API path (including incremental sync) is completely bypassed
 - ICS feeds have no sync token mechanism — the full feed is always re-downloaded and re-parsed on every calendar fetch; at the default 2-hour `events_fetch_interval` this is negligible
 - `_fetch_from_ical()` uses `requests.get(..., timeout=30)` and the `icalendar` library; HTTP errors or parse errors are caught, logged as warnings, and return `[]` (graceful degradation)
