@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 from src.render.fonts import (
     cinzel_bold, playfair_regular, playfair_medium, weather_icon,
 )
-from src.render.icons import OWM_ICON_MAP, FALLBACK_ICON
 from src.render.moon import (
     moon_illumination, moon_phase_age, moon_phase_glyph, moon_phase_name,
 )
@@ -200,36 +199,21 @@ def _draw_weather_strip(
     draw: "ImageDraw.ImageDraw", weather: "WeatherData | None",
     cx: int, y: int, style: "ThemeStyle",
 ) -> int:
-    """Draw weather icon, temp, description, and hi/lo."""
+    """Draw weather temp, description, and hi/lo (no icon glyph)."""
     if weather is None:
         return y
-
-    # Weather icon glyph
-    icon_font = weather_icon(30)
-    icon_glyph = OWM_ICON_MAP.get(weather.current_icon, FALLBACK_ICON)
 
     text_font = playfair_regular(19)
     temp = f"{weather.current_temp:.0f}°"
     desc = weather.current_description.title()
     hilo = f"H:{weather.high:.0f}° L:{weather.low:.0f}°"
-    info = f"  {temp}  {desc}   {hilo}"
+    info = f"{temp}  {desc}   {hilo}"
 
-    icon_bbox = draw.textbbox((0, 0), icon_glyph, font=icon_font)
-    icon_w = icon_bbox[2] - icon_bbox[0]
     info_w = text_width(draw, info, text_font)
-    total_w = icon_w + info_w
+    start_x = cx - info_w // 2
 
-    start_x = cx - total_w // 2
-
-    # Draw icon
-    icon_h = icon_bbox[3] - icon_bbox[1]
     th = text_height(text_font)
-    icon_y = y + (th - icon_h) // 2 - icon_bbox[1]
-    draw.text((start_x - icon_bbox[0], icon_y), icon_glyph,
-              font=icon_font, fill=style.fg)
-
-    # Draw text
-    draw.text((start_x + icon_w, y), info, font=text_font, fill=style.fg)
+    draw.text((start_x, y), info, font=text_font, fill=style.fg)
     return y + th + 10
 
 
