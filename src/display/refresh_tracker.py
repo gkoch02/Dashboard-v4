@@ -8,8 +8,9 @@ STATE_FILE = Path("/tmp/dashboard_refresh_state.json")
 
 
 class RefreshTracker:
-    def __init__(self, partial_count: int = 0, last_full: datetime | None = None,
-                 max_partials: int = 6):
+    def __init__(
+        self, partial_count: int = 0, last_full: datetime | None = None, max_partials: int = 6
+    ):
         self.partial_count = partial_count
         self.last_full = last_full
         self.max_partials = max_partials
@@ -22,8 +23,7 @@ class RefreshTracker:
                 return cls(
                     partial_count=data.get("partial_count", 0),
                     last_full=(
-                        datetime.fromisoformat(data["last_full"])
-                        if data.get("last_full") else None
+                        datetime.fromisoformat(data["last_full"]) if data.get("last_full") else None
                     ),
                     max_partials=max_partials,
                 )

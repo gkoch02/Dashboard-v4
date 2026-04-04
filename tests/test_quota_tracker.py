@@ -74,6 +74,7 @@ class TestQuotaTracker:
     def test_save_exception_does_not_propagate(self, tmp_state_dir):
         """_save() silently swallows write errors (lines 78-79)."""
         from unittest.mock import patch
+
         qt = QuotaTracker(state_dir=tmp_state_dir)
         with patch("src.fetchers.quota_tracker.json.dump", side_effect=OSError("disk full")):
             qt.record_call("events")  # triggers _save(), should not raise

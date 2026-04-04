@@ -11,24 +11,24 @@ import pytest
 
 from src.config import BirthdayConfig, GoogleConfig
 from src.fetchers.calendar import (
-    _parse_birthday_entry,
-    _parse_contact_birthday,
-    _days_until,
-    fetch_birthdays,
-    _parse_event,
     _apply_delta,
+    _days_until,
     _fetch_full,
     _fetch_incremental,
     _filter_to_window,
-    _ser_sync_event,
     _load_sync_state,
+    _parse_birthday_entry,
+    _parse_contact_birthday,
+    _parse_event,
     _save_sync_state,
+    _ser_sync_event,
+    fetch_birthdays,
 )
-
 
 # ---------------------------------------------------------------------------
 # _parse_birthday_entry
 # ---------------------------------------------------------------------------
+
 
 class TestParseBirthdayEntry:
     def setup_method(self):
@@ -73,6 +73,7 @@ class TestParseBirthdayEntry:
 # _days_until
 # ---------------------------------------------------------------------------
 
+
 class TestDaysUntil:
     def test_future(self):
         today = date(2024, 3, 15)
@@ -92,6 +93,7 @@ class TestDaysUntil:
 # ---------------------------------------------------------------------------
 # _parse_event
 # ---------------------------------------------------------------------------
+
 
 class TestParseEvent:
     def test_timed_event(self):
@@ -158,6 +160,7 @@ class TestParseEvent:
 # fetch_birthdays from file
 # ---------------------------------------------------------------------------
 
+
 class TestFetchBirthdaysFromFile:
     def test_loads_valid_file(self):
         today = date.today()
@@ -202,6 +205,7 @@ class TestFetchBirthdaysFromFile:
 # ---------------------------------------------------------------------------
 # _parse_contact_birthday
 # ---------------------------------------------------------------------------
+
 
 class TestParseContactBirthday:
     def setup_method(self):
@@ -273,9 +277,12 @@ class TestParseContactBirthday:
 # fetch_birthdays from contacts (mocked People API)
 # ---------------------------------------------------------------------------
 
+
 class TestFetchBirthdaysFromContacts:
     def _make_connections_response(
-        self, connections: list, next_page_token: str | None = None,
+        self,
+        connections: list,
+        next_page_token: str | None = None,
     ) -> dict:
         result: dict = {"connections": connections}
         if next_page_token:
@@ -299,9 +306,11 @@ class TestFetchBirthdaysFromContacts:
         mock_service = MagicMock()
         mock_build.return_value = mock_service
         mock_service.people().connections().list().execute.return_value = (
-            self._make_connections_response([
-                self._person("Alice", upcoming.month, upcoming.day, year=1990),
-            ])
+            self._make_connections_response(
+                [
+                    self._person("Alice", upcoming.month, upcoming.day, year=1990),
+                ]
+            )
         )
 
         cfg_google = GoogleConfig(contacts_email="user@example.com")
@@ -319,10 +328,12 @@ class TestFetchBirthdaysFromContacts:
         mock_service = MagicMock()
         mock_build.return_value = mock_service
         mock_service.people().connections().list().execute.return_value = (
-            self._make_connections_response([
-                {"names": [{"displayName": "No Birthday"}], "birthdays": []},
-                self._person("Alice", upcoming.month, upcoming.day),
-            ])
+            self._make_connections_response(
+                [
+                    {"names": [{"displayName": "No Birthday"}], "birthdays": []},
+                    self._person("Alice", upcoming.month, upcoming.day),
+                ]
+            )
         )
 
         cfg_google = GoogleConfig(contacts_email="user@example.com")
@@ -376,6 +387,7 @@ class TestFetchBirthdaysFromContacts:
 # _parse_contact_birthday — empty display name
 # ---------------------------------------------------------------------------
 
+
 class TestParseContactBirthdayEmptyName:
     def test_empty_display_name_returns_none(self):
         today = date(2024, 3, 15)
@@ -390,6 +402,7 @@ class TestParseContactBirthdayEmptyName:
 # ---------------------------------------------------------------------------
 # _fetch_full — pagination and exception
 # ---------------------------------------------------------------------------
+
 
 class TestFetchFull:
     def _make_service(self, pages: list[dict]):
@@ -467,20 +480,31 @@ class TestFetchFull:
 # _fetch_incremental — multi-page and generic exception
 # ---------------------------------------------------------------------------
 
+
 class TestFetchIncremental:
     def test_multi_page_aggregates_delta(self):
         page1 = {
             "summary": "Cal",
-            "items": [{"id": "e1", "summary": "Evt1",
-                       "start": {"dateTime": "2024-03-15T09:00:00+00:00"},
-                       "end": {"dateTime": "2024-03-15T10:00:00+00:00"}}],
+            "items": [
+                {
+                    "id": "e1",
+                    "summary": "Evt1",
+                    "start": {"dateTime": "2024-03-15T09:00:00+00:00"},
+                    "end": {"dateTime": "2024-03-15T10:00:00+00:00"},
+                }
+            ],
             "nextPageToken": "page2",
         }
         page2 = {
             "summary": "Cal",
-            "items": [{"id": "e2", "summary": "Evt2",
-                       "start": {"dateTime": "2024-03-16T09:00:00+00:00"},
-                       "end": {"dateTime": "2024-03-16T10:00:00+00:00"}}],
+            "items": [
+                {
+                    "id": "e2",
+                    "summary": "Evt2",
+                    "start": {"dateTime": "2024-03-16T09:00:00+00:00"},
+                    "end": {"dateTime": "2024-03-16T10:00:00+00:00"},
+                }
+            ],
             "nextSyncToken": "newtok",
         }
         svc = MagicMock()
@@ -502,6 +526,7 @@ class TestFetchIncremental:
 # _filter_to_window — tz and all-day edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestFilterToWindowExtended:
     def test_uses_tz_to_localise_window(self):
         """When tz is given, window bounds are converted to local time."""
@@ -512,6 +537,7 @@ class TestFilterToWindowExtended:
 
         # Event at Wed 09:00 EST (naive) — within window
         from src.data.models import CalendarEvent
+
         event = CalendarEvent(
             summary="In Window",
             start=datetime(2024, 3, 13, 9, 0),
@@ -528,6 +554,7 @@ class TestFilterToWindowExtended:
         week_end = week_start + timedelta(days=7)
 
         from src.data.models import CalendarEvent
+
         # tz-aware event inside window
         event = CalendarEvent(
             summary="Aware Event",
@@ -545,6 +572,7 @@ class TestFilterToWindowExtended:
         week_end = week_start + timedelta(days=7)
 
         from src.data.models import CalendarEvent
+
         # All-day event ending on the window start date is outside
         event = CalendarEvent(
             summary="Ends at window start",
@@ -563,6 +591,7 @@ class TestFilterToWindowExtended:
         week_end = week_start + timedelta(days=7)
 
         from src.data.models import CalendarEvent
+
         event = CalendarEvent(
             summary="Conference",
             start=datetime(2024, 3, 13, 0, 0),
@@ -579,6 +608,7 @@ class TestFilterToWindowExtended:
 # ---------------------------------------------------------------------------
 # _apply_delta — delta item without an ID
 # ---------------------------------------------------------------------------
+
 
 class TestApplyDeltaNoId:
     def test_delta_item_without_id_is_skipped(self):
@@ -598,9 +628,11 @@ class TestApplyDeltaNoId:
 # _save_sync_state — exception path
 # ---------------------------------------------------------------------------
 
+
 class TestSaveSyncStateException:
     def test_write_failure_logs_warning(self, caplog):
         import logging
+
         with tempfile.TemporaryDirectory() as tmpdir:
             with caplog.at_level(logging.WARNING, logger="src.fetchers.calendar"):
                 with patch("tempfile.mkstemp", side_effect=OSError("disk full")):
@@ -620,6 +652,7 @@ class TestLoadSyncStateCorrupt:
 class TestFetchIncrementalNon410HttpError:
     def test_non_410_http_error_triggers_reset(self):
         from googleapiclient.errors import HttpError
+
         svc = MagicMock()
         mock_resp = MagicMock()
         mock_resp.status = 500  # server error, not 410
@@ -630,13 +663,14 @@ class TestFetchIncrementalNon410HttpError:
 
 
 class TestFetchEventsIncrementalReset:
-    @patch("src.fetchers.calendar._build_service")
+    @patch("src.fetchers.calendar_google._build_service")
     def test_expired_sync_token_falls_back_to_full_sync(self, mock_build):
         """When incremental sync returns needs_reset=True, full sync is performed."""
         today = date.today()
         monday = today - timedelta(days=today.weekday())
         event_start = datetime.combine(
-            monday + timedelta(days=1), datetime.min.time().replace(hour=9),
+            monday + timedelta(days=1),
+            datetime.min.time().replace(hour=9),
         )
 
         event_end_iso = (event_start + timedelta(hours=1)).replace(tzinfo=timezone.utc).isoformat()
@@ -659,6 +693,7 @@ class TestFetchEventsIncrementalReset:
 
         # Incremental response — 410 Gone triggers reset
         from googleapiclient.errors import HttpError
+
         gone_resp = MagicMock()
         gone_resp.status = 410
         http_error = HttpError(gone_resp, b"Gone")
@@ -666,6 +701,7 @@ class TestFetchEventsIncrementalReset:
         mock_service.events().list().execute.side_effect = [full_resp, http_error, full_resp]
 
         from src.fetchers.calendar import fetch_events
+
         cfg = GoogleConfig()
         with tempfile.TemporaryDirectory() as tmpdir:
             # First call — full sync, stores token
@@ -681,19 +717,25 @@ class TestFetchEventsIncrementalReset:
 # _birthdays_from_file — corrupt file
 # ---------------------------------------------------------------------------
 
+
 class TestTodayWithTimezone:
     def test_today_with_tz_returns_local_date(self):
-        from src.fetchers.calendar import _today
         import zoneinfo
+
+        from src.fetchers.calendar import _today
+
         tz = zoneinfo.ZoneInfo("America/New_York")
         result = _today(tz)
         from datetime import datetime
+
         expected = datetime.now(tz).date()
         assert result == expected
 
     def test_today_without_tz_returns_system_date(self):
-        from src.fetchers.calendar import _today
         from datetime import date
+
+        from src.fetchers.calendar import _today
+
         result = _today(None)
         assert result == date.today()
 
@@ -713,6 +755,7 @@ class TestBirthdaysFromFileCorrupt:
 # ---------------------------------------------------------------------------
 # _birthdays_from_calendar — mocked service
 # ---------------------------------------------------------------------------
+
 
 class TestBirthdaysFromCalendar:
     @patch("src.fetchers.calendar._build_service")
@@ -802,13 +845,15 @@ class TestBirthdaysFromCalendar:
 # fetch_events — full integration with mocked service
 # ---------------------------------------------------------------------------
 
+
 class TestFetchEventsIntegration:
-    @patch("src.fetchers.calendar._build_service")
+    @patch("src.fetchers.calendar_google._build_service")
     def test_fetch_events_returns_events(self, mock_build):
         today = date.today()
         monday = today - timedelta(days=today.weekday())
         event_start = datetime.combine(
-            monday + timedelta(days=1), datetime.min.time().replace(hour=9),
+            monday + timedelta(days=1),
+            datetime.min.time().replace(hour=9),
         )
 
         event_end_iso = (event_start + timedelta(hours=1)).replace(tzinfo=timezone.utc).isoformat()
@@ -828,6 +873,7 @@ class TestFetchEventsIntegration:
         }
 
         from src.fetchers.calendar import fetch_events
+
         cfg = GoogleConfig()
         with tempfile.TemporaryDirectory() as tmpdir:
             events = fetch_events(cfg, cache_dir=tmpdir)
@@ -835,12 +881,13 @@ class TestFetchEventsIntegration:
         assert len(events) == 1
         assert events[0].summary == "Team Meeting"
 
-    @patch("src.fetchers.calendar._build_service")
+    @patch("src.fetchers.calendar_google._build_service")
     def test_fetch_events_uses_incremental_sync_on_second_call(self, mock_build):
         today = date.today()
         monday = today - timedelta(days=today.weekday())
         event_start = datetime.combine(
-            monday + timedelta(days=1), datetime.min.time().replace(hour=9),
+            monday + timedelta(days=1),
+            datetime.min.time().replace(hour=9),
         )
 
         event_end_iso = (event_start + timedelta(hours=1)).replace(tzinfo=timezone.utc).isoformat()
@@ -867,6 +914,7 @@ class TestFetchEventsIntegration:
         mock_service.events().list().execute.side_effect = [full_resp, incremental_resp]
 
         from src.fetchers.calendar import fetch_events
+
         cfg = GoogleConfig()
         with tempfile.TemporaryDirectory() as tmpdir:
             # First call — full sync
@@ -882,6 +930,7 @@ class TestFetchEventsIntegration:
 # ---------------------------------------------------------------------------
 # ICS feed fetching
 # ---------------------------------------------------------------------------
+
 
 def _make_ics(events_text: str, cal_name: str = "Test Calendar") -> str:
     """Wrap one or more VEVENT blocks in a minimal VCALENDAR envelope."""
@@ -902,11 +951,7 @@ def _timed_vevent(
     location: str = "",
 ) -> str:
     lines = (
-        "BEGIN:VEVENT\r\n"
-        f"UID:{uid}\r\n"
-        f"SUMMARY:{summary}\r\n"
-        f"DTSTART:{dtstart}\r\n"
-        f"DTEND:{dtend}\r\n"
+        f"BEGIN:VEVENT\r\nUID:{uid}\r\nSUMMARY:{summary}\r\nDTSTART:{dtstart}\r\nDTEND:{dtend}\r\n"
     )
     if location:
         lines += f"LOCATION:{location}\r\n"
@@ -936,20 +981,19 @@ class TestICalFetcher:
 
     def _this_monday(self, tz=None):
         from src.fetchers.calendar import _today
+
         today = _today(tz)
         return today - timedelta(days=today.weekday())
 
     # --- Basic timed event ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_timed_event_parsed(self, mock_get):
         tz = zoneinfo.ZoneInfo("America/New_York")
         monday = self._this_monday(tz)
         tuesday = monday + timedelta(days=1)
 
-        dtstart = datetime.combine(tuesday, datetime.min.time().replace(hour=9)).replace(
-            tzinfo=tz
-        )
+        dtstart = datetime.combine(tuesday, datetime.min.time().replace(hour=9)).replace(tzinfo=tz)
         dtend = dtstart + timedelta(hours=1)
         # ICS format: YYYYMMDDTHHMMSSZ (UTC) or with TZID
         dtstart_str = dtstart.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -963,6 +1007,7 @@ class TestICalFetcher:
 
         cfg = GoogleConfig(ical_url="https://example.com/cal.ics")
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg, tz=tz)
 
         assert len(events) == 1
@@ -974,7 +1019,7 @@ class TestICalFetcher:
 
     # --- All-day event ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_allday_event_parsed(self, mock_get):
         tz = zoneinfo.ZoneInfo("America/New_York")
         monday = self._this_monday(tz)
@@ -992,6 +1037,7 @@ class TestICalFetcher:
 
         cfg = GoogleConfig(ical_url="https://example.com/cal.ics")
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg, tz=tz)
 
         assert len(events) == 1
@@ -1000,7 +1046,7 @@ class TestICalFetcher:
 
     # --- Event outside the week window is filtered out ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_event_outside_window_excluded(self, mock_get):
         tz = zoneinfo.ZoneInfo("America/New_York")
         monday = self._this_monday(tz)
@@ -1018,13 +1064,14 @@ class TestICalFetcher:
 
         cfg = GoogleConfig(ical_url="https://example.com/cal.ics")
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg, tz=tz)
 
         assert events == []
 
     # --- X-WR-CALNAME used as calendar_name ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_cal_name_from_xwrcalname(self, mock_get):
         tz = zoneinfo.ZoneInfo("America/New_York")
         monday = self._this_monday(tz)
@@ -1045,6 +1092,7 @@ class TestICalFetcher:
 
         cfg = GoogleConfig(ical_url="https://example.com/cal.ics")
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg, tz=tz)
 
         assert len(events) == 1
@@ -1052,15 +1100,13 @@ class TestICalFetcher:
 
     # --- Hostname fallback when no X-WR-CALNAME ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_cal_name_hostname_fallback(self, mock_get):
         tz = zoneinfo.ZoneInfo("America/New_York")
         monday = self._this_monday(tz)
         friday = monday + timedelta(days=4)
 
-        dtstart = datetime.combine(friday, datetime.min.time().replace(hour=11)).replace(
-            tzinfo=tz
-        )
+        dtstart = datetime.combine(friday, datetime.min.time().replace(hour=11)).replace(tzinfo=tz)
         dtend = dtstart + timedelta(hours=1)
         dtstart_str = dtstart.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         dtend_str = dtend.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -1075,6 +1121,7 @@ class TestICalFetcher:
 
         cfg = GoogleConfig(ical_url="https://calendar.google.com/calendar/ical/abc/basic.ics")
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg, tz=tz)
 
         assert len(events) == 1
@@ -1082,7 +1129,7 @@ class TestICalFetcher:
 
     # --- Multiple URLs merged and sorted ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_multiple_urls_merged(self, mock_get):
         tz = zoneinfo.ZoneInfo("America/New_York")
         monday = self._this_monday(tz)
@@ -1116,6 +1163,7 @@ class TestICalFetcher:
             additional_ical_urls=["https://example.com/cal2.ics"],
         )
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg, tz=tz)
 
         assert len(events) == 2
@@ -1125,19 +1173,20 @@ class TestICalFetcher:
 
     # --- HTTP error returns empty list, logs warning ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_http_error_returns_empty(self, mock_get):
         mock_get.side_effect = Exception("connection refused")
 
         cfg = GoogleConfig(ical_url="https://example.com/cal.ics")
         from src.fetchers.calendar import fetch_events
+
         events = fetch_events(cfg)
 
         assert events == []
 
     # --- Malformed ICS returns empty list ---
 
-    @patch("src.fetchers.calendar.requests.get")
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_malformed_ics_returns_empty(self, mock_get):
         mock_resp = MagicMock()
         mock_resp.text = "this is not valid ics data %%% garbage"
@@ -1146,6 +1195,7 @@ class TestICalFetcher:
 
         cfg = GoogleConfig(ical_url="https://example.com/cal.ics")
         from src.fetchers.calendar import fetch_events
+
         # Should not raise — logs warning and returns []
         events = fetch_events(cfg)
 
@@ -1153,7 +1203,7 @@ class TestICalFetcher:
 
     # --- Google path still works when ical_url is empty (regression) ---
 
-    @patch("src.fetchers.calendar._build_service")
+    @patch("src.fetchers.calendar_google._build_service")
     def test_google_path_used_when_no_ical_url(self, mock_build):
         today = date.today()
         monday = today - timedelta(days=today.weekday())
@@ -1181,6 +1231,7 @@ class TestICalFetcher:
         # ical_url is empty — must use Google API path
         cfg = GoogleConfig(ical_url="")
         from src.fetchers.calendar import fetch_events
+
         with tempfile.TemporaryDirectory() as tmpdir:
             events = fetch_events(cfg, cache_dir=tmpdir)
 

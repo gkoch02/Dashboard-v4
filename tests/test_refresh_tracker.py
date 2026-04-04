@@ -67,7 +67,9 @@ class TestSaveLoad:
 
     def test_save_load_round_trip(self, _patch_state_file):
         original = RefreshTracker(
-            partial_count=3, last_full=datetime(2024, 6, 1, 8, 30), max_partials=7,
+            partial_count=3,
+            last_full=datetime(2024, 6, 1, 8, 30),
+            max_partials=7,
         )
         original.save()
 

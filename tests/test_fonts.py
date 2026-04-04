@@ -41,6 +41,7 @@ class TestGetVariableFont:
 
     def test_get_variable_font_calls_set_variation_by_axes(self):
         from unittest.mock import MagicMock, patch
+
         from src.render.fonts import _get_variable_font
 
         mock_font = MagicMock()
@@ -55,6 +56,7 @@ class TestGetVariableFont:
 
     def test_get_variable_font_is_cached(self):
         from unittest.mock import MagicMock, patch
+
         from src.render.fonts import _get_variable_font
 
         mock_font = MagicMock()

@@ -164,7 +164,7 @@ refresh is skipped entirely. This extends display lifespan and saves power.
 
 After the first full sync, subsequent fetches download only changed events using Google
 Calendar sync tokens. This dramatically reduces API quota usage. Sync state is persisted
-to `output/calendar_sync_state.json`.
+to `state/calendar_sync_state.json`.
 
 This applies to the **service account path only**. When using `ical_url`, the full feed
 is re-fetched on every calendar refresh (no sync tokens — ICS has no equivalent mechanism).

@@ -7,17 +7,23 @@ from PIL import Image
 
 from src.config import DisplayConfig
 from src.data.models import (
-    AirQualityData, Birthday, CalendarEvent, DashboardData, DayForecast,
-    StalenessLevel, WeatherAlert, WeatherData,
+    AirQualityData,
+    Birthday,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    StalenessLevel,
+    WeatherAlert,
+    WeatherData,
 )
 from src.render.canvas import render_dashboard
 from src.render.theme import AVAILABLE_THEMES, load_theme
 from src.render.themes.diags import diags_theme
 
-
 # ---------------------------------------------------------------------------
 # Shared fixture
 # ---------------------------------------------------------------------------
+
 
 def _make_data(today: date | None = None) -> DashboardData:
     today = today or date(2026, 3, 24)  # Monday
@@ -32,10 +38,12 @@ def _make_data(today: date | None = None) -> DashboardData:
             ),
             CalendarEvent(
                 summary="Design review",
-                start=datetime.combine(today + timedelta(days=2),
-                                       datetime.min.time().replace(hour=14)),
-                end=datetime.combine(today + timedelta(days=2),
-                                     datetime.min.time().replace(hour=15)),
+                start=datetime.combine(
+                    today + timedelta(days=2), datetime.min.time().replace(hour=14)
+                ),
+                end=datetime.combine(
+                    today + timedelta(days=2), datetime.min.time().replace(hour=15)
+                ),
             ),
         ],
         weather=WeatherData(
@@ -90,6 +98,7 @@ def _make_data(today: date | None = None) -> DashboardData:
 # Theme structure
 # ---------------------------------------------------------------------------
 
+
 class TestDiagsTheme:
     def test_name(self):
         assert diags_theme().name == "diags"
@@ -140,6 +149,7 @@ class TestDiagsTheme:
 # Render smoke tests
 # ---------------------------------------------------------------------------
 
+
 class TestDiagsRender:
     def test_render_returns_image(self):
         result = render_dashboard(_make_data(), DisplayConfig(), theme=diags_theme())
@@ -147,7 +157,9 @@ class TestDiagsRender:
 
     def test_render_correct_size(self):
         result = render_dashboard(
-            _make_data(), DisplayConfig(width=800, height=480), theme=diags_theme(),
+            _make_data(),
+            DisplayConfig(width=800, height=480),
+            theme=diags_theme(),
         )
         assert result.size == (800, 480)
 
@@ -246,6 +258,7 @@ class TestDiagsRender:
 # AirQualityData model — new fields
 # ---------------------------------------------------------------------------
 
+
 class TestAirQualityDataNewFields:
     def test_new_fields_default_to_none(self):
         aq = AirQualityData(aqi=42, category="Good", pm25=9.8)
@@ -255,8 +268,12 @@ class TestAirQualityDataNewFields:
 
     def test_new_fields_can_be_set(self):
         aq = AirQualityData(
-            aqi=42, category="Good", pm25=9.8,
-            temperature=68.4, humidity=52.0, pressure=1014.3,
+            aqi=42,
+            category="Good",
+            pm25=9.8,
+            temperature=68.4,
+            humidity=52.0,
+            pressure=1014.3,
         )
         assert aq.temperature == 68.4
         assert aq.humidity == 52.0
@@ -267,12 +284,21 @@ class TestAirQualityDataNewFields:
 # Cache roundtrip for new AirQualityData fields
 # ---------------------------------------------------------------------------
 
+
 class TestAirQualityCacheRoundtrip:
     def test_roundtrip_with_new_fields(self):
-        from src.fetchers.cache import _ser_air_quality, _deser_air_quality  # noqa: PLC0415
+        from src.fetchers.cache import _deser_air_quality, _ser_air_quality  # noqa: PLC0415
+
         original = AirQualityData(
-            aqi=42, category="Good", pm25=9.8, pm10=14.2, pm1=6.1,
-            sensor_id=99999, temperature=68.4, humidity=52.0, pressure=1014.3,
+            aqi=42,
+            category="Good",
+            pm25=9.8,
+            pm10=14.2,
+            pm1=6.1,
+            sensor_id=99999,
+            temperature=68.4,
+            humidity=52.0,
+            pressure=1014.3,
         )
         serialized = _ser_air_quality(original)
         restored = _deser_air_quality(serialized)
@@ -283,6 +309,7 @@ class TestAirQualityCacheRoundtrip:
     def test_roundtrip_without_new_fields(self):
         """Old cache entries (missing new keys) deserialize without error."""
         from src.fetchers.cache import _deser_air_quality  # noqa: PLC0415
+
         old_dict = {"aqi": 30, "category": "Good", "pm25": 8.0}
         restored = _deser_air_quality(old_dict)
         assert restored.temperature is None
@@ -291,9 +318,14 @@ class TestAirQualityCacheRoundtrip:
 
     def test_serialized_dict_includes_new_keys(self):
         from src.fetchers.cache import _ser_air_quality  # noqa: PLC0415
+
         aq = AirQualityData(
-            aqi=42, category="Good", pm25=9.8,
-            temperature=70.0, humidity=55.0, pressure=1010.0,
+            aqi=42,
+            category="Good",
+            pm25=9.8,
+            temperature=70.0,
+            humidity=55.0,
+            pressure=1010.0,
         )
         d = _ser_air_quality(aq)
         assert "temperature" in d
@@ -306,17 +338,20 @@ class TestAirQualityCacheRoundtrip:
 # Random pool exclusion
 # ---------------------------------------------------------------------------
 
+
 class TestDiagsPanelDefaults:
     """Call draw_diags directly to cover default region/style/today branches."""
 
     def _make_draw(self):
         from PIL import ImageDraw
+
         img = Image.new("1", (800, 480), 1)
         return img, ImageDraw.Draw(img)
 
     def test_default_region_and_style(self):
         """region=None and style=None trigger the default assignment branches."""
         from src.render.components.diags_panel import draw_diags
+
         _, draw = self._make_draw()
         draw_diags(draw, _make_data(), region=None, style=None)
 
@@ -324,22 +359,28 @@ class TestDiagsPanelDefaults:
         """today=None with a datetime fetched_at uses now.date()."""
         from src.render.components.diags_panel import draw_diags
         from src.render.theme import ComponentRegion, ThemeStyle
+
         _, draw = self._make_draw()
         data = _make_data()
-        draw_diags(draw, data, today=None, region=ComponentRegion(0, 0, 800, 480), style=ThemeStyle())
+        draw_diags(
+            draw, data, today=None, region=ComponentRegion(0, 0, 800, 480), style=ThemeStyle()
+        )
 
     def test_today_derived_from_date_fetched_at(self):
         """today=None with a plain date fetched_at falls back to date.today() (line 60)."""
-        from src.render.components.diags_panel import draw_diags
         from datetime import date
+
+        from src.render.components.diags_panel import draw_diags
+
         _, draw = self._make_draw()
         data = _make_data()
-        data.fetched_at = date(2026, 3, 24)   # plain date, not datetime
+        data.fetched_at = date(2026, 3, 24)  # plain date, not datetime
         draw_diags(draw, data, today=None)
 
     def test_header_non_datetime_fetched_at(self):
         """fetched_at as a plain date renders header via str(now) branch (line 126)."""
         from datetime import date
+
         data = _make_data()
         data.fetched_at = date(2026, 3, 24)
         render_dashboard(data, DisplayConfig(), theme=diags_theme())
@@ -348,6 +389,7 @@ class TestDiagsPanelDefaults:
 class TestFmtUptime:
     def test_with_days(self):
         from src.render.components.diags_panel import _fmt_uptime
+
         result = _fmt_uptime(90061)  # 1 day, 1 hour, 1 minute
         assert "1d" in result
         assert "1h" in result
@@ -355,13 +397,15 @@ class TestFmtUptime:
 
     def test_without_days(self):
         from src.render.components.diags_panel import _fmt_uptime
-        result = _fmt_uptime(3661)   # 1 hour, 1 minute, no days
+
+        result = _fmt_uptime(3661)  # 1 hour, 1 minute, no days
         assert "d" not in result
         assert "1h" in result
         assert "1m" in result
 
     def test_zero_seconds(self):
         from src.render.components.diags_panel import _fmt_uptime
+
         result = _fmt_uptime(0)
         assert "0h" in result
         assert "0m" in result
@@ -372,10 +416,11 @@ class TestHostSectionFullData:
 
     def test_render_with_all_host_fields(self):
         from src.data.models import HostData
+
         data = _make_data()
         data.host_data = HostData(
             hostname="pi-dashboard",
-            uptime_seconds=90061.0,   # 1d 1h 1m — exercises the days branch
+            uptime_seconds=90061.0,  # 1d 1h 1m — exercises the days branch
             load_1m=0.42,
             load_5m=0.38,
             load_15m=0.31,
@@ -398,11 +443,13 @@ class TestHostSectionFullData:
 class TestDiagsNotInRandomPool:
     def test_diags_excluded_from_pool_by_default(self):
         from src.render.random_theme import eligible_themes  # noqa: PLC0415
+
         pool = eligible_themes(include=[], exclude=[])
         assert "diags" not in pool
 
     def test_diags_excluded_even_with_include(self):
         """diags is a hard exclusion (like 'random') — include list cannot override it."""
         from src.render.random_theme import eligible_themes  # noqa: PLC0415
+
         pool = eligible_themes(include=["diags"], exclude=[])
         assert "diags" not in pool

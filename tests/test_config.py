@@ -4,8 +4,13 @@ import pytest
 import yaml
 
 from src.config import (
-    BirthdayConfig, Config, DisplayConfig, GoogleConfig, ScheduleConfig,
-    WeatherConfig, load_config,
+    BirthdayConfig,
+    Config,
+    DisplayConfig,
+    GoogleConfig,
+    ScheduleConfig,
+    WeatherConfig,
+    load_config,
 )
 
 
@@ -70,31 +75,35 @@ class TestLoadConfig:
 
     def test_full_config(self, tmp_path):
         p = tmp_path / "config.yaml"
-        p.write_text(yaml.dump({
-            "google": {
-                "service_account_path": "creds/sa.json",
-                "calendar_id": "my@cal.com",
-                "additional_calendars": ["work@cal.com"],
-            },
-            "weather": {
-                "api_key": "abc123",
-                "latitude": 37.7749,
-                "longitude": -122.4194,
-                "units": "metric",
-            },
-            "birthdays": {
-                "source": "calendar",
-                "calendar_keyword": "🎂",
-                "lookahead_days": 14,
-            },
-            "display": {
-                "enable_partial_refresh": True,
-                "max_partials_before_full": 3,
-                "show_weather": False,
-            },
-            "output": {"dry_run_dir": "/tmp/dash"},
-            "logging": {"level": "DEBUG"},
-        }))
+        p.write_text(
+            yaml.dump(
+                {
+                    "google": {
+                        "service_account_path": "creds/sa.json",
+                        "calendar_id": "my@cal.com",
+                        "additional_calendars": ["work@cal.com"],
+                    },
+                    "weather": {
+                        "api_key": "abc123",
+                        "latitude": 37.7749,
+                        "longitude": -122.4194,
+                        "units": "metric",
+                    },
+                    "birthdays": {
+                        "source": "calendar",
+                        "calendar_keyword": "🎂",
+                        "lookahead_days": 14,
+                    },
+                    "display": {
+                        "enable_partial_refresh": True,
+                        "max_partials_before_full": 3,
+                        "show_weather": False,
+                    },
+                    "output": {"dry_run_dir": "/tmp/dash"},
+                    "logging": {"level": "DEBUG"},
+                }
+            )
+        )
         cfg = load_config(str(p))
 
         assert cfg.google.service_account_path == "creds/sa.json"
@@ -135,13 +144,17 @@ class TestLoadConfig:
 
     def test_display_boolean_flags(self, tmp_path):
         p = tmp_path / "config.yaml"
-        p.write_text(yaml.dump({
-            "display": {
-                "show_weather": False,
-                "show_birthdays": False,
-                "show_info_panel": False,
-            }
-        }))
+        p.write_text(
+            yaml.dump(
+                {
+                    "display": {
+                        "show_weather": False,
+                        "show_birthdays": False,
+                        "show_info_panel": False,
+                    }
+                }
+            )
+        )
         cfg = load_config(str(p))
         assert cfg.display.show_weather is False
         assert cfg.display.show_birthdays is False
@@ -209,18 +222,22 @@ class TestLoadConfig:
     def test_cache_section_loaded(self, tmp_path):
         """load_config() parses the cache: section into CacheConfig (lines 169-170)."""
         p = tmp_path / "config.yaml"
-        p.write_text(yaml.dump({
-            "cache": {
-                "weather_ttl_minutes": 30,
-                "events_ttl_minutes": 90,
-                "birthdays_ttl_minutes": 720,
-                "weather_fetch_interval": 15,
-                "events_fetch_interval": 60,
-                "birthdays_fetch_interval": 480,
-                "max_failures": 5,
-                "cooldown_minutes": 15,
-            }
-        }))
+        p.write_text(
+            yaml.dump(
+                {
+                    "cache": {
+                        "weather_ttl_minutes": 30,
+                        "events_ttl_minutes": 90,
+                        "birthdays_ttl_minutes": 720,
+                        "weather_fetch_interval": 15,
+                        "events_fetch_interval": 60,
+                        "birthdays_fetch_interval": 480,
+                        "max_failures": 5,
+                        "cooldown_minutes": 15,
+                    }
+                }
+            )
+        )
         cfg = load_config(str(p))
         assert cfg.cache.weather_ttl_minutes == 30
         assert cfg.cache.events_ttl_minutes == 90
@@ -230,13 +247,17 @@ class TestLoadConfig:
     def test_filters_section_loaded(self, tmp_path):
         """load_config() parses the filters: section into FilterConfig (lines 182-183)."""
         p = tmp_path / "config.yaml"
-        p.write_text(yaml.dump({
-            "filters": {
-                "exclude_calendars": ["Holidays"],
-                "exclude_keywords": ["standup"],
-                "exclude_all_day": True,
-            }
-        }))
+        p.write_text(
+            yaml.dump(
+                {
+                    "filters": {
+                        "exclude_calendars": ["Holidays"],
+                        "exclude_keywords": ["standup"],
+                        "exclude_all_day": True,
+                    }
+                }
+            )
+        )
         cfg = load_config(str(p))
         assert cfg.filters.exclude_calendars == ["Holidays"]
         assert cfg.filters.exclude_keywords == ["standup"]
@@ -260,13 +281,17 @@ class TestLoadConfig:
     def test_random_theme_section_parsed(self, tmp_path):
         """load_config() parses the random_theme: section into RandomThemeConfig."""
         p = tmp_path / "config.yaml"
-        p.write_text(yaml.dump({
-            "theme": "random",
-            "random_theme": {
-                "include": ["minimalist", "today"],
-                "exclude": ["terminal"],
-            },
-        }))
+        p.write_text(
+            yaml.dump(
+                {
+                    "theme": "random",
+                    "random_theme": {
+                        "include": ["minimalist", "today"],
+                        "exclude": ["terminal"],
+                    },
+                }
+            )
+        )
         cfg = load_config(str(p))
         assert cfg.theme == "random"
         assert cfg.random_theme.include == ["minimalist", "today"]
@@ -275,12 +300,16 @@ class TestLoadConfig:
     def test_theme_schedule_section_parsed(self, tmp_path):
         """load_config() parses theme_schedule entries into ThemeScheduleConfig."""
         p = tmp_path / "config.yaml"
-        p.write_text(yaml.dump({
-            "theme_schedule": [
-                {"time": "06:00", "theme": "default"},
-                {"time": "22:00", "theme": "fuzzyclock_invert"},
-            ],
-        }))
+        p.write_text(
+            yaml.dump(
+                {
+                    "theme_schedule": [
+                        {"time": "06:00", "theme": "default"},
+                        {"time": "22:00", "theme": "fuzzyclock_invert"},
+                    ],
+                }
+            )
+        )
         cfg = load_config(str(p))
         assert len(cfg.theme_schedule.entries) == 2
         assert cfg.theme_schedule.entries[0].time == "06:00"

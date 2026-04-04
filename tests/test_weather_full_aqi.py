@@ -8,10 +8,10 @@ from src.data.models import AirQualityData, DayForecast, WeatherData
 from src.render.components.weather_full import draw_weather_full
 from src.render.theme import ComponentRegion, ThemeStyle
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -54,6 +54,7 @@ def _make_aqi(**overrides) -> AirQualityData:
 # ---------------------------------------------------------------------------
 # Smoke tests
 # ---------------------------------------------------------------------------
+
 
 class TestDrawWeatherFullAqi:
     def test_renders_without_aqi(self):

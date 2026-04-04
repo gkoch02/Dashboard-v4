@@ -3,7 +3,13 @@ from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 
 from src.data.models import (
-    AirQualityData, Birthday, CalendarEvent, DashboardData, HostData, StalenessLevel, WeatherData,
+    AirQualityData,
+    Birthday,
+    CalendarEvent,
+    DashboardData,
+    HostData,
+    StalenessLevel,
+    WeatherData,
 )
 from src.fetchers.cache import check_staleness, load_cached_source, save_source
 from src.fetchers.calendar import fetch_birthdays, fetch_events
@@ -33,7 +39,10 @@ def retry_fetch(label: str, fn):
 
 class DataPipeline:
     def __init__(
-        self, cfg, cache_dir: str, tz=None,
+        self,
+        cfg,
+        cache_dir: str,
+        tz=None,
         force_refresh: bool = False,
         ignore_breakers: bool = False,
     ):
@@ -98,23 +107,35 @@ class DataPipeline:
             air_quality = aq_cached
 
         futures = self._launch_fetches(
-            events_skip, weather_skip, birthdays_skip, purpleair_enabled, aq_skip,
+            events_skip,
+            weather_skip,
+            birthdays_skip,
+            purpleair_enabled,
+            aq_skip,
         )
 
         events = self._resolve_source(
-            "events", futures.get("events"), events,
+            "events",
+            futures.get("events"),
+            events,
             lambda d: logger.info("Fetched %d calendar events", len(d)),
         )
         weather = self._resolve_source(
-            "weather", futures.get("weather"), weather,
+            "weather",
+            futures.get("weather"),
+            weather,
             lambda d: logger.info("Fetched weather: %.1f°", d.current_temp),
         )
         birthdays = self._resolve_source(
-            "birthdays", futures.get("birthdays"), birthdays,
+            "birthdays",
+            futures.get("birthdays"),
+            birthdays,
             lambda d: logger.info("Fetched %d upcoming birthdays", len(d)),
         )
         air_quality = self._resolve_source(
-            "air_quality", futures.get("air_quality"), air_quality,
+            "air_quality",
+            futures.get("air_quality"),
+            air_quality,
             lambda d: logger.info("Fetched air quality: AQI=%d (%s)", d.aqi, d.category),
         )
 
@@ -161,7 +182,9 @@ class DataPipeline:
         if age_minutes < interval:
             logger.info(
                 "%s data is %.0fm old (interval: %dm), skipping fetch",
-                source, age_minutes, interval,
+                source,
+                age_minutes,
+                interval,
             )
             self.source_staleness[source] = StalenessLevel.FRESH
             return data, True
@@ -177,8 +200,9 @@ class DataPipeline:
             return cached_data, True
         return None, False
 
-    def _launch_fetches(self, events_skip, weather_skip, birthdays_skip,
-                        purpleair_enabled, aq_skip):
+    def _launch_fetches(
+        self, events_skip, weather_skip, birthdays_skip, purpleair_enabled, aq_skip
+    ):
         futures: dict[str, Future | None] = {
             "events": None,
             "weather": None,
@@ -186,7 +210,9 @@ class DataPipeline:
             "air_quality": None,
         }
         needs_fetch = (
-            not events_skip or not weather_skip or not birthdays_skip
+            not events_skip
+            or not weather_skip
+            or not birthdays_skip
             or (purpleair_enabled and not aq_skip)
         )
         if not needs_fetch:
@@ -196,22 +222,26 @@ class DataPipeline:
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             if not events_skip:
                 futures["events"] = pool.submit(
-                    retry_fetch, "Calendar",
+                    retry_fetch,
+                    "Calendar",
                     lambda: fetch_events(self.cfg.google, tz=self.tz, cache_dir=self.cache_dir),
                 )
             if not weather_skip:
                 futures["weather"] = pool.submit(
-                    retry_fetch, "Weather",
+                    retry_fetch,
+                    "Weather",
                     lambda: fetch_weather(self.cfg.weather, tz=self.tz),
                 )
             if not birthdays_skip:
                 futures["birthdays"] = pool.submit(
-                    retry_fetch, "Birthdays",
+                    retry_fetch,
+                    "Birthdays",
                     lambda: fetch_birthdays(self.cfg.google, self.cfg.birthdays, tz=self.tz),
                 )
             if purpleair_enabled and not aq_skip:
                 futures["air_quality"] = pool.submit(
-                    retry_fetch, "AirQuality",
+                    retry_fetch,
+                    "AirQuality",
                     lambda: fetch_air_quality(self.cfg.purpleair),
                 )
         return futures
@@ -242,7 +272,8 @@ class DataPipeline:
             cached_data = self._use_cache(source)
             if cached_data is not None:
                 logger.warning(
-                    "Using cached %s (%s)", source,
+                    "Using cached %s (%s)",
+                    source,
                     self.source_staleness.get(source, StalenessLevel.STALE).value,
                 )
                 return cached_data

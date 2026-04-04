@@ -7,13 +7,17 @@ from PIL import Image, ImageDraw
 
 from src.data.models import CalendarEvent, DayForecast
 from src.render.components.week_view import (
-    _density_tier, _events_for_day, _fmt_time, _fonts_for_tier, draw_week,
+    _density_tier,
+    _events_for_day,
+    _fmt_time,
+    _fonts_for_tier,
+    draw_week,
 )
-
 
 # ---------------------------------------------------------------------------
 # _fmt_time
 # ---------------------------------------------------------------------------
+
 
 class TestFmtTime:
     def test_on_the_hour_am(self):
@@ -44,6 +48,7 @@ class TestFmtTime:
 # ---------------------------------------------------------------------------
 # _events_for_day
 # ---------------------------------------------------------------------------
+
 
 class TestEventsForDay:
     def _timed(
@@ -119,6 +124,7 @@ class TestEventsForDay:
 # draw_week smoke test
 # ---------------------------------------------------------------------------
 
+
 class TestDrawWeek:
     def _make_draw(self):
         img = Image.new("1", (800, 480), 1)
@@ -161,7 +167,9 @@ class TestDrawWeek:
             seen_texts.append(args[2])
             return 0
 
-        with patch("src.render.components.week_view.draw_text_truncated", side_effect=_capture_text):
+        with patch(
+            "src.render.components.week_view.draw_text_truncated", side_effect=_capture_text
+        ):
             draw_week(draw, events, today)
 
         assert any("Suite 200" in t for t in seen_texts)
@@ -211,8 +219,12 @@ class TestDrawWeek:
         today = date(2024, 3, 18)  # Monday
         forecast = [
             DayForecast(
-                date=today + timedelta(days=i), high=50.0 + i, low=35.0,
-                icon="01d", description="clear", precip_chance=0.1,
+                date=today + timedelta(days=i),
+                high=50.0 + i,
+                low=35.0,
+                icon="01d",
+                description="clear",
+                precip_chance=0.1,
             )
             for i in range(5)
         ]
@@ -237,6 +249,7 @@ class TestDrawWeek:
 # ---------------------------------------------------------------------------
 # _density_tier
 # ---------------------------------------------------------------------------
+
 
 class TestDensityTier:
     # --- Weekday thresholds ---
@@ -291,6 +304,7 @@ class TestDensityTier:
 # _fonts_for_tier
 # ---------------------------------------------------------------------------
 
+
 class TestFontsForTier:
     def test_normal_tier_returns_7_tuple(self):
         result = _fonts_for_tier("normal")
@@ -344,6 +358,7 @@ class TestFontsForTier:
 # ---------------------------------------------------------------------------
 # _draw_day_events — allday_font default (line 392) and overflow (lines 404-406)
 # ---------------------------------------------------------------------------
+
 
 class TestDrawDayEvents:
     """Exercise _draw_day_events directly for edge-case branches."""

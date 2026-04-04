@@ -8,8 +8,21 @@ from unittest.mock import patch
 
 import pytest
 
-from src.data.models import Birthday, CalendarEvent, DashboardData, DayForecast, StalenessLevel, WeatherData
-from src.fetchers.cache import check_staleness, load_cached, load_cached_source, save_cache, save_source
+from src.data.models import (
+    Birthday,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    StalenessLevel,
+    WeatherData,
+)
+from src.fetchers.cache import (
+    check_staleness,
+    load_cached,
+    load_cached_source,
+    save_cache,
+    save_source,
+)
 
 
 def _make_data() -> DashboardData:
@@ -38,8 +51,12 @@ def _make_data() -> DashboardData:
             sunset=datetime(2024, 3, 15, 18, 30),
             forecast=[
                 DayForecast(
-                    date=date(2024, 3, 16), high=48.0, low=33.0,
-                    icon="02d", description="cloudy", precip_chance=0.65,
+                    date=date(2024, 3, 16),
+                    high=48.0,
+                    low=33.0,
+                    icon="02d",
+                    description="cloudy",
+                    precip_chance=0.65,
                 )
             ],
         ),
@@ -107,12 +124,21 @@ class TestCacheRoundtrip:
     def test_weather_none_optional_fields_round_trip(self):
         """Fields that were None before this fix should still deserialise as None."""
         weather = WeatherData(
-            current_temp=42.0, current_icon="01d", current_description="clear",
-            high=50.0, low=35.0, humidity=60,
-            forecast=[DayForecast(
-                date=date(2024, 3, 16), high=48.0, low=33.0,
-                icon="02d", description="cloudy",
-            )],
+            current_temp=42.0,
+            current_icon="01d",
+            current_description="clear",
+            high=50.0,
+            low=35.0,
+            humidity=60,
+            forecast=[
+                DayForecast(
+                    date=date(2024, 3, 16),
+                    high=48.0,
+                    low=33.0,
+                    icon="02d",
+                    description="cloudy",
+                )
+            ],
         )
         with tempfile.TemporaryDirectory() as tmpdir:
             save_source("weather", weather, datetime(2024, 3, 15, 8, 0), tmpdir)
@@ -129,8 +155,12 @@ class TestCacheRoundtrip:
     def test_location_name_round_trips(self):
         """location_name is serialised and deserialised correctly."""
         weather = WeatherData(
-            current_temp=55.0, current_icon="01d", current_description="clear",
-            high=60.0, low=45.0, humidity=50,
+            current_temp=55.0,
+            current_icon="01d",
+            current_description="clear",
+            high=60.0,
+            low=45.0,
+            humidity=50,
             location_name="San Francisco",
         )
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -144,14 +174,20 @@ class TestCacheRoundtrip:
     def test_location_name_none_when_absent_in_old_cache(self):
         """Old cache files without location_name deserialise safely as None."""
         import json
+
         raw_cache = {
             "schema_version": 2,
             "weather": {
                 "fetched_at": "2024-03-15T08:00:00",
                 "data": {
-                    "current_temp": 42.0, "current_icon": "01d",
-                    "current_description": "clear", "high": 50.0, "low": 35.0,
-                    "humidity": 60, "forecast": [], "alerts": [],
+                    "current_temp": 42.0,
+                    "current_icon": "01d",
+                    "current_description": "clear",
+                    "high": 50.0,
+                    "low": 35.0,
+                    "humidity": 60,
+                    "forecast": [],
+                    "alerts": [],
                     # deliberately omit "location_name"
                 },
             },
@@ -172,6 +208,7 @@ class TestCacheRoundtrip:
 
     def test_load_returns_none_on_corrupt_file(self):
         import os
+
         with tempfile.TemporaryDirectory() as tmpdir:
             cache_path = os.path.join(tmpdir, "dashboard_cache.json")
             with open(cache_path, "w") as f:
@@ -202,8 +239,12 @@ class TestCacheRoundtrip:
 class TestLoadCachedSourceEdgeCases:
     def _make_weather(self) -> WeatherData:
         return WeatherData(
-            current_temp=50.0, current_icon="01d", current_description="clear",
-            high=55.0, low=40.0, humidity=55,
+            current_temp=50.0,
+            current_icon="01d",
+            current_description="clear",
+            high=55.0,
+            low=40.0,
+            humidity=55,
         )
 
     def test_returns_none_when_file_missing(self):
@@ -248,8 +289,7 @@ class TestLoadCachedSourceEdgeCases:
                 "events": {
                     "fetched_at": "2024-03-15T09:00:00",
                     "data": [
-                        {"summary": "Evt", "start": "NOT_A_DATE",
-                         "end": "2024-03-15T10:00:00"},
+                        {"summary": "Evt", "start": "NOT_A_DATE", "end": "2024-03-15T10:00:00"},
                     ],
                 },
             }
@@ -263,8 +303,14 @@ class TestLoadCachedSourceEdgeCases:
                 "fetched_at": "2024-03-15T08:00:00",
                 "events": [],
                 "weather": {
-                    "current_temp": 50.0, "current_icon": "01d", "current_description": "clear",
-                    "high": 55.0, "low": 40.0, "humidity": 55, "forecast": [], "alerts": [],
+                    "current_temp": 50.0,
+                    "current_icon": "01d",
+                    "current_description": "clear",
+                    "high": 55.0,
+                    "low": 40.0,
+                    "humidity": 55,
+                    "forecast": [],
+                    "alerts": [],
                 },
                 "birthdays": [],
             }
@@ -299,8 +345,12 @@ class TestLoadCachedSourceEdgeCases:
 class TestSaveSourceEdgeCases:
     def _make_weather(self) -> WeatherData:
         return WeatherData(
-            current_temp=50.0, current_icon="01d", current_description="clear",
-            high=55.0, low=40.0, humidity=55,
+            current_temp=50.0,
+            current_icon="01d",
+            current_description="clear",
+            high=55.0,
+            low=40.0,
+            humidity=55,
         )
 
     def test_unknown_source_is_ignored(self):
@@ -322,6 +372,7 @@ class TestSaveSourceEdgeCases:
 
     def test_write_failure_logs_warning(self, caplog):
         import logging
+
         with tempfile.TemporaryDirectory() as tmpdir:
             with caplog.at_level(logging.WARNING, logger="src.fetchers.cache"):
                 with patch(
@@ -335,6 +386,7 @@ class TestSaveSourceEdgeCases:
 class TestSaveCacheEdgeCases:
     def test_write_failure_logs_warning(self, caplog):
         import logging
+
         data = DashboardData(fetched_at=datetime(2024, 3, 15, 8))
         with tempfile.TemporaryDirectory() as tmpdir:
             with caplog.at_level(logging.WARNING, logger="src.fetchers.cache"):
@@ -440,6 +492,7 @@ class TestAtomicWriteCleanup:
 
             with patch("os.fdopen", side_effect=patched_fdopen):
                 from src.fetchers.cache import _atomic_write_json
+
                 with pytest.raises(OSError):
                     _atomic_write_json(path, {"key": "value"})
             # The temp file should not remain (was cleaned up)
@@ -450,6 +503,7 @@ class TestAtomicWriteCleanup:
 # ---------------------------------------------------------------------------
 # check_staleness — TTL gradation
 # ---------------------------------------------------------------------------
+
 
 class TestCheckStaleness:
     _BASE = datetime(2024, 3, 15, 10, 0, 0)
@@ -510,6 +564,7 @@ class TestCheckStaleness:
 # ---------------------------------------------------------------------------
 # Enhanced weather fields (wind_deg, uv_index, pressure) cache round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestEnhancedWeatherFieldsCache:
     def _make_full_weather(self) -> WeatherData:

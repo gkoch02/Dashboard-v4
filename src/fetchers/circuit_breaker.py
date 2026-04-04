@@ -81,9 +81,10 @@ class CircuitBreaker:
         if st.consecutive_failures >= self._max_failures:
             st.state = "open"
             logger.warning(
-                "Circuit breaker for %s: → OPEN after %d failures "
-                "(cooldown: %dm)",
-                source, st.consecutive_failures, self._cooldown_minutes,
+                "Circuit breaker for %s: → OPEN after %d failures (cooldown: %dm)",
+                source,
+                st.consecutive_failures,
+                self._cooldown_minutes,
             )
         elif st.state == "half_open":
             # Probe failed — back to open
@@ -104,9 +105,12 @@ class CircuitBreaker:
             return True
         # Use UTC for consistent cooldown calculation regardless of clock changes
         now = datetime.now(timezone.utc)
-        # Handle legacy naive timestamps by assuming UTC
+        # Handle legacy naive timestamps: interpret as local wall-clock time, not UTC.
+        # (Older state files and some tools write naive local timestamps; treating them
+        # as UTC would shift the apparent failure time by the UTC offset, causing OPEN
+        # breakers to appear expired before cooldown actually elapses.)
         if last.tzinfo is None:
-            last = last.replace(tzinfo=timezone.utc)
+            last = last.astimezone(timezone.utc)
         age = (now - last).total_seconds() / 60
         return age >= self._cooldown_minutes
 
@@ -126,9 +130,10 @@ class CircuitBreaker:
             for source, st in self._states.items():
                 if st.state != "closed":
                     logger.info(
-                        "Circuit breaker for '%s' loaded in %s state "
-                        "(%d consecutive failures)",
-                        source, st.state.upper(), st.consecutive_failures,
+                        "Circuit breaker for '%s' loaded in %s state (%d consecutive failures)",
+                        source,
+                        st.state.upper(),
+                        st.consecutive_failures,
                     )
         except Exception as exc:
             logger.debug("Could not load breaker state: %s", exc)

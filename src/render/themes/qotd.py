@@ -23,17 +23,20 @@ contrast strokes that evoke classic editorial typography.  Legible at large
 sizes on eInk displays.
 """
 
-from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 from src.render.fonts import (
-    playfair_regular, playfair_medium, playfair_semibold, playfair_bold,
+    playfair_bold,
+    playfair_medium,
+    playfair_regular,
+    playfair_semibold,
 )
+from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
-BANNER_H = 80   # height of the bottom weather strip
+BANNER_H = 80  # height of the bottom weather strip
 
 
 def qotd_theme() -> Theme:
     """Return the QOTD theme."""
-    quote_h = 480 - BANNER_H   # 400 px for the quote
+    quote_h = 480 - BANNER_H  # 400 px for the quote
 
     return Theme(
         name="qotd",
@@ -54,7 +57,7 @@ def qotd_theme() -> Theme:
             draw_order=["qotd", "qotd_weather"],
         ),
         style=ThemeStyle(
-            fg=0,   # black ink on white paper
+            fg=0,  # black ink on white paper
             bg=1,
             invert_header=False,
             invert_today_col=False,

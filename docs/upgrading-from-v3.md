@@ -136,6 +136,8 @@ Your existing config is fully compatible. These are opt-in additions:
 | **PurpleAir air quality** | Add `purpleair.api_key` and `purpleair.sensor_id` to `config.yaml`; an AQI card (EPA index from 60-minute PM2.5 average) appears in the `weather` theme metric row, and a PM1 · PM2.5 · PM10 µg/m³ breakdown appears in the detail strip |
 | **ICS feed calendar (no GCP)** | Set `google.ical_url` to your calendar's "Secret address in iCal format" URL — no service account or GCP project needed; supports multiple calendars via `additional_ical_urls` |
 | **Configurable quote refresh** | Set `cache.quote_refresh` to `daily` (default), `twice_daily`, or `hourly` to control how often the displayed quote rotates; uses a stable date-based hash so the same time slot always shows the same quote |
+| **State directory** | Runtime state files (cache, circuit breaker, sync tokens, random theme state) now live in `state/` instead of `output/`. Existing files are auto-migrated on first run — no manual action needed |
+| **Tooling** | `pyproject.toml` for project metadata; `ruff` for linting/formatting (`make lint`, `make fmt`); GitHub Actions CI; `.pre-commit-config.yaml` |
 
 ---
 

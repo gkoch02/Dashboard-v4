@@ -21,17 +21,21 @@ Layout (800 × 480):
   │   └────────┘                        ║  └─────────────────────────────┘ │
   ├─────────────────── double-rule bottom border ──────────────────────────┤
 """
-from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
+
 from src.render.fonts import (
-    playfair_regular, playfair_medium, playfair_semibold, playfair_bold,
     cinzel_black,
+    playfair_bold,
+    playfair_medium,
+    playfair_regular,
+    playfair_semibold,
 )
 from src.render.primitives import hline, vline
-
+from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
 # ---------------------------------------------------------------------------
 # Hybrid font callable: Cinzel Black for small label sizes, Playfair for body
 # ---------------------------------------------------------------------------
+
 
 def _press_bold(size: int):
     """Cinzel Black for small text (≤14 px — section labels, milestone tags).
@@ -48,6 +52,7 @@ def _press_bold(size: int):
 # Newspaper overlay — ornamental rules, column separator, masthead ornaments
 # ---------------------------------------------------------------------------
 
+
 def _newspaper_overlay(draw, layout, style):
     """Draw Victorian broadsheet ornaments on top of all components.
 
@@ -63,8 +68,8 @@ def _newspaper_overlay(draw, layout, style):
     H = layout.canvas_h
     fg = style.fg
     bg = style.bg
-    hdr_h = layout.header.h          # masthead height  (70 px)
-    body_y = layout.today_view.y     # body starts here (80 px)
+    hdr_h = layout.header.h  # masthead height  (70 px)
+    body_y = layout.today_view.y  # body starts here (80 px)
     sep_x = layout.today_view.x + layout.today_view.w  # column split (490)
 
     # ------------------------------------------------------------------
@@ -72,20 +77,20 @@ def _newspaper_overlay(draw, layout, style):
     #     Each bracket is a pair of thin white rectangles forming an L-shape.
     # ------------------------------------------------------------------
     pad = 8
-    arm = 11   # bracket arm length in px
+    arm = 11  # bracket arm length in px
 
     # top-left  ┌
-    draw.rectangle([pad,               pad,               pad + arm, pad + 2  ], fill=bg)
-    draw.rectangle([pad,               pad,               pad + 2,   pad + arm], fill=bg)
+    draw.rectangle([pad, pad, pad + arm, pad + 2], fill=bg)
+    draw.rectangle([pad, pad, pad + 2, pad + arm], fill=bg)
     # top-right ┐
-    draw.rectangle([W - pad - arm - 1, pad,               W - pad - 1, pad + 2  ], fill=bg)
-    draw.rectangle([W - pad - 2 - 1,   pad,               W - pad - 1, pad + arm], fill=bg)
+    draw.rectangle([W - pad - arm - 1, pad, W - pad - 1, pad + 2], fill=bg)
+    draw.rectangle([W - pad - 2 - 1, pad, W - pad - 1, pad + arm], fill=bg)
     # bottom-left └
-    draw.rectangle([pad,               hdr_h - pad - 2, pad + arm, hdr_h - pad], fill=bg)
-    draw.rectangle([pad,               hdr_h - pad - arm, pad + 2, hdr_h - pad], fill=bg)
+    draw.rectangle([pad, hdr_h - pad - 2, pad + arm, hdr_h - pad], fill=bg)
+    draw.rectangle([pad, hdr_h - pad - arm, pad + 2, hdr_h - pad], fill=bg)
     # bottom-right ┘
     draw.rectangle([W - pad - arm - 1, hdr_h - pad - 2, W - pad - 1, hdr_h - pad], fill=bg)
-    draw.rectangle([W - pad - 2 - 1,   hdr_h - pad - arm, W - pad - 1, hdr_h - pad], fill=bg)
+    draw.rectangle([W - pad - 2 - 1, hdr_h - pad - arm, W - pad - 1, hdr_h - pad], fill=bg)
 
     # Thin white inner rule aligned with the top of the lower bracket arms —
     # creates a subtle "picture-frame" effect inside the masthead.
@@ -98,14 +103,14 @@ def _newspaper_overlay(draw, layout, style):
     #     Classic broadsheet pattern: thick–thick / gap / thin.
     # ------------------------------------------------------------------
     hline(draw, hdr_h + 2, 0, W - 1, fill=fg)
-    hline(draw, hdr_h + 3, 0, W - 1, fill=fg)   # thick pair
-    hline(draw, hdr_h + 7, 0, W - 1, fill=fg)   # thin accent
+    hline(draw, hdr_h + 3, 0, W - 1, fill=fg)  # thick pair
+    hline(draw, hdr_h + 7, 0, W - 1, fill=fg)  # thin accent
 
     # ------------------------------------------------------------------
     # 3.  Double vertical column rule separating today_view / right sidebar.
     #     Two vlines with a 2-px gap — the traditional broadsheet gutter rule.
     # ------------------------------------------------------------------
-    vline(draw, sep_x,     body_y, H - 7, fill=fg)
+    vline(draw, sep_x, body_y, H - 7, fill=fg)
     vline(draw, sep_x + 3, body_y, H - 7, fill=fg)
 
     # Small filled-square dingbat bridging the gap at the top of the rule.
@@ -130,21 +135,22 @@ def _newspaper_overlay(draw, layout, style):
 # Theme factory
 # ---------------------------------------------------------------------------
 
+
 def old_fashioned_theme() -> Theme:
     """Return the revamped Old Fashioned / Victorian broadsheet theme."""
-    header_h = 70                              # tall inverted masthead
-    rule_h = 10                                # decorative rule band below masthead
-    body_y = header_h + rule_h                 # body components start at y=80
-    body_h = 480 - body_y                      # 400 px body area
+    header_h = 70  # tall inverted masthead
+    rule_h = 10  # decorative rule band below masthead
+    body_y = header_h + rule_h  # body components start at y=80
+    body_h = 480 - body_y  # 400 px body area
 
-    main_w = 490                               # left column: today's schedule
+    main_w = 490  # left column: today's schedule
     side_x = main_w
-    side_w = 800 - main_w                      # 310 px right sidebar
+    side_w = 800 - main_w  # 310 px right sidebar
 
     # Right sidebar: three stacked panels filling body_h (400 px)
     weather_h = 175
     birthday_h = 125
-    info_h = body_h - weather_h - birthday_h   # 100 px
+    info_h = body_h - weather_h - birthday_h  # 100 px
 
     return Theme(
         name="old_fashioned",
@@ -157,13 +163,23 @@ def old_fashioned_theme() -> Theme:
             today_view=ComponentRegion(0, body_y, main_w, body_h),
             weather=ComponentRegion(side_x, body_y, side_w, weather_h),
             birthdays=ComponentRegion(
-                side_x, body_y + weather_h, side_w, birthday_h,
+                side_x,
+                body_y + weather_h,
+                side_w,
+                birthday_h,
             ),
             info=ComponentRegion(
-                side_x, body_y + weather_h + birthday_h, side_w, info_h,
+                side_x,
+                body_y + weather_h + birthday_h,
+                side_w,
+                info_h,
             ),
             draw_order=[
-                "header", "today_view", "weather", "birthdays", "info",
+                "header",
+                "today_view",
+                "weather",
+                "birthdays",
+                "info",
             ],
             overlay_fn=_newspaper_overlay,
         ),
@@ -184,9 +200,9 @@ def old_fashioned_theme() -> Theme:
             font_semibold=playfair_semibold,
             font_bold=_press_bold,
             component_labels={
-                "weather":   "THE WEATHER",
+                "weather": "THE WEATHER",
                 "birthdays": "SOCIAL NOTICES",
-                "info":      "WORDS OF WISDOM",
+                "info": "WORDS OF WISDOM",
             },
         ),
     )

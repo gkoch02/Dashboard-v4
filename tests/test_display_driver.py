@@ -6,7 +6,10 @@ import pytest
 from PIL import Image
 
 from src.display.driver import (
-    DryRunDisplay, WAVESHARE_MODELS, WaveshareDisplay, image_changed,
+    WAVESHARE_MODELS,
+    DryRunDisplay,
+    WaveshareDisplay,
+    image_changed,
 )
 
 
@@ -52,6 +55,7 @@ class TestDryRunDisplayShow:
 
     def test_multiple_shows_create_multiple_timestamped(self, display, output_dir):
         import time
+
         display.show(_make_image())
         time.sleep(1.1)  # ensure different second → different filename
         display.show(_make_image())
@@ -167,8 +171,10 @@ class TestWaveshareDisplayHardware:
 
         d = WaveshareDisplay(model="epd7in5_V2", enable_partial=False)
         image = Image.new("1", (800, 480), 1)
-        with patch.object(d, "_get_epd", return_value=epd), \
-             patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker):
+        with (
+            patch.object(d, "_get_epd", return_value=epd),
+            patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker),
+        ):
             d.show(image)
 
         epd.init.assert_called_once()
@@ -184,8 +190,10 @@ class TestWaveshareDisplayHardware:
 
         d = WaveshareDisplay(model="epd7in5_V2", enable_partial=True)
         image = Image.new("1", (800, 480), 1)
-        with patch.object(d, "_get_epd", return_value=epd), \
-             patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker):
+        with (
+            patch.object(d, "_get_epd", return_value=epd),
+            patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker),
+        ):
             d.show(image)
 
         epd.init_fast.assert_called_once()
@@ -199,8 +207,10 @@ class TestWaveshareDisplayHardware:
 
         d = WaveshareDisplay(model="epd7in5_V2", enable_partial=True)
         image = Image.new("1", (800, 480), 1)
-        with patch.object(d, "_get_epd", return_value=epd), \
-             patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker):
+        with (
+            patch.object(d, "_get_epd", return_value=epd),
+            patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker),
+        ):
             d.show(image, force_full=True)
 
         epd.init.assert_called_once()
@@ -215,8 +225,10 @@ class TestWaveshareDisplayHardware:
 
         d = WaveshareDisplay(model="epd7in5_V2")
         image = Image.new("1", (800, 480), 1)
-        with patch.object(d, "_get_epd", return_value=epd), \
-             patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker):
+        with (
+            patch.object(d, "_get_epd", return_value=epd),
+            patch("src.display.refresh_tracker.RefreshTracker.load", return_value=tracker),
+        ):
             with pytest.raises(RuntimeError):
                 d.show(image)
         epd.sleep.assert_called_once()

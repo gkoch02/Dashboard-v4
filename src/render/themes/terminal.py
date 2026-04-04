@@ -4,15 +4,16 @@ Inverted color scheme (white on black) with a compact header and wider
 weather panel for a data-heavy, information-dense terminal aesthetic.
 Uses Share Tech Mono for an authentic monospace terminal feel.
 """
-from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
+
 from src.render.fonts import cyber_mono, maratype, synthetic_genesis, uesc_display
+from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
 
 def terminal_theme() -> Theme:
     header_h = 34
     week_h = 326
     bottom_y = header_h + week_h  # 360
-    bottom_h = 480 - bottom_y     # 120
+    bottom_h = 480 - bottom_y  # 120
 
     return Theme(
         name="terminal",
@@ -26,12 +27,12 @@ def terminal_theme() -> Theme:
             info=ComponentRegion(540, bottom_y, 260, bottom_h),
         ),
         style=ThemeStyle(
-            fg=1,                     # white text / lines on black canvas
-            bg=0,                     # black background
-            invert_header=False,      # dark canvas already; bottom border line only
-            invert_today_col=True,    # today column: white fill + black text
+            fg=1,  # white text / lines on black canvas
+            bg=0,  # black background
+            invert_header=False,  # dark canvas already; bottom border line only
+            invert_today_col=True,  # today column: white fill + black text
             invert_allday_bars=True,  # all-day bars: white fill + black text
-            spacing_scale=0.85,       # tight — denser, more information visible
+            spacing_scale=0.85,  # tight — denser, more information visible
             label_font_size=11,
             label_font_weight="bold",
             # Share Tech Mono: monospace terminal font across all weights for

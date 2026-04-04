@@ -14,7 +14,11 @@ import math
 from typing import TYPE_CHECKING
 
 from src.render.fonts import (
-    cinzel_bold, playfair_medium, playfair_regular, regular, semibold,
+    cinzel_bold,
+    playfair_medium,
+    playfair_regular,
+    regular,
+    semibold,
 )
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
@@ -26,13 +30,16 @@ if TYPE_CHECKING:
 # Overlay: whimsical vine border, stars, and corner flourishes
 # ---------------------------------------------------------------------------
 
-_BORDER_INSET = 8   # distance from canvas edge to vine border
-_INNER_INSET = 10   # inner accent line
+_BORDER_INSET = 8  # distance from canvas edge to vine border
+_INNER_INSET = 10  # inner accent line
 
 
 def _leaf_bud(
-    draw: "ImageDraw.ImageDraw", x: int, y: int,
-    direction: str, fill: int,
+    draw: ImageDraw.ImageDraw,
+    x: int,
+    y: int,
+    direction: str,
+    fill: int,
 ) -> None:
     """Draw a small 3px triangular leaf bud pointing outward."""
     if direction == "up":
@@ -46,8 +53,11 @@ def _leaf_bud(
 
 
 def _small_star(
-    draw: "ImageDraw.ImageDraw", cx: int, cy: int,
-    size: int, fill: int,
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    size: int,
+    fill: int,
 ) -> None:
     """Draw a small cross-shaped star."""
     draw.line([(cx - size, cy), (cx + size, cy)], fill=fill, width=1)
@@ -62,8 +72,11 @@ def _small_star(
 
 
 def _corner_flourish(
-    draw: "ImageDraw.ImageDraw", cx: int, cy: int,
-    quadrant: int, fill: int,
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    quadrant: int,
+    fill: int,
 ) -> None:
     """Draw a small floral arc flourish at a corner.
 
@@ -92,7 +105,7 @@ def _corner_flourish(
 
 
 def _draw_moonphase_overlay(
-    draw: "ImageDraw.ImageDraw",
+    draw: ImageDraw.ImageDraw,
     layout: ThemeLayout,
     style: ThemeStyle,
 ) -> None:
@@ -127,7 +140,7 @@ def _draw_moonphase_overlay(
     # 2. Corner flourishes
     # ------------------------------------------------------------------
     margin = B + 3
-    _corner_flourish(draw, margin, margin, 2, fg)          # top-left
+    _corner_flourish(draw, margin, margin, 2, fg)  # top-left
     _corner_flourish(draw, W - margin - 1, margin, 3, fg)  # top-right
     _corner_flourish(draw, W - margin - 1, H - margin - 1, 0, fg)  # bot-right
     _corner_flourish(draw, margin, H - margin - 1, 1, fg)  # bot-left
@@ -137,11 +150,18 @@ def _draw_moonphase_overlay(
     # ------------------------------------------------------------------
     # Deterministic positions using simple arithmetic
     star_positions = [
-        (28, 24, 2), (65, 18, 1), (42, 42, 1),
-        (W - 30, 22, 2), (W - 62, 19, 1), (W - 45, 38, 1),
-        (22, 55, 1), (W - 25, 52, 1),
-        (90, 28, 1), (W - 88, 30, 1),
-        (55, 60, 1), (W - 58, 58, 1),
+        (28, 24, 2),
+        (65, 18, 1),
+        (42, 42, 1),
+        (W - 30, 22, 2),
+        (W - 62, 19, 1),
+        (W - 45, 38, 1),
+        (22, 55, 1),
+        (W - 25, 52, 1),
+        (90, 28, 1),
+        (W - 88, 30, 1),
+        (55, 60, 1),
+        (W - 58, 58, 1),
     ]
     for sx, sy, sz in star_positions:
         _small_star(draw, sx, sy, sz, fg)
@@ -149,15 +169,16 @@ def _draw_moonphase_overlay(
     # ------------------------------------------------------------------
     # 4. Edge midpoint star accents
     # ------------------------------------------------------------------
-    _small_star(draw, W // 2, B - 1, 2, fg)      # top
-    _small_star(draw, W // 2, H - B, 2, fg)       # bottom
-    _small_star(draw, B - 1, H // 2, 2, fg)       # left
-    _small_star(draw, W - B, H // 2, 2, fg)        # right
+    _small_star(draw, W // 2, B - 1, 2, fg)  # top
+    _small_star(draw, W // 2, H - B, 2, fg)  # bottom
+    _small_star(draw, B - 1, H // 2, 2, fg)  # left
+    _small_star(draw, W - B, H // 2, 2, fg)  # right
 
 
 # ---------------------------------------------------------------------------
 # Theme factory
 # ---------------------------------------------------------------------------
+
 
 def moonphase_theme() -> Theme:
     """Return the Moonphase theme — dark canvas, celestial aesthetic."""
@@ -184,7 +205,7 @@ def moonphase_theme() -> Theme:
             overlay_fn=_draw_moonphase_overlay,
         ),
         style=ThemeStyle(
-            fg=1,   # white on black — night sky
+            fg=1,  # white on black — night sky
             bg=0,
             invert_header=False,
             invert_today_col=False,

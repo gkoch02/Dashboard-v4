@@ -7,7 +7,11 @@ from PIL import Image
 
 from src.config import DisplayConfig
 from src.data.models import (
-    Birthday, CalendarEvent, DashboardData, DayForecast, WeatherData,
+    Birthday,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    WeatherData,
 )
 from src.render.canvas import render_dashboard
 from src.render.theme import (
@@ -21,10 +25,10 @@ from src.render.theme import (
     load_theme,
 )
 
-
 # ---------------------------------------------------------------------------
 # Shared fixture data
 # ---------------------------------------------------------------------------
+
 
 def _make_data(today: date | None = None) -> DashboardData:
     today = today or date(2024, 3, 15)
@@ -54,8 +58,11 @@ def _make_data(today: date | None = None) -> DashboardData:
             humidity=50,
             forecast=[
                 DayForecast(
-                    date=today + timedelta(days=1), high=58.0, low=42.0,
-                    icon="02d", description="partly cloudy",
+                    date=today + timedelta(days=1),
+                    high=58.0,
+                    low=42.0,
+                    icon="02d",
+                    description="partly cloudy",
                 ),
             ],
         ),
@@ -67,11 +74,12 @@ def _make_data(today: date | None = None) -> DashboardData:
 # ThemeStyle
 # ---------------------------------------------------------------------------
 
+
 class TestThemeStyle:
     def test_default_values(self):
         s = ThemeStyle()
-        assert s.fg == 0    # BLACK
-        assert s.bg == 1    # WHITE
+        assert s.fg == 0  # BLACK
+        assert s.bg == 1  # WHITE
         assert s.invert_header is True
         assert s.invert_today_col is True
         assert s.invert_allday_bars is True
@@ -89,6 +97,7 @@ class TestThemeStyle:
 
     def test_font_callables_return_font_objects(self):
         from PIL import ImageFont
+
         s = ThemeStyle()
         for fn in (s.font_regular, s.font_medium, s.font_semibold, s.font_bold):
             result = fn(12)
@@ -96,11 +105,13 @@ class TestThemeStyle:
 
     def test_label_font_method_bold(self):
         from PIL import ImageFont
+
         s = ThemeStyle(label_font_weight="bold", label_font_size=12)
         assert isinstance(s.label_font(), ImageFont.FreeTypeFont)
 
     def test_label_font_method_regular(self):
         from PIL import ImageFont
+
         s = ThemeStyle(label_font_weight="regular", label_font_size=11)
         assert isinstance(s.label_font(), ImageFont.FreeTypeFont)
 
@@ -113,6 +124,7 @@ class TestThemeStyle:
 # ---------------------------------------------------------------------------
 # ComponentRegion
 # ---------------------------------------------------------------------------
+
 
 class TestComponentRegion:
     def test_default_visible(self):
@@ -127,6 +139,7 @@ class TestComponentRegion:
 # ---------------------------------------------------------------------------
 # ThemeLayout
 # ---------------------------------------------------------------------------
+
 
 class TestThemeLayout:
     def test_default_layout_canvas_size(self):
@@ -173,6 +186,7 @@ class TestThemeLayout:
 # ---------------------------------------------------------------------------
 # default_theme / load_theme
 # ---------------------------------------------------------------------------
+
 
 class TestDefaultTheme:
     def test_returns_theme_instance(self):
@@ -246,6 +260,7 @@ class TestLoadTheme:
 # render_dashboard with themes
 # ---------------------------------------------------------------------------
 
+
 class TestRenderDashboardWithThemes:
     def _cfg(self) -> DisplayConfig:
         return DisplayConfig()
@@ -318,8 +333,8 @@ class TestRenderDashboardWithThemes:
     def test_fantasy_canvas_starts_black(self):
         """Fantasy theme uses a black background."""
         t = load_theme("fantasy")
-        assert t.style.bg == 0   # BLACK
-        assert t.style.fg == 1   # WHITE
+        assert t.style.bg == 0  # BLACK
+        assert t.style.fg == 1  # WHITE
 
     def test_fantasy_has_overlay_fn(self):
         """Fantasy theme wires up the decorative border overlay."""
@@ -330,11 +345,11 @@ class TestRenderDashboardWithThemes:
     def test_fantasy_sidebar_layout(self):
         """Sidebar panels live on the left; week view on the right."""
         t = load_theme("fantasy")
-        assert t.layout.week_view.x > 0               # quest log is not at x=0
-        assert t.layout.weather.x < t.layout.week_view.x    # weather is in the sidebar
+        assert t.layout.week_view.x > 0  # quest log is not at x=0
+        assert t.layout.weather.x < t.layout.week_view.x  # weather is in the sidebar
         assert t.layout.birthdays.x < t.layout.week_view.x  # birthdays is in the sidebar
-        assert t.layout.info.x < t.layout.week_view.x       # quote is in the sidebar
-        assert t.layout.week_view.w > t.layout.weather.w    # calendar wider than sidebar
+        assert t.layout.info.x < t.layout.week_view.x  # quote is in the sidebar
+        assert t.layout.week_view.w > t.layout.weather.w  # calendar wider than sidebar
 
     def test_fantasy_component_labels(self):
         """Fantasy-themed section labels are configured."""
@@ -368,11 +383,13 @@ class TestRenderDashboardWithThemes:
         today = date(2024, 3, 15)
         data = _make_data(today)
         # Add an event on today
-        data.events.append(CalendarEvent(
-            summary="Morning Meeting",
-            start=datetime.combine(today, datetime.min.time().replace(hour=9)),
-            end=datetime.combine(today, datetime.min.time().replace(hour=10)),
-        ))
+        data.events.append(
+            CalendarEvent(
+                summary="Morning Meeting",
+                start=datetime.combine(today, datetime.min.time().replace(hour=9)),
+                end=datetime.combine(today, datetime.min.time().replace(hour=10)),
+            )
+        )
         t = load_theme("today")
         result = render_dashboard(data, self._cfg(), theme=t)
         assert isinstance(result, Image.Image)
@@ -388,6 +405,7 @@ class TestRenderDashboardWithThemes:
     def test_today_view_default_region_not_visible_in_default_theme(self):
         """ThemeLayout.today_view defaults to visible=False so existing themes are unaffected."""
         from src.render.theme import default_layout
+
         layout = default_layout()
         assert layout.today_view.visible is False
 
@@ -397,9 +415,9 @@ class TestRenderDashboardWithThemes:
         custom_layout = ThemeLayout(
             canvas_w=800,
             canvas_h=480,
-            header=ComponentRegion(0, 0, 800, 56),          # tall header
-            week_view=ComponentRegion(0, 56, 500, 424),      # left column
-            weather=ComponentRegion(500, 56, 300, 141),      # right stack
+            header=ComponentRegion(0, 0, 800, 56),  # tall header
+            week_view=ComponentRegion(0, 56, 500, 424),  # left column
+            weather=ComponentRegion(500, 56, 300, 141),  # right stack
             birthdays=ComponentRegion(500, 197, 300, 141),
             info=ComponentRegion(500, 338, 300, 142),
         )
@@ -413,8 +431,10 @@ class TestRenderDashboardWithThemes:
         data = _make_data()
         layout = default_layout()
         layout.weather = ComponentRegion(
-            layout.weather.x, layout.weather.y,
-            layout.weather.w, layout.weather.h,
+            layout.weather.x,
+            layout.weather.y,
+            layout.weather.w,
+            layout.weather.h,
             visible=False,
         )
         t = Theme(name="no-weather", style=ThemeStyle(), layout=layout)
@@ -478,6 +498,7 @@ class TestRenderDashboardWithThemes:
     def test_qotd_theme_uses_playfair_fonts(self):
         """QOTD theme font callables should return Playfair Display fonts."""
         from PIL import ImageFont
+
         t = load_theme("qotd")
         for fn in (t.style.font_regular, t.style.font_bold, t.style.font_semibold):
             font = fn(24)
@@ -497,12 +518,14 @@ class TestRenderDashboardWithThemes:
 # qotd_invert theme
 # ---------------------------------------------------------------------------
 
+
 class TestQotdInvertTheme:
     def _cfg(self):
         return DisplayConfig()
 
     def test_name(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         assert qotd_invert_theme().name == "qotd_invert"
 
     def test_in_available_themes(self):
@@ -513,20 +536,24 @@ class TestQotdInvertTheme:
 
     def test_inverted_colors(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         t = qotd_invert_theme()
-        assert t.style.fg == 1   # white text on black
+        assert t.style.fg == 1  # white text on black
         assert t.style.bg == 0
 
     def test_qotd_region_visible(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         assert qotd_invert_theme().layout.qotd.visible is True
 
     def test_weather_region_visible(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         assert qotd_invert_theme().layout.weather.visible is True
 
     def test_standard_regions_hidden(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         layout = qotd_invert_theme().layout
         assert layout.header.visible is False
         assert layout.week_view.visible is False
@@ -535,15 +562,18 @@ class TestQotdInvertTheme:
 
     def test_draw_order(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         assert qotd_invert_theme().layout.draw_order == ["qotd", "qotd_weather"]
 
     def test_canvas_fills_fully(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         layout = qotd_invert_theme().layout
         assert layout.qotd.h + layout.weather.h == 480
 
     def test_weather_at_bottom(self):
         from src.render.themes.qotd_invert import qotd_invert_theme
+
         layout = qotd_invert_theme().layout
         assert layout.weather.y + layout.weather.h == 480
 
@@ -559,6 +589,7 @@ class TestQotdInvertTheme:
 
     def test_uses_playfair_fonts(self):
         from PIL import ImageFont
+
         t = load_theme("qotd_invert")
         for fn in (t.style.font_regular, t.style.font_bold):
             assert isinstance(fn(24), ImageFont.FreeTypeFont)
@@ -568,15 +599,19 @@ class TestQotdInvertTheme:
 # Config wiring
 # ---------------------------------------------------------------------------
 
+
 class TestThemeConfigField:
     def test_config_default_theme_is_default(self):
         from src.config import Config
+
         cfg = Config()
         assert cfg.theme == "default"
 
     def test_load_config_parses_theme(self, tmp_path):
         import yaml
+
         from src.config import load_config
+
         config_file = tmp_path / "config.yaml"
         config_file.write_text(yaml.dump({"theme": "terminal"}))
         cfg = load_config(str(config_file))
@@ -584,6 +619,7 @@ class TestThemeConfigField:
 
     def test_unknown_theme_produces_validation_warning(self):
         from src.config import Config, validate_config
+
         cfg = Config()
         cfg.theme = "nonexistent_xyz"
         errors, warnings = validate_config(cfg)
@@ -592,6 +628,7 @@ class TestThemeConfigField:
 
     def test_known_theme_produces_no_theme_warning(self):
         from src.config import Config, validate_config
+
         cfg = Config()
         cfg.theme = "terminal"
         errors, warnings = validate_config(cfg)

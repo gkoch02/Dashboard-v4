@@ -1,9 +1,10 @@
-from dataclasses import dataclass, field
-from datetime import datetime, tzinfo
-from pathlib import Path
 import logging
 import re
 import zoneinfo
+from dataclasses import dataclass, field
+from datetime import datetime, tzinfo
+from pathlib import Path
+
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,7 @@ class DisplayConfig:
 @dataclass
 class ScheduleConfig:
     quiet_hours_start: int = 23  # hour (0-23) when quiet period begins
-    quiet_hours_end: int = 6     # hour (0-23) when active period resumes
+    quiet_hours_end: int = 6  # hour (0-23) when active period resumes
 
 
 @dataclass
@@ -72,12 +73,12 @@ class CacheConfig:
     events_ttl_minutes: int = 120
     birthdays_ttl_minutes: int = 1440
     # Per-source fetch intervals: skip fetching if cached data is younger
-    weather_fetch_interval: int = 30       # minutes between weather API calls
-    events_fetch_interval: int = 120       # minutes between calendar API calls
-    birthdays_fetch_interval: int = 1440   # minutes between birthday API calls
+    weather_fetch_interval: int = 30  # minutes between weather API calls
+    events_fetch_interval: int = 120  # minutes between calendar API calls
+    birthdays_fetch_interval: int = 1440  # minutes between birthday API calls
     # Circuit breaker: stop hitting an API after repeated failures
-    max_failures: int = 3                  # consecutive failures before opening breaker
-    cooldown_minutes: int = 30             # minutes to wait before retrying
+    max_failures: int = 3  # consecutive failures before opening breaker
+    cooldown_minutes: int = 30  # minutes to wait before retrying
     # PurpleAir air quality cache settings
     air_quality_ttl_minutes: int = 30
     air_quality_fetch_interval: int = 15
@@ -99,6 +100,7 @@ class RandomThemeConfig:
     - ``include``: if non-empty, only these themes are candidates.
     - ``exclude``: themes to always skip (applied after include).
     """
+
     include: list[str] = field(default_factory=list)
     exclude: list[str] = field(default_factory=list)
 
@@ -106,7 +108,8 @@ class RandomThemeConfig:
 @dataclass
 class ThemeScheduleEntry:
     """A single time → theme mapping for the time-of-day theme schedule."""
-    time: str   # "HH:MM" in 24-hour format
+
+    time: str  # "HH:MM" in 24-hour format
     theme: str  # concrete theme name (not "random")
 
 
@@ -119,6 +122,7 @@ class ThemeScheduleConfig:
     entries start after the current time), returns None and the normal
     theme/random logic applies. Ignored when ``--theme`` is passed via CLI.
     """
+
     entries: list[ThemeScheduleEntry] = field(default_factory=list)
 
 
@@ -137,6 +141,7 @@ class Config:
     title: str = "Home Dashboard"
     theme: str = "default"
     output_dir: str = "output"
+    state_dir: str = "state"
     log_level: str = "INFO"
     timezone: str = "local"
 
@@ -205,6 +210,7 @@ def load_config(path: str = "config/config.yaml") -> Config:
         default_w, default_h = 800, 480
         if "width" not in d or "height" not in d:
             from src.display.driver import WAVESHARE_MODELS
+
             if model in WAVESHARE_MODELS:
                 default_w = WAVESHARE_MODELS[model][1]
                 default_h = WAVESHARE_MODELS[model][2]
@@ -271,14 +277,19 @@ def load_config(path: str = "config/config.yaml") -> Config:
         entries = []
         if isinstance(raw_entries, list):
             for item in raw_entries:
-                entries.append(ThemeScheduleEntry(
-                    time=str(item.get("time", "")),
-                    theme=str(item.get("theme", "")),
-                ))
+                entries.append(
+                    ThemeScheduleEntry(
+                        time=str(item.get("time", "")),
+                        theme=str(item.get("theme", "")),
+                    )
+                )
         cfg.theme_schedule = ThemeScheduleConfig(entries=entries)
 
     if "output" in raw:
         cfg.output_dir = raw["output"].get("dry_run_dir", "output")
+
+    if "state_dir" in raw:
+        cfg.state_dir = str(raw["state_dir"])
 
     if "logging" in raw:
         cfg.log_level = raw["logging"].get("level", "INFO")
@@ -298,6 +309,7 @@ def load_config(path: str = "config/config.yaml") -> Config:
 @dataclass
 class ConfigWarning:
     """A non-fatal configuration issue detected during validation."""
+
     field: str
     message: str
     hint: str = ""
@@ -306,6 +318,7 @@ class ConfigWarning:
 @dataclass
 class ConfigError:
     """A fatal configuration issue that will prevent the dashboard from running."""
+
     field: str
     message: str
     hint: str = ""
@@ -324,11 +337,13 @@ def validate_config(
 
     # --- Config file existence ---
     if config_path and not Path(config_path).exists():
-        errors.append(ConfigError(
-            field="config",
-            message=f"Config file not found: {config_path}",
-            hint="Copy the template:  cp config/config.example.yaml config/config.yaml",
-        ))
+        errors.append(
+            ConfigError(
+                field="config",
+                message=f"Config file not found: {config_path}",
+                hint="Copy the template:  cp config/config.example.yaml config/config.yaml",
+            )
+        )
         return errors, warnings  # Can't validate further without a config file
 
     # --- Google / Calendar ---
@@ -337,92 +352,117 @@ def validate_config(
     if using_ical:
         ical_url = cfg.google.ical_url
         if not ical_url.startswith(("http://", "https://")):
-            errors.append(ConfigError(
-                field="google.ical_url",
-                message=f"ICS URL must start with http:// or https://, got: {ical_url!r}",
-                hint="Use the 'Secret address in iCal format' URL from Google Calendar settings.",
-            ))
+            errors.append(
+                ConfigError(
+                    field="google.ical_url",
+                    message=f"ICS URL must start with http:// or https://, got: {ical_url!r}",
+                    hint="Use the 'Secret address in iCal format' URL from Google Calendar settings.",
+                )
+            )
         sa_path = Path(cfg.google.service_account_path)
         if sa_path.exists():
-            warnings.append(ConfigWarning(
-                field="google.ical_url",
-                message="Both ical_url and a service account file are configured; "
-                        "ical_url takes precedence for calendar events.",
-                hint="Remove service_account_path from config if you only want ICS fetching.",
-            ))
+            warnings.append(
+                ConfigWarning(
+                    field="google.ical_url",
+                    message="Both ical_url and a service account file are configured; "
+                    "ical_url takes precedence for calendar events.",
+                    hint="Remove service_account_path from config if you only want ICS fetching.",
+                )
+            )
     else:
         sa_path = Path(cfg.google.service_account_path)
         if not sa_path.exists():
-            warnings.append(ConfigWarning(
-                field="google.service_account_path",
-                message=f"Service account file not found: {sa_path}",
-                hint="Download a service account JSON key from Google Cloud Console "
-                     "and place it at the configured path.",
-            ))
+            warnings.append(
+                ConfigWarning(
+                    field="google.service_account_path",
+                    message=f"Service account file not found: {sa_path}",
+                    hint="Download a service account JSON key from Google Cloud Console "
+                    "and place it at the configured path.",
+                )
+            )
 
         if cfg.google.calendar_id == "primary":
-            warnings.append(ConfigWarning(
-                field="google.calendar_id",
-                message="Calendar ID is set to 'primary' (the default).",
-                hint="Set google.calendar_id to your calendar's ID "
-                     "(Settings > Calendar > Integrate > Calendar ID).",
-            ))
+            warnings.append(
+                ConfigWarning(
+                    field="google.calendar_id",
+                    message="Calendar ID is set to 'primary' (the default).",
+                    hint="Set google.calendar_id to your calendar's ID "
+                    "(Settings > Calendar > Integrate > Calendar ID).",
+                )
+            )
 
     # --- Weather ---
     if not cfg.weather.api_key:
-        warnings.append(ConfigWarning(
-            field="weather.api_key",
-            message="Weather API key is not configured.",
-            hint="Sign up at https://openweathermap.org/api and add your key "
-                 "to weather.api_key in config.yaml.",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="weather.api_key",
+                message="Weather API key is not configured.",
+                hint="Sign up at https://openweathermap.org/api and add your key "
+                "to weather.api_key in config.yaml.",
+            )
+        )
     elif cfg.weather.api_key == "YOUR_OPENWEATHERMAP_API_KEY":
-        warnings.append(ConfigWarning(
-            field="weather.api_key",
-            message="Weather API key is still the placeholder value.",
-            hint="Replace with your actual OpenWeatherMap API key.",
-        ))
-    elif not re.fullmatch(r'[0-9a-fA-F]{32}', cfg.weather.api_key):
-        warnings.append(ConfigWarning(
-            field="weather.api_key",
-            message="OpenWeatherMap API key doesn't match expected format (32 hex characters).",
-            hint="Double-check your API key at https://home.openweathermap.org/api_keys",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="weather.api_key",
+                message="Weather API key is still the placeholder value.",
+                hint="Replace with your actual OpenWeatherMap API key.",
+            )
+        )
+    elif not re.fullmatch(r"[0-9a-fA-F]{32}", cfg.weather.api_key):
+        warnings.append(
+            ConfigWarning(
+                field="weather.api_key",
+                message="OpenWeatherMap API key doesn't match expected format (32 hex characters).",
+                hint="Double-check your API key at https://home.openweathermap.org/api_keys",
+            )
+        )
 
     if cfg.weather.latitude == 0.0 and cfg.weather.longitude == 0.0:
-        warnings.append(ConfigWarning(
-            field="weather.latitude/longitude",
-            message="Weather coordinates are at 0,0 (Gulf of Guinea).",
-            hint="Set weather.latitude and weather.longitude to your location.",
-        ))
-    elif (abs(cfg.weather.latitude - 40.7128) < 0.001
-          and abs(cfg.weather.longitude - (-74.0060)) < 0.001):
-        warnings.append(ConfigWarning(
-            field="weather.latitude/longitude",
-            message="Weather coordinates appear to be the example defaults (New York City).",
-            hint="Update weather.latitude and weather.longitude to your actual location.",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="weather.latitude/longitude",
+                message="Weather coordinates are at 0,0 (Gulf of Guinea).",
+                hint="Set weather.latitude and weather.longitude to your location.",
+            )
+        )
+    elif (
+        abs(cfg.weather.latitude - 40.7128) < 0.001
+        and abs(cfg.weather.longitude - (-74.0060)) < 0.001
+    ):
+        warnings.append(
+            ConfigWarning(
+                field="weather.latitude/longitude",
+                message="Weather coordinates appear to be the example defaults (New York City).",
+                hint="Update weather.latitude and weather.longitude to your actual location.",
+            )
+        )
 
     # --- Timezone ---
     if cfg.timezone != "local":
         try:
             zoneinfo.ZoneInfo(cfg.timezone)
         except (KeyError, zoneinfo.ZoneInfoNotFoundError):
-            errors.append(ConfigError(
-                field="timezone",
-                message=f"Invalid IANA timezone: '{cfg.timezone}'",
-                hint="Use a valid name like 'America/Los_Angeles' or 'UTC'. "
-                     "See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones",
-            ))
+            errors.append(
+                ConfigError(
+                    field="timezone",
+                    message=f"Invalid IANA timezone: '{cfg.timezone}'",
+                    hint="Use a valid name like 'America/Los_Angeles' or 'UTC'. "
+                    "See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones",
+                )
+            )
 
     # --- Theme ---
     from src.render.theme import AVAILABLE_THEMES
+
     if cfg.theme not in AVAILABLE_THEMES:
-        warnings.append(ConfigWarning(
-            field="theme",
-            message=f"Unknown theme: '{cfg.theme}'",
-            hint=f"Available themes: {', '.join(sorted(AVAILABLE_THEMES))}",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="theme",
+                message=f"Unknown theme: '{cfg.theme}'",
+                hint=f"Available themes: {', '.join(sorted(AVAILABLE_THEMES))}",
+            )
+        )
 
     if cfg.theme in ("random", "random_daily", "random_hourly"):
         real_themes = AVAILABLE_THEMES - {"random", "random_daily", "random_hourly"}
@@ -432,19 +472,24 @@ def validate_config(
         ]:
             invalid = set(lst) - real_themes
             if invalid:
-                warnings.append(ConfigWarning(
-                    field=label,
-                    message=f"Unknown theme(s): {', '.join(sorted(invalid))}",
-                    hint=f"Available themes: {', '.join(sorted(real_themes))}",
-                ))
+                warnings.append(
+                    ConfigWarning(
+                        field=label,
+                        message=f"Unknown theme(s): {', '.join(sorted(invalid))}",
+                        hint=f"Available themes: {', '.join(sorted(real_themes))}",
+                    )
+                )
         from src.render.random_theme import eligible_themes
+
         pool = eligible_themes(cfg.random_theme.include, cfg.random_theme.exclude)
         if not pool:
-            warnings.append(ConfigWarning(
-                field="random_theme",
-                message="Random theme pool is empty — all themes have been excluded.",
-                hint="Check your include/exclude lists; the dashboard will fall back to 'default'.",
-            ))
+            warnings.append(
+                ConfigWarning(
+                    field="random_theme",
+                    message="Random theme pool is empty — all themes have been excluded.",
+                    hint="Check your include/exclude lists; the dashboard will fall back to 'default'.",
+                )
+            )
 
     # --- Theme schedule ---
     real_themes = AVAILABLE_THEMES - {"random"}
@@ -457,50 +502,63 @@ def validate_config(
             if not (0 <= h <= 23 and 0 <= m <= 59):
                 raise ValueError
         except (ValueError, AttributeError):
-            errors.append(ConfigError(
-                field=f"theme_schedule[{i}].time",
-                message=f"Invalid time '{entry.time}' — must be HH:MM (24-hour)",
-                hint="Example: '22:00' for 10 PM",
-            ))
+            errors.append(
+                ConfigError(
+                    field=f"theme_schedule[{i}].time",
+                    message=f"Invalid time '{entry.time}' — must be HH:MM (24-hour)",
+                    hint="Example: '22:00' for 10 PM",
+                )
+            )
         if entry.theme not in real_themes:
-            warnings.append(ConfigWarning(
-                field=f"theme_schedule[{i}].theme",
-                message=f"Unknown theme '{entry.theme}' in schedule",
-                hint=f"Available themes: {', '.join(sorted(real_themes))}",
-            ))
+            warnings.append(
+                ConfigWarning(
+                    field=f"theme_schedule[{i}].theme",
+                    message=f"Unknown theme '{entry.theme}' in schedule",
+                    hint=f"Available themes: {', '.join(sorted(real_themes))}",
+                )
+            )
 
     # --- Display model ---
     from src.display.driver import WAVESHARE_MODELS
+
     if cfg.display.model not in WAVESHARE_MODELS:
-        warnings.append(ConfigWarning(
-            field="display.model",
-            message=f"Unknown display model: '{cfg.display.model}'",
-            hint=f"Supported models: {', '.join(sorted(WAVESHARE_MODELS))}",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="display.model",
+                message=f"Unknown display model: '{cfg.display.model}'",
+                hint=f"Supported models: {', '.join(sorted(WAVESHARE_MODELS))}",
+            )
+        )
 
     # --- Birthdays ---
     if cfg.birthdays.source == "file":
         bday_path = Path(cfg.birthdays.file_path)
         if not bday_path.exists():
-            warnings.append(ConfigWarning(
-                field="birthdays.file_path",
-                message=f"Birthday file not found: {bday_path}",
-                hint="Create the file or change birthdays.source to 'calendar' or 'contacts'.",
-            ))
+            warnings.append(
+                ConfigWarning(
+                    field="birthdays.file_path",
+                    message=f"Birthday file not found: {bday_path}",
+                    hint="Create the file or change birthdays.source to 'calendar' or 'contacts'.",
+                )
+            )
     elif cfg.birthdays.source == "contacts" and not cfg.google.contacts_email:
-        errors.append(ConfigError(
-            field="google.contacts_email",
-            message="birthdays.source is 'contacts' but google.contacts_email is not set.",
-            hint="Set google.contacts_email to the email address of the user "
-                 "whose contacts should be read.",
-        ))
+        errors.append(
+            ConfigError(
+                field="google.contacts_email",
+                message="birthdays.source is 'contacts' but google.contacts_email is not set.",
+                hint="Set google.contacts_email to the email address of the user "
+                "whose contacts should be read.",
+            )
+        )
 
     if cfg.birthdays.source not in ("file", "calendar", "contacts"):
-        errors.append(ConfigError(
-            field="birthdays.source",
-            message=f"Invalid birthday source: '{cfg.birthdays.source}'",
-            hint="Must be one of: file, calendar, contacts",
-        ))
+        errors.append(
+            ConfigError(
+                field="birthdays.source",
+                message=f"Invalid birthday source: '{cfg.birthdays.source}'",
+                hint="Must be one of: file, calendar, contacts",
+            )
+        )
 
     # --- Schedule ---
     for label, val in [
@@ -508,20 +566,24 @@ def validate_config(
         ("schedule.quiet_hours_end", cfg.schedule.quiet_hours_end),
     ]:
         if not (0 <= val <= 23):
-            errors.append(ConfigError(
-                field=label,
-                message=f"Invalid hour value: {val}",
-                hint="Must be an integer between 0 and 23.",
-            ))
+            errors.append(
+                ConfigError(
+                    field=label,
+                    message=f"Invalid hour value: {val}",
+                    hint="Must be an integer between 0 and 23.",
+                )
+            )
 
     # --- Quote refresh ---
     valid_quote_refresh = {"daily", "twice_daily", "hourly"}
     if cfg.cache.quote_refresh not in valid_quote_refresh:
-        errors.append(ConfigError(
-            field="cache.quote_refresh",
-            message=f"Invalid quote_refresh value: '{cfg.cache.quote_refresh}'",
-            hint=f"Must be one of: {', '.join(sorted(valid_quote_refresh))}",
-        ))
+        errors.append(
+            ConfigError(
+                field="cache.quote_refresh",
+                message=f"Invalid quote_refresh value: '{cfg.cache.quote_refresh}'",
+                hint=f"Must be one of: {', '.join(sorted(valid_quote_refresh))}",
+            )
+        )
 
     # --- Cache fetch intervals ---
     for label, val in [
@@ -530,36 +592,44 @@ def validate_config(
         ("cache.birthdays_fetch_interval", cfg.cache.birthdays_fetch_interval),
     ]:
         if val <= 0:
-            errors.append(ConfigError(
-                field=label,
-                message=f"Fetch interval must be positive, got {val}",
-                hint="Set a positive number of minutes.",
-            ))
+            errors.append(
+                ConfigError(
+                    field=label,
+                    message=f"Fetch interval must be positive, got {val}",
+                    hint="Set a positive number of minutes.",
+                )
+            )
 
     # --- Weather units ---
     if cfg.weather.units not in ("imperial", "metric", "standard"):
-        warnings.append(ConfigWarning(
-            field="weather.units",
-            message=f"Unknown weather units: '{cfg.weather.units}'",
-            hint="Must be one of: imperial, metric, standard",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="weather.units",
+                message=f"Unknown weather units: '{cfg.weather.units}'",
+                hint="Must be one of: imperial, metric, standard",
+            )
+        )
 
     # --- PurpleAir ---
     if cfg.purpleair.api_key and not cfg.purpleair.sensor_id:
-        warnings.append(ConfigWarning(
-            field="purpleair.sensor_id",
-            message="PurpleAir api_key is set but sensor_id is missing.",
-            hint=(
-                "Find your sensor_index at map.purpleair.com "
-                "(click your sensor — the ID appears in the URL as ?select=XXXXX)."
-            ),
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="purpleair.sensor_id",
+                message="PurpleAir api_key is set but sensor_id is missing.",
+                hint=(
+                    "Find your sensor_index at map.purpleair.com "
+                    "(click your sensor — the ID appears in the URL as ?select=XXXXX)."
+                ),
+            )
+        )
     if cfg.purpleair.sensor_id and not cfg.purpleair.api_key:
-        warnings.append(ConfigWarning(
-            field="purpleair.api_key",
-            message="PurpleAir sensor_id is set but api_key is missing.",
-            hint="Get a free API key at develop.purpleair.com.",
-        ))
+        warnings.append(
+            ConfigWarning(
+                field="purpleair.api_key",
+                message="PurpleAir sensor_id is set but api_key is missing.",
+                hint="Get a free API key at develop.purpleair.com.",
+            )
+        )
 
     return errors, warnings
 
@@ -573,9 +643,9 @@ def print_validation_report(errors: list[ConfigError], warnings: list[ConfigWarn
         return
 
     if errors:
-        print(f"\n{'='*60}", file=sys.stderr)
+        print(f"\n{'=' * 60}", file=sys.stderr)
         print(f"  ERRORS ({len(errors)}) — must fix before running", file=sys.stderr)
-        print(f"{'='*60}", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
         for e in errors:
             print(f"\n  [{e.field}]", file=sys.stderr)
             print(f"    {e.message}", file=sys.stderr)
@@ -583,9 +653,9 @@ def print_validation_report(errors: list[ConfigError], warnings: list[ConfigWarn
                 print(f"    -> {e.hint}", file=sys.stderr)
 
     if warnings:
-        print(f"\n{'='*60}", file=sys.stderr)
+        print(f"\n{'=' * 60}", file=sys.stderr)
         print(f"  WARNINGS ({len(warnings)}) — may cause issues", file=sys.stderr)
-        print(f"{'='*60}", file=sys.stderr)
+        print(f"{'=' * 60}", file=sys.stderr)
         for w in warnings:
             print(f"\n  [{w.field}]", file=sys.stderr)
             print(f"    {w.message}", file=sys.stderr)

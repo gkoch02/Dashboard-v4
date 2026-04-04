@@ -1,12 +1,10 @@
-"""Tests for src/services_theme_service.py — schedule resolution and theme name resolution."""
+"""Tests for src/services/theme.py — schedule resolution and theme name resolution."""
 
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from src.config import ThemeScheduleConfig, ThemeScheduleEntry
-from src.services_theme_service import _resolve_scheduled_theme, resolve_theme_name
+from src.config import ThemeScheduleEntry
+from src.services.theme import _resolve_scheduled_theme, resolve_theme_name
 
 
 def _entries(*pairs):
@@ -31,6 +29,7 @@ def _make_cfg(theme="default", entries=None):
 # ---------------------------------------------------------------------------
 # _resolve_scheduled_theme
 # ---------------------------------------------------------------------------
+
 
 class TestResolveScheduledTheme:
     def test_empty_entries_returns_none(self):
@@ -79,6 +78,7 @@ class TestResolveScheduledTheme:
 # resolve_theme_name — priority chain
 # ---------------------------------------------------------------------------
 
+
 class TestResolveThemeName:
     def test_cli_override_bypasses_schedule(self):
         """--theme terminal should win even when a schedule entry applies."""
@@ -120,7 +120,9 @@ class TestResolveThemeName:
 
     def test_random_theme_resolved_when_cfg_theme_is_random(self):
         cfg = _make_cfg(theme="random", entries=[])
-        with patch("src.render.random_theme.pick_random_theme", return_value="fantasy") as mock_pick:
+        with patch(
+            "src.render.random_theme.pick_random_theme", return_value="fantasy"
+        ) as mock_pick:
             result = resolve_theme_name(cfg, override_theme=None, now=_now(12))
         assert result == "fantasy"
         mock_pick.assert_called_once()

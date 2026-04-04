@@ -7,19 +7,21 @@ test_weather_full_aqi.py (which focuses on the AQI card only).
 
 from datetime import date, datetime, timedelta
 
-import pytest
 from PIL import Image, ImageDraw
 
 from src.data.models import (
-    AirQualityData, DayForecast, WeatherAlert, WeatherData,
+    AirQualityData,
+    DayForecast,
+    WeatherAlert,
+    WeatherData,
 )
 from src.render.components.weather_full import draw_weather_full
 from src.render.theme import ComponentRegion, ThemeStyle
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -69,6 +71,7 @@ TODAY = date(2024, 3, 15)
 # Smoke — basic rendering
 # ---------------------------------------------------------------------------
 
+
 class TestDrawWeatherFullSmoke:
     def test_renders_with_full_data(self):
         _, draw = _make_draw()
@@ -91,7 +94,9 @@ class TestDrawWeatherFullSmoke:
     def test_custom_region_and_style(self):
         _, draw = _make_draw()
         draw_weather_full(
-            draw, _make_weather(), TODAY,
+            draw,
+            _make_weather(),
+            TODAY,
             region=ComponentRegion(0, 0, 800, 480),
             style=ThemeStyle(),
         )
@@ -100,6 +105,7 @@ class TestDrawWeatherFullSmoke:
 # ---------------------------------------------------------------------------
 # Unavailable fallback
 # ---------------------------------------------------------------------------
+
 
 class TestDrawWeatherFullUnavailable:
     def test_renders_when_weather_is_none(self):
@@ -120,6 +126,7 @@ class TestDrawWeatherFullUnavailable:
 # ---------------------------------------------------------------------------
 # Hero zone — optional fields
 # ---------------------------------------------------------------------------
+
 
 class TestHeroZone:
     def test_renders_with_location_name(self):
@@ -151,6 +158,7 @@ class TestHeroZone:
 # ---------------------------------------------------------------------------
 # Metric cards — optional wind, UV, pressure
 # ---------------------------------------------------------------------------
+
 
 class TestMetricCards:
     def test_four_cards_without_air_quality(self):
@@ -203,6 +211,7 @@ class TestMetricCards:
 # ---------------------------------------------------------------------------
 # Detail strip
 # ---------------------------------------------------------------------------
+
 
 class TestDetailStrip:
     def test_renders_with_sunrise_and_sunset(self):
@@ -259,6 +268,7 @@ class TestDetailStrip:
 # Alert banner
 # ---------------------------------------------------------------------------
 
+
 class TestAlertBanner:
     def test_renders_single_alert(self):
         _, draw = _make_draw()
@@ -297,6 +307,7 @@ class TestAlertBanner:
 # Forecast grid
 # ---------------------------------------------------------------------------
 
+
 class TestForecastGrid:
     def test_renders_five_day_forecast(self):
         _, draw = _make_draw()
@@ -332,8 +343,10 @@ class TestForecastGrid:
         fc = [
             DayForecast(
                 date=date(2024, 3, 17),
-                high=65.0, low=50.0,
-                icon="01d", description="clear",
+                high=65.0,
+                low=50.0,
+                icon="01d",
+                description="clear",
                 precip_chance=0.02,
             )
         ]
@@ -344,8 +357,10 @@ class TestForecastGrid:
         fc = [
             DayForecast(
                 date=date(2024, 3, 17),
-                high=65.0, low=50.0,
-                icon="invalid_xyz", description="unknown",
+                high=65.0,
+                low=50.0,
+                icon="invalid_xyz",
+                description="unknown",
             )
         ]
         draw_weather_full(draw, _make_weather(forecast=fc), TODAY)

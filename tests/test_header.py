@@ -26,7 +26,8 @@ class TestDrawHeader:
         """No stale sources → header shows 'Updated' (no alert prefix)."""
         img, draw = _make_draw()
         draw_header(
-            draw, self._now(),
+            draw,
+            self._now(),
             source_staleness={"events": StalenessLevel.FRESH, "weather": StalenessLevel.FRESH},
         )
         assert img.getbbox() is not None  # rendered without crash
@@ -36,7 +37,8 @@ class TestDrawHeader:
         img, draw = _make_draw()
         # AGING is below the threshold for '! Stale' label
         draw_header(
-            draw, self._now(),
+            draw,
+            self._now(),
             source_staleness={"weather": StalenessLevel.AGING},
         )
         assert img.getbbox() is not None
@@ -45,7 +47,8 @@ class TestDrawHeader:
         """STALE source triggers '! Stale' label (lines 39-49)."""
         img, draw = _make_draw()
         draw_header(
-            draw, self._now(),
+            draw,
+            self._now(),
             source_staleness={"weather": StalenessLevel.STALE},
         )
         assert img.getbbox() is not None
@@ -54,7 +57,8 @@ class TestDrawHeader:
         """EXPIRED source also triggers '! Stale' label."""
         img, draw = _make_draw()
         draw_header(
-            draw, self._now(),
+            draw,
+            self._now(),
             source_staleness={"events": StalenessLevel.EXPIRED},
         )
         assert img.getbbox() is not None
@@ -64,7 +68,8 @@ class TestDrawHeader:
         img, draw = _make_draw()
         # is_stale=True but no source_staleness with STALE/EXPIRED
         draw_header(
-            draw, self._now(),
+            draw,
+            self._now(),
             is_stale=True,
             source_staleness={"weather": StalenessLevel.FRESH},
         )
@@ -80,7 +85,8 @@ class TestDrawHeader:
         """Worst staleness level wins: STALE beats AGING (lines 39-47)."""
         img, draw = _make_draw()
         draw_header(
-            draw, self._now(),
+            draw,
+            self._now(),
             source_staleness={
                 "events": StalenessLevel.AGING,
                 "weather": StalenessLevel.STALE,

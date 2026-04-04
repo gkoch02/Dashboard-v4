@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from src.render.fonts import cinzel_bold, regular, medium, semibold
+from src.render.fonts import cinzel_bold, medium, regular, semibold
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
 if TYPE_CHECKING:
@@ -31,38 +31,44 @@ if TYPE_CHECKING:
 _CANVAS_W = 800
 _CANVAS_H = 480
 
-_HEADER_H = 50          # tall masthead for the fantasy title
-_SIDEBAR_W = 240        # arcane tower on the left
+_HEADER_H = 50  # tall masthead for the fantasy title
+_SIDEBAR_W = 240  # arcane tower on the left
 
 _BODY_Y = _HEADER_H
-_BODY_H = _CANVAS_H - _HEADER_H   # 430px
+_BODY_H = _CANVAS_H - _HEADER_H  # 430px
 
 _QUEST_X = _SIDEBAR_W
 _QUEST_W = _CANVAS_W - _SIDEBAR_W  # 585px
 
 # Sidebar panels stacked vertically; heights must sum to _BODY_H
-_WEATHER_H = 180        # oracle's omen — weather
-_BIRTHDAY_H = 130       # the fellowship — birthdays
+_WEATHER_H = 180  # oracle's omen — weather
+_BIRTHDAY_H = 130  # the fellowship — birthdays
 _INFO_H = _BODY_H - _WEATHER_H - _BIRTHDAY_H  # ancient wisdom — quote
 
 # The ornamental double-frame uses an inner border at inset 6 and an outer
 # border at inset 2.  Component regions are inset by one extra pixel so that
 # solid-filled rectangles (inverted header, alert bars, month band, today
 # column) never reach the frame band and visually overwrite the border lines.
-_CI = 7   # content inset — one pixel inside the inner border (INNER=6)
+_CI = 7  # content inset — one pixel inside the inner border (INNER=6)
 
 
 # ---------------------------------------------------------------------------
 # Ornamental drawing helpers
 # ---------------------------------------------------------------------------
 
-def _diamond(draw: "ImageDraw.ImageDraw", cx: int, cy: int, r: int, fill: int) -> None:
+
+def _diamond(draw: ImageDraw.ImageDraw, cx: int, cy: int, r: int, fill: int) -> None:
     """Draw a solid diamond (rotated square) ornament."""
     draw.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)], fill=fill)
 
 
 def _double_hline(
-    draw: "ImageDraw.ImageDraw", y: int, x0: int, x1: int, gap: int, fill: int,
+    draw: ImageDraw.ImageDraw,
+    y: int,
+    x0: int,
+    x1: int,
+    gap: int,
+    fill: int,
 ) -> None:
     """Draw a double horizontal rule (two parallel lines separated by *gap* px)."""
     draw.line([(x0, y), (x1, y)], fill=fill, width=1)
@@ -70,7 +76,12 @@ def _double_hline(
 
 
 def _double_vline(
-    draw: "ImageDraw.ImageDraw", x: int, y0: int, y1: int, gap: int, fill: int,
+    draw: ImageDraw.ImageDraw,
+    x: int,
+    y0: int,
+    y1: int,
+    gap: int,
+    fill: int,
 ) -> None:
     """Draw a double vertical rule (two parallel lines separated by *gap* px)."""
     draw.line([(x, y0), (x, y1)], fill=fill, width=1)
@@ -78,39 +89,41 @@ def _double_vline(
 
 
 def _corner_ornament(
-    draw: "ImageDraw.ImageDraw", cx: int, cy: int, fill: int,
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    cy: int,
+    fill: int,
 ) -> None:
     """Draw a corner ornament: concentric diamond + inner dot."""
     _diamond(draw, cx, cy, 7, fill)
-    _diamond(draw, cx, cy, 3, 1 - fill)   # inner diamond in opposite color
-
+    _diamond(draw, cx, cy, 3, 1 - fill)  # inner diamond in opposite color
 
 
 def _draw_fantasy_overlay(
-    draw: "ImageDraw.ImageDraw",
+    draw: ImageDraw.ImageDraw,
     layout: ThemeLayout,
     style: ThemeStyle,
 ) -> None:
     """Overlay function: draws all D&D ornamental elements on top of components."""
     W = layout.canvas_w
     H = layout.canvas_h
-    fg = style.fg   # WHITE (1) on dark canvas
-    bg = style.bg   # BLACK (0)
+    fg = style.fg  # WHITE (1) on dark canvas
+    bg = style.bg  # BLACK (0)
 
     # ------------------------------------------------------------------
     # 1. Outer double-frame border
     # ------------------------------------------------------------------
-    OUTER = 2   # outer border inset from canvas edge
-    INNER = 6   # inner accent line inset
+    OUTER = 2  # outer border inset from canvas edge
+    INNER = 6  # inner accent line inset
 
     # Clear the entire frame band to bg before drawing borders.  Component
     # fills (inverted header, alert columns, month band, today column) may
     # have painted white over the black gap between the two border lines,
     # making the double-frame effect invisible.  Resetting those strips here
     # ensures the gap is always bg (black) regardless of component content.
-    draw.rectangle([OUTER, OUTER, W - OUTER - 1, INNER], fill=bg)           # top strip
+    draw.rectangle([OUTER, OUTER, W - OUTER - 1, INNER], fill=bg)  # top strip
     draw.rectangle([OUTER, H - INNER - 1, W - OUTER - 1, H - OUTER - 1], fill=bg)  # bottom
-    draw.rectangle([OUTER, OUTER, INNER, H - OUTER - 1], fill=bg)           # left strip
+    draw.rectangle([OUTER, OUTER, INNER, H - OUTER - 1], fill=bg)  # left strip
     draw.rectangle([W - INNER - 1, OUTER, W - OUTER - 1, H - OUTER - 1], fill=bg)  # right
 
     draw.rectangle([OUTER, OUTER, W - OUTER - 1, H - OUTER - 1], outline=fg, width=2)
@@ -119,8 +132,12 @@ def _draw_fantasy_overlay(
     # ------------------------------------------------------------------
     # 2. Corner ornaments (at inner-frame corners)
     # ------------------------------------------------------------------
-    for cx, cy in [(INNER, INNER), (W - INNER - 1, INNER),
-                   (INNER, H - INNER - 1), (W - INNER - 1, H - INNER - 1)]:
+    for cx, cy in [
+        (INNER, INNER),
+        (W - INNER - 1, INNER),
+        (INNER, H - INNER - 1),
+        (W - INNER - 1, H - INNER - 1),
+    ]:
         _corner_ornament(draw, cx, cy, fg)
 
     # ------------------------------------------------------------------
@@ -129,10 +146,8 @@ def _draw_fantasy_overlay(
     hdr_bottom = _HEADER_H - 1
     # Erase the default single line; replace with a decorative thick rule
     draw.rectangle([INNER + 1, hdr_bottom - 2, W - INNER - 2, hdr_bottom + 3], fill=bg)
-    draw.line([(INNER + 1, hdr_bottom - 1), (W - INNER - 2, hdr_bottom - 1)],
-              fill=fg, width=1)
-    draw.line([(INNER + 1, hdr_bottom + 2), (W - INNER - 2, hdr_bottom + 2)],
-              fill=fg, width=1)
+    draw.line([(INNER + 1, hdr_bottom - 1), (W - INNER - 2, hdr_bottom - 1)], fill=fg, width=1)
+    draw.line([(INNER + 1, hdr_bottom + 2), (W - INNER - 2, hdr_bottom + 2)], fill=fg, width=1)
     mid_x = W // 2
     _diamond(draw, mid_x, hdr_bottom, 5, fg)
 
@@ -181,14 +196,19 @@ def _draw_fantasy_overlay(
     # 7. Small diamond tick-marks along canvas mid-edges for flair
     # ------------------------------------------------------------------
     # Top and bottom edge midpoints
-    for mx, my in [(W // 2, INNER), (W // 2, H - INNER - 1),
-                   (INNER, H // 2), (W - INNER - 1, H // 2)]:
+    for mx, my in [
+        (W // 2, INNER),
+        (W // 2, H - INNER - 1),
+        (INNER, H // 2),
+        (W - INNER - 1, H // 2),
+    ]:
         _diamond(draw, mx, my, 4, fg)
 
 
 # ---------------------------------------------------------------------------
 # Theme factory
 # ---------------------------------------------------------------------------
+
 
 def fantasy_theme() -> Theme:
     """Return the Fantasy theme — dark canvas, Cinzel headers, ornamental borders."""
@@ -210,11 +230,11 @@ def fantasy_theme() -> Theme:
     )
 
     style = ThemeStyle(
-        fg=1,                           # WHITE on black canvas
-        bg=0,                           # BLACK background
-        invert_header=True,             # filled black header bar (already black = canvas bg)
-        invert_today_col=True,          # white-filled today column with black text
-        invert_allday_bars=True,        # solid white bars for all-day events
+        fg=1,  # WHITE on black canvas
+        bg=0,  # BLACK background
+        invert_header=True,  # filled black header bar (already black = canvas bg)
+        invert_today_col=True,  # white-filled today column with black text
+        invert_allday_bars=True,  # solid white bars for all-day events
         spacing_scale=1.0,
         label_font_size=10,
         label_font_weight="bold",
@@ -223,8 +243,8 @@ def fantasy_theme() -> Theme:
         # Plus Jakarta Sans for all event/body text — legible at small sizes in narrow columns.
         font_regular=regular,
         font_medium=medium,
-        font_semibold=semibold,         # event titles stay in Plus Jakarta Sans
-        font_bold=cinzel_bold,          # day numbers, MARCH, header title in Cinzel
+        font_semibold=semibold,  # event titles stay in Plus Jakarta Sans
+        font_bold=cinzel_bold,  # day numbers, MARCH, header title in Cinzel
         component_labels={
             "weather": "THE ORACLE'S OMEN",
             "birthdays": "THE FELLOWSHIP",

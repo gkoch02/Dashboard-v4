@@ -1,7 +1,7 @@
 """Tests for src/render/icons.py — OWM icon map and draw_weather_icon()."""
 
-from PIL import Image, ImageDraw
 import pytest
+from PIL import Image, ImageDraw
 
 from src.render.icons import (
     FALLBACK_ICON,

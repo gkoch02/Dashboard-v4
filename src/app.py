@@ -1,17 +1,45 @@
 import logging
-from datetime import date as _date, datetime
+import shutil
+from datetime import date as _date
+from datetime import datetime
+from pathlib import Path
 
+from src.config import resolve_tz
 from src.data_pipeline import DataPipeline
 from src.dummy_data import generate_dummy_data
 from src.filters import filter_events
 from src.render.canvas import render_dashboard
-from src.services.output import OutputService
-from src.config import resolve_tz
 from src.render.theme import load_theme
+from src.services.output import OutputService
 from src.services.run_policy import should_force_full_refresh, should_skip_refresh
 from src.services.theme import resolve_theme_name
 
 logger = logging.getLogger(__name__)
+
+# State files that belong in state_dir (not output_dir)
+_STATE_FILES = [
+    "dashboard_cache.json",
+    "dashboard_breaker_state.json",
+    "api_quota_state.json",
+    "calendar_sync_state.json",
+    "random_theme_state.json",
+    "random_theme_hourly_state.json",
+]
+
+
+def _migrate_state_files(output_dir: str, state_dir: str) -> None:
+    """Move state files from output/ to state/ on first run after upgrade."""
+    src_path = Path(output_dir)
+    dst_path = Path(state_dir)
+    for filename in _STATE_FILES:
+        old = src_path / filename
+        new = dst_path / filename
+        if old.exists() and not new.exists():
+            try:
+                shutil.move(str(old), str(new))
+                logger.info("Migrated state file: %s → %s", old, new)
+            except Exception as exc:
+                logger.warning("Failed to migrate %s: %s", old, exc)
 
 
 class DashboardApp:
@@ -20,6 +48,10 @@ class DashboardApp:
         self.args = args
         self.tz = resolve_tz(cfg.timezone)
         self.output = OutputService(cfg, self.tz)
+
+        # Ensure state directory exists and migrate legacy state files
+        Path(cfg.state_dir).mkdir(parents=True, exist_ok=True)
+        _migrate_state_files(cfg.output_dir, cfg.state_dir)
 
     def run(self):
         logger.info("Using timezone: %s", self.tz)
@@ -39,7 +71,9 @@ class DashboardApp:
             return
 
         force_full = should_force_full_refresh(
-            now, self.cfg.schedule.quiet_hours_end, self.args.force_full_refresh,
+            now,
+            self.cfg.schedule.quiet_hours_end,
+            self.args.force_full_refresh,
         )
         if force_full and not self.args.force_full_refresh:
             logger.info("Morning startup — forcing full refresh")
@@ -55,7 +89,8 @@ class DashboardApp:
 
         logger.info("Rendering dashboard")
         image = render_dashboard(
-            data, self.cfg.display,
+            data,
+            self.cfg.display,
             title=self.cfg.title,
             theme=theme,
             quote_refresh=self.cfg.cache.quote_refresh,
@@ -79,7 +114,7 @@ class DashboardApp:
 
         pipeline = DataPipeline(
             self.cfg,
-            cache_dir=self.cfg.output_dir,
+            cache_dir=self.cfg.state_dir,
             tz=self.tz,
             force_refresh=force_full,
             ignore_breakers=self.args.ignore_breakers,

@@ -6,12 +6,12 @@ import pytest
 
 from src.config import PurpleAirConfig
 from src.data.models import AirQualityData
-from src.fetchers.purpleair import fetch_air_quality, _pm25_to_aqi, _aqi_category
-
+from src.fetchers.purpleair import _aqi_category, _pm25_to_aqi, fetch_air_quality
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def cfg():
@@ -38,24 +38,28 @@ def _make_response(
 # AQI calculation unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestPm25ToAqi:
-    @pytest.mark.parametrize("pm25,expected_aqi,expected_cat", [
-        (0.0,   0,   "Good"),
-        (6.0,   25,  "Good"),
-        (12.0,  50,  "Good"),
-        (12.1,  51,  "Moderate"),
-        (35.4,  100, "Moderate"),
-        (35.5,  101, "Unhealthy for Sensitive Groups"),
-        (55.4,  150, "Unhealthy for Sensitive Groups"),
-        (55.5,  151, "Unhealthy"),
-        (150.4, 200, "Unhealthy"),
-        (150.5, 201, "Very Unhealthy"),
-        (250.4, 300, "Very Unhealthy"),
-        (250.5, 301, "Hazardous"),
-        (350.4, 400, "Hazardous"),
-        (350.5, 401, "Hazardous"),
-        (500.4, 500, "Hazardous"),
-    ])
+    @pytest.mark.parametrize(
+        "pm25,expected_aqi,expected_cat",
+        [
+            (0.0, 0, "Good"),
+            (6.0, 25, "Good"),
+            (12.0, 50, "Good"),
+            (12.1, 51, "Moderate"),
+            (35.4, 100, "Moderate"),
+            (35.5, 101, "Unhealthy for Sensitive Groups"),
+            (55.4, 150, "Unhealthy for Sensitive Groups"),
+            (55.5, 151, "Unhealthy"),
+            (150.4, 200, "Unhealthy"),
+            (150.5, 201, "Very Unhealthy"),
+            (250.4, 300, "Very Unhealthy"),
+            (250.5, 301, "Hazardous"),
+            (350.4, 400, "Hazardous"),
+            (350.5, 401, "Hazardous"),
+            (500.4, 500, "Hazardous"),
+        ],
+    )
     def test_breakpoints(self, pm25, expected_aqi, expected_cat):
         aqi, cat = _pm25_to_aqi(pm25)
         assert aqi == expected_aqi
@@ -77,21 +81,24 @@ class TestPm25ToAqi:
 
 
 class TestAqiCategory:
-    @pytest.mark.parametrize("aqi,expected", [
-        (0,   "Good"),
-        (50,  "Good"),
-        (51,  "Moderate"),
-        (100, "Moderate"),
-        (101, "Unhealthy for Sensitive Groups"),
-        (150, "Unhealthy for Sensitive Groups"),
-        (151, "Unhealthy"),
-        (200, "Unhealthy"),
-        (201, "Very Unhealthy"),
-        (300, "Very Unhealthy"),
-        (301, "Hazardous"),
-        (500, "Hazardous"),
-        (501, "Hazardous"),
-    ])
+    @pytest.mark.parametrize(
+        "aqi,expected",
+        [
+            (0, "Good"),
+            (50, "Good"),
+            (51, "Moderate"),
+            (100, "Moderate"),
+            (101, "Unhealthy for Sensitive Groups"),
+            (150, "Unhealthy for Sensitive Groups"),
+            (151, "Unhealthy"),
+            (200, "Unhealthy"),
+            (201, "Very Unhealthy"),
+            (300, "Very Unhealthy"),
+            (301, "Hazardous"),
+            (500, "Hazardous"),
+            (501, "Hazardous"),
+        ],
+    )
     def test_categories(self, aqi, expected):
         assert _aqi_category(aqi) == expected
 
@@ -99,6 +106,7 @@ class TestAqiCategory:
 # ---------------------------------------------------------------------------
 # Fetcher integration tests (mocked HTTP)
 # ---------------------------------------------------------------------------
+
 
 class TestFetchAirQuality:
     def test_raises_without_api_key(self):
@@ -123,7 +131,7 @@ class TestFetchAirQuality:
         assert result.pm10 == 12.2
         assert result.pm1 == 5.0
         assert result.sensor_id == cfg.sensor_id
-        assert result.aqi == 35   # AQI for 8.5 µg/m³
+        assert result.aqi == 35  # AQI for 8.5 µg/m³
         assert result.category == "Good"
 
     def test_fetch_without_pm10(self, cfg):

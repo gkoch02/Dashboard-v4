@@ -22,8 +22,11 @@ def filter_events(
     calendar names use substring matching, keywords use substring matching
     against the event summary.
     """
-    if (not filters.exclude_calendars and not filters.exclude_keywords
-            and not filters.exclude_all_day):
+    if (
+        not filters.exclude_calendars
+        and not filters.exclude_keywords
+        and not filters.exclude_all_day
+    ):
         return list(events)
 
     excluded_cals = [c.lower() for c in filters.exclude_calendars]

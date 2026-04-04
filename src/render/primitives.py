@@ -100,7 +100,9 @@ def draw_text_wrapped(
 @lru_cache(maxsize=32)
 def text_height(font: ImageFont.FreeTypeFont) -> int:
     """Get the height of a line of text for a given font (approximate)."""
-    from PIL import Image, ImageDraw as ID
+    from PIL import Image
+    from PIL import ImageDraw as ID
+
     img = Image.new("1", (1, 1))
     d = ID.Draw(img)
     bbox = d.textbbox((0, 0), "Ag", font=font)
@@ -204,6 +206,7 @@ def draw_staleness_glyph(draw: ImageDraw.ImageDraw, region, style) -> None:
     The badge is a 12×14px filled rectangle with a white '!' centred inside.
     """
     from src.render import fonts as _fonts
+
     glyph_w, glyph_h = 12, 14
     gx = region.x + region.w - glyph_w - 3
     gy = region.y + region.h - glyph_h - 3

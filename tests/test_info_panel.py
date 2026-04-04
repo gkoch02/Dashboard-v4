@@ -27,10 +27,8 @@ class TestQuoteForToday:
         """Two different dates should not always return the same quote
         (statistically near-certain with any real pool)."""
         from datetime import timedelta
-        quotes = {
-            _quote_for_today(date(2024, 1, 1) + timedelta(days=i))["text"]
-            for i in range(10)
-        }
+
+        quotes = {_quote_for_today(date(2024, 1, 1) + timedelta(days=i))["text"] for i in range(10)}
         assert len(quotes) > 1
 
     def test_uses_quotes_json_when_present(self, tmp_path):
@@ -78,6 +76,7 @@ class TestDrawInfo:
 
     def test_smoke_various_dates(self):
         import datetime
+
         for offset in range(7):
             img, draw = self._make_draw()
             draw_info(draw, date(2024, 1, 1) + datetime.timedelta(days=offset))
@@ -86,6 +85,7 @@ class TestDrawInfo:
     def test_long_quote_adapts_to_smaller_font(self, tmp_path):
         """A very long quote triggers the smaller font (regular(12)) path (lines 62-65)."""
         import json
+
         # Build a quote whose wrapped length exceeds 3 lines at size 14
         long_body = " ".join(["word"] * 120)
         custom = [{"text": long_body, "author": "Verbosity"}]
@@ -93,6 +93,7 @@ class TestDrawInfo:
         qfile.write_text(json.dumps(custom))
 
         from src.render.components.info_panel import _quote_for_today
+
         _quote_for_today.cache_clear()
 
         with patch("src.render.components.info_panel.QUOTES_FILE", qfile):
@@ -107,6 +108,7 @@ class TestDrawInfo:
         corrupt = tmp_path / "quotes.json"
         corrupt.write_text("{bad json}")
         from src.render.components.info_panel import _quote_for_today
+
         _quote_for_today.cache_clear()
         with patch("src.render.components.info_panel.QUOTES_FILE", corrupt):
             _quote_for_today.cache_clear()
@@ -118,6 +120,7 @@ class TestDrawInfo:
         """Missing quotes.json triggers else path (lines 64-65) in _quote_for_today."""
         missing = tmp_path / "nonexistent_quotes.json"
         from src.render.components.info_panel import _quote_for_today
+
         _quote_for_today.cache_clear()
         with patch("src.render.components.info_panel.QUOTES_FILE", missing):
             _quote_for_today.cache_clear()
@@ -143,15 +146,17 @@ class TestQuoteRefreshModes:
         d = date(2025, 6, 1)
         now_am1 = datetime(2025, 6, 1, 9, 0)
         now_am2 = datetime(2025, 6, 1, 11, 59)
-        assert _quote_for_today(d, refresh="twice_daily", now=now_am1) == \
-               _quote_for_today(d, refresh="twice_daily", now=now_am2)
+        assert _quote_for_today(d, refresh="twice_daily", now=now_am1) == _quote_for_today(
+            d, refresh="twice_daily", now=now_am2
+        )
 
     def test_twice_daily_pm_stable(self):
         d = date(2025, 6, 1)
         now_pm1 = datetime(2025, 6, 1, 12, 0)
         now_pm2 = datetime(2025, 6, 1, 23, 0)
-        assert _quote_for_today(d, refresh="twice_daily", now=now_pm1) == \
-               _quote_for_today(d, refresh="twice_daily", now=now_pm2)
+        assert _quote_for_today(d, refresh="twice_daily", now=now_pm1) == _quote_for_today(
+            d, refresh="twice_daily", now=now_pm2
+        )
 
     def test_twice_daily_am_pm_differ(self):
         d = date(2025, 6, 2)
@@ -166,8 +171,9 @@ class TestQuoteRefreshModes:
         d = date(2025, 6, 3)
         now1 = datetime(2025, 6, 3, 14, 0)
         now2 = datetime(2025, 6, 3, 14, 59)
-        assert _quote_for_today(d, refresh="hourly", now=now1) == \
-               _quote_for_today(d, refresh="hourly", now=now2)
+        assert _quote_for_today(d, refresh="hourly", now=now1) == _quote_for_today(
+            d, refresh="hourly", now=now2
+        )
 
     def test_hourly_different_hours_differ(self):
         d = date(2025, 6, 3)
@@ -197,7 +203,8 @@ class TestQuoteRefreshConfig:
     """Tests for cache.quote_refresh validation in config.py."""
 
     def test_valid_values_accepted(self):
-        from src.config import Config, CacheConfig, validate_config
+        from src.config import CacheConfig, Config, validate_config
+
         for val in ("daily", "twice_daily", "hourly"):
             cfg = Config()
             cfg.cache = CacheConfig(quote_refresh=val)
@@ -206,7 +213,8 @@ class TestQuoteRefreshConfig:
             assert not field_errors, f"Expected no error for {val!r}, got {field_errors}"
 
     def test_invalid_value_raises_error(self):
-        from src.config import Config, CacheConfig, validate_config
+        from src.config import CacheConfig, Config, validate_config
+
         cfg = Config()
         cfg.cache = CacheConfig(quote_refresh="weekly")
         errors, _ = validate_config(cfg)
@@ -214,4 +222,5 @@ class TestQuoteRefreshConfig:
 
     def test_default_is_daily(self):
         from src.config import CacheConfig
+
         assert CacheConfig().quote_refresh == "daily"

@@ -1,9 +1,16 @@
 from datetime import date
+
 from PIL import ImageDraw
 
 from src.data.models import Birthday, StalenessLevel
 from src.render import layout as L
-from src.render.primitives import draw_staleness_glyph, hline, vline, filled_rect, draw_text_truncated
+from src.render.primitives import (
+    draw_staleness_glyph,
+    draw_text_truncated,
+    filled_rect,
+    hline,
+    vline,
+)
 from src.render.theme import ComponentRegion, ThemeStyle
 
 # Milestone ages rendered with extra emphasis
@@ -97,12 +104,22 @@ def draw_birthdays(
             filled_rect(draw, row_rect, fill=style.fg)
             draw.ellipse((x0 + pad, y + 5, x0 + pad + 5, y + 10), fill=style.bg)
             draw_text_truncated(
-                draw, (x0 + pad + 12, y), entry, font, w - pad * 2 - 14, fill=style.bg,
+                draw,
+                (x0 + pad + 12, y),
+                entry,
+                font,
+                w - pad * 2 - 14,
+                fill=style.bg,
             )
         else:
             draw.ellipse((x0 + pad, y + 5, x0 + pad + 5, y + 10), fill=style.fg)
             draw_text_truncated(
-                draw, (x0 + pad + 12, y), entry, font, w - pad * 2 - 14, fill=style.fg,
+                draw,
+                (x0 + pad + 12, y),
+                entry,
+                font,
+                w - pad * 2 - 14,
+                fill=style.fg,
             )
 
         y += line_h
@@ -114,8 +131,10 @@ def draw_birthdays(
         overflow_h = 14  # approximate height for regular(11)
         if y + overflow_h <= y0 + h - pad:
             draw.text(
-                (x0 + pad + 12, y), f"+{overflow} more upcoming",
-                font=overflow_font, fill=style.fg,
+                (x0 + pad + 12, y),
+                f"+{overflow} more upcoming",
+                font=overflow_font,
+                fill=style.fg,
             )
 
     if staleness in (StalenessLevel.STALE, StalenessLevel.EXPIRED):

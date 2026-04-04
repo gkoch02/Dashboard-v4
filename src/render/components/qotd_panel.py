@@ -17,14 +17,21 @@ from PIL import ImageDraw
 from src.data.models import WeatherData
 from src.render.components.info_panel import _quote_for_today
 from src.render.fonts import (
-    weather_icon as weather_icon_font,
-    regular as jakarta_regular,
-    semibold as jakarta_semibold,
     bold as jakarta_bold,
 )
-from src.render.icons import draw_weather_icon, OWM_ICON_MAP, FALLBACK_ICON
+from src.render.fonts import (
+    regular as jakarta_regular,
+)
+from src.render.fonts import (
+    semibold as jakarta_semibold,
+)
+from src.render.fonts import (
+    weather_icon as weather_icon_font,
+)
+from src.render.icons import FALLBACK_ICON, OWM_ICON_MAP, draw_weather_icon
 from src.render.moon import moon_phase_glyph
-from src.render.primitives import text_height, wrap_lines as _wrap_lines
+from src.render.primitives import text_height
+from src.render.primitives import wrap_lines as _wrap_lines
 from src.render.theme import ComponentRegion, ThemeStyle
 
 
@@ -43,6 +50,7 @@ def _icon_width(draw, owm_code: str, size: int) -> int:
 # ---------------------------------------------------------------------------
 # Main quote panel
 # ---------------------------------------------------------------------------
+
 
 def draw_qotd(
     draw: ImageDraw.ImageDraw,
@@ -64,11 +72,11 @@ def draw_qotd(
         style = ThemeStyle()
 
     quote = _quote_for_today(today, refresh=quote_refresh)
-    text = quote["text"]                           # marks rendered separately, large
-    author = f'\u2014\u2002{quote["author"]}'      # — thin-space author
+    text = quote["text"]  # marks rendered separately, large
+    author = f"\u2014\u2002{quote['author']}"  # — thin-space author
 
-    h_pad = 52   # horizontal padding from region edges
-    v_pad = 28   # vertical padding at top/bottom
+    h_pad = 52  # horizontal padding from region edges
+    v_pad = 28  # vertical padding at top/bottom
     max_w = region.w - h_pad * 2
 
     quote_font_fn = style.font_bold
@@ -86,12 +94,7 @@ def draw_qotd(
         line_gap = max(4, size // 6)
         attr_gap = max(12, size // 3)
         attr_lh = text_height(a_font)
-        total_h = (
-            len(lines) * lh
-            + max(0, len(lines) - 1) * line_gap
-            + attr_gap
-            + attr_lh
-        )
+        total_h = len(lines) * lh + max(0, len(lines) - 1) * line_gap + attr_gap + attr_lh
         if total_h <= region.h - v_pad * 2:
             best_size = size
             best_lines = lines
@@ -109,12 +112,7 @@ def draw_qotd(
     line_gap = max(4, best_size // 6)
     attr_gap = max(12, best_size // 3)
     attr_lh = text_height(best_attr_font)
-    total_h = (
-        len(best_lines) * lh
-        + max(0, len(best_lines) - 1) * line_gap
-        + attr_gap
-        + attr_lh
-    )
+    total_h = len(best_lines) * lh + max(0, len(best_lines) - 1) * line_gap + attr_gap + attr_lh
 
     # Start y for vertical centering
     text_block_top = region.y + (region.h - total_h) // 2
@@ -126,12 +124,12 @@ def draw_qotd(
     mark_size = min(100, max(60, int(best_size * 3.0)))
     mark_font = style.font_bold(mark_size)
 
-    for glyph, side in (('\u201c', 'open'), ('\u201d', 'close')):
+    for glyph, side in (("\u201c", "open"), ("\u201d", "close")):
         bb = draw.textbbox((0, 0), glyph, font=mark_font)
         ink_w = bb[2] - bb[0]
         ink_h = bb[3] - bb[1]
 
-        if side == 'open':
+        if side == "open":
             # Top-left: ink top sits slightly above the first text line
             px = region.x + h_pad // 4
             py = text_block_top - ink_h // 3
@@ -160,6 +158,7 @@ def draw_qotd(
 # ---------------------------------------------------------------------------
 # Weather banner (full-width horizontal strip)
 # ---------------------------------------------------------------------------
+
 
 def draw_qotd_weather(
     draw: ImageDraw.ImageDraw,
@@ -194,12 +193,12 @@ def draw_qotd_weather(
 
     # Fixed zone boundaries (absolute x, relative to x0)
     PAD = 14
-    Z1_X = x0 + PAD          # icon starts here
-    Z2_X = x0 + 185          # conditions text starts here
-    Z3_X = x0 + 430          # forecast columns start here
-    MOON_W = 26               # px reserved for moon glyph on the far right
+    Z1_X = x0 + PAD  # icon starts here
+    Z2_X = x0 + 185  # conditions text starts here
+    Z3_X = x0 + 430  # forecast columns start here
+    MOON_W = 26  # px reserved for moon glyph on the far right
     Z3_RIGHT = x0 + w - PAD - MOON_W - 4
-    Z2_MAX_W = Z3_X - Z2_X - 12   # max width for conditions text (with gap)
+    Z2_MAX_W = Z3_X - Z2_X - 12  # max width for conditions text (with gap)
 
     if weather is None:
         msg_font = jakarta_regular(13)
@@ -209,7 +208,9 @@ def draw_qotd_weather(
         mh = bbox[3] - bbox[1]
         draw.text(
             (x0 + (w - mw) // 2, y0 + (h - mh) // 2),
-            msg, font=msg_font, fill=style.fg,
+            msg,
+            font=msg_font,
+            fill=style.fg,
         )
         return
 
@@ -243,6 +244,7 @@ def draw_qotd_weather(
         detail_parts.append(f"Feels {weather.feels_like:.0f}°")
     if weather.wind_speed is not None:
         from src.render.primitives import deg_to_compass
+
         wind_str = f"Wind {weather.wind_speed:.0f}mph"
         if weather.wind_deg is not None:
             wind_str += f" {deg_to_compass(weather.wind_deg)}"
@@ -256,6 +258,7 @@ def draw_qotd_weather(
     by = center_y - block_h // 2
 
     from src.render.primitives import draw_text_truncated
+
     draw_text_truncated(draw, (Z2_X, by), desc, desc_font, Z2_MAX_W, fill=style.fg)
     by += desc_h + row_gap
     draw_text_truncated(draw, (Z2_X, by), hilo_str, hilo_font, Z2_MAX_W, fill=style.fg)
@@ -286,7 +289,8 @@ def draw_qotd_weather(
             draw.text(
                 (tx, fc_y + row_lh + 3),
                 f"{fc.high:.0f}°/{fc.low:.0f}°",
-                font=sm_font, fill=style.fg,
+                font=sm_font,
+                fill=style.fg,
             )
 
     # ---- Moon phase glyph (right edge) ----

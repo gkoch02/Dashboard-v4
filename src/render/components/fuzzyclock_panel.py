@@ -18,23 +18,33 @@ from datetime import datetime
 
 from PIL import ImageDraw
 
-from src.render.fonts import dm_bold as _dm_bold, dm_regular as _dm_regular
+from src.render.fonts import dm_bold as _dm_bold
+from src.render.fonts import dm_regular as _dm_regular
 from src.render.primitives import text_height
 from src.render.theme import ComponentRegion, ThemeStyle
-
 
 # ---------------------------------------------------------------------------
 # Fuzzy time logic
 # ---------------------------------------------------------------------------
 
 _HOURS = [
-    "twelve", "one", "two", "three", "four", "five",
-    "six", "seven", "eight", "nine", "ten", "eleven",
+    "twelve",
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+    "ten",
+    "eleven",
 ]
 
 _PHRASES = {
-    0:  "{hour} o'clock",
-    5:  "five past {hour}",
+    0: "{hour} o'clock",
+    5: "five past {hour}",
     10: "ten past {hour}",
     15: "quarter past {hour}",
     20: "twenty past {hour}",
@@ -61,7 +71,7 @@ def fuzzy_time(dt: datetime) -> str:
         fuzzy_time(datetime(2026, 3, 23, 0,  1))  -> "midnight"
         fuzzy_time(datetime(2026, 3, 23, 12, 2))  -> "noon"
     """
-    h = dt.hour % 12   # 0–11 (0 = 12 o'clock, either midnight or noon)
+    h = dt.hour % 12  # 0–11 (0 = 12 o'clock, either midnight or noon)
     m = dt.minute
     # Round to nearest 5-minute bucket
     bucket = ((m + 2) // 5) * 5
@@ -84,6 +94,7 @@ def fuzzy_time(dt: datetime) -> str:
 # Drawing
 # ---------------------------------------------------------------------------
 
+
 def draw_fuzzyclock(
     draw: ImageDraw.ImageDraw,
     now: datetime,
@@ -104,7 +115,7 @@ def draw_fuzzyclock(
         style = ThemeStyle()
 
     phrase = fuzzy_time(now)
-    date_line = now.strftime("%A  \u00b7  %-d %B")   # e.g. "Wednesday  ·  23 March"
+    date_line = now.strftime("%A  \u00b7  %-d %B")  # e.g. "Wednesday  ·  23 March"
 
     h_pad = 48
     v_pad = 24
@@ -129,7 +140,7 @@ def draw_fuzzyclock(
 
     phrase_h = text_height(phrase_font)
     date_h = text_height(date_font)
-    gap = max(16, best_phrase_size // 3)   # gap between phrase and date line
+    gap = max(16, best_phrase_size // 3)  # gap between phrase and date line
     block_h = phrase_h + gap + date_h
 
     # Reject if block overflows region (fall back to smallest sizes)

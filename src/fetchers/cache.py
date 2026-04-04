@@ -16,15 +16,23 @@ from datetime import date, datetime
 from pathlib import Path
 
 from src.data.models import (
-    AirQualityData, Birthday, CalendarEvent, DashboardData, DayForecast, StalenessLevel,
-    WeatherAlert, WeatherData,
+    AirQualityData,
+    Birthday,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    StalenessLevel,
+    WeatherAlert,
+    WeatherData,
 )
 
 logger = logging.getLogger(__name__)
 
 
 def check_staleness(
-    fetched_at: datetime, ttl_minutes: int, now: datetime | None = None,
+    fetched_at: datetime,
+    ttl_minutes: int,
+    now: datetime | None = None,
 ) -> StalenessLevel:
     """Determine staleness level based on cache age relative to TTL.
 
@@ -97,9 +105,9 @@ def load_cached_source(
         try:
             fetched_at = datetime.fromisoformat(block["fetched_at"])
             if source == "events":
-                data: list | WeatherData | AirQualityData | None = (
-                    [_deser_event(e) for e in block.get("data", [])]
-                )
+                data: list | WeatherData | AirQualityData | None = [
+                    _deser_event(e) for e in block.get("data", [])
+                ]
             elif source == "weather":
                 data = _deser_weather(block["data"]) if block.get("data") else None
             elif source == "birthdays":
@@ -201,6 +209,7 @@ def _atomic_write_json(path: Path, data: dict) -> None:
 # ---------------------------------------------------------------------------
 # Serialisation helpers
 # ---------------------------------------------------------------------------
+
 
 def _serialise(data: DashboardData) -> dict:
     """Serialise to v2 format with per-source timestamps."""

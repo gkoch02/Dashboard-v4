@@ -16,18 +16,22 @@ import pytest
 import yaml
 
 from src.config import (
-    CacheConfig, Config, DisplayConfig, ScheduleConfig,
-    load_config, validate_config,
+    CacheConfig,
+    Config,
+    DisplayConfig,
+    ScheduleConfig,
+    WeatherConfig,
+    load_config,
+    validate_config,
 )
 from src.data.models import Birthday
 from src.fetchers.circuit_breaker import CircuitBreaker
 from src.fetchers.weather import fetch_weather
-from src.config import WeatherConfig
-
 
 # ---------------------------------------------------------------------------
 # C1: max_partials_before_full default consistency
 # ---------------------------------------------------------------------------
+
 
 class TestMaxPartialsDefault:
     def test_dataclass_default_is_six(self):
@@ -47,6 +51,7 @@ class TestMaxPartialsDefault:
 # ---------------------------------------------------------------------------
 # C2: empty weather array guard
 # ---------------------------------------------------------------------------
+
 
 class TestEmptyWeatherArrayGuard:
     @staticmethod
@@ -75,7 +80,9 @@ class TestEmptyWeatherArrayGuard:
 
         session = MagicMock()
         session.get.side_effect = [
-            current_resp, self._mock_forecast_resp(), self._mock_alerts_resp(),
+            current_resp,
+            self._mock_forecast_resp(),
+            self._mock_alerts_resp(),
         ]
         mock_session_cls.return_value.__enter__ = MagicMock(return_value=session)
         mock_session_cls.return_value.__exit__ = MagicMock(return_value=False)
@@ -95,7 +102,9 @@ class TestEmptyWeatherArrayGuard:
 
         session = MagicMock()
         session.get.side_effect = [
-            current_resp, self._mock_forecast_resp(), self._mock_alerts_resp(),
+            current_resp,
+            self._mock_forecast_resp(),
+            self._mock_alerts_resp(),
         ]
         mock_session_cls.return_value.__enter__ = MagicMock(return_value=session)
         mock_session_cls.return_value.__exit__ = MagicMock(return_value=False)
@@ -108,9 +117,11 @@ class TestEmptyWeatherArrayGuard:
 # C3: Feb 29 birthday in non-leap year
 # ---------------------------------------------------------------------------
 
+
 class TestFeb29Birthday:
     def test_feb29_birthday_does_not_crash(self):
         from PIL import Image, ImageDraw
+
         from src.render.components.birthday_bar import draw_birthdays
 
         img = Image.new("1", (800, 480), 1)
@@ -124,6 +135,7 @@ class TestFeb29Birthday:
 
     def test_feb29_birthday_next_year_non_leap(self):
         from PIL import Image, ImageDraw
+
         from src.render.components.birthday_bar import draw_birthdays
 
         img = Image.new("1", (800, 480), 1)
@@ -139,6 +151,7 @@ class TestFeb29Birthday:
 # H2: circuit breaker UTC timestamps
 # ---------------------------------------------------------------------------
 
+
 class TestCircuitBreakerUTC:
     def test_failure_timestamp_is_utc(self, tmp_path):
         cb = CircuitBreaker(max_failures=3, state_dir=str(tmp_path))
@@ -149,7 +162,9 @@ class TestCircuitBreakerUTC:
 
     def test_cooldown_works_with_utc(self, tmp_path):
         cb = CircuitBreaker(
-            max_failures=1, cooldown_minutes=0, state_dir=str(tmp_path),
+            max_failures=1,
+            cooldown_minutes=0,
+            state_dir=str(tmp_path),
         )
         cb.record_failure("weather")
         assert cb._states["weather"].state == "open"
@@ -159,16 +174,23 @@ class TestCircuitBreakerUTC:
     def test_legacy_naive_timestamp_handled(self, tmp_path):
         """Old state files with naive timestamps should still work."""
         import json
+
         state_file = tmp_path / "dashboard_breaker_state.json"
-        state_file.write_text(json.dumps({
-            "weather": {
-                "consecutive_failures": 3,
-                "last_failure_at": "2020-01-01T00:00:00",  # naive, old
-                "state": "open",
-            }
-        }))
+        state_file.write_text(
+            json.dumps(
+                {
+                    "weather": {
+                        "consecutive_failures": 3,
+                        "last_failure_at": "2020-01-01T00:00:00",  # naive, old
+                        "state": "open",
+                    }
+                }
+            )
+        )
         cb = CircuitBreaker(
-            max_failures=3, cooldown_minutes=30, state_dir=str(tmp_path),
+            max_failures=3,
+            cooldown_minutes=30,
+            state_dir=str(tmp_path),
         )
         # Old timestamp — cooldown should be expired
         assert cb.should_attempt("weather") is True
@@ -178,58 +200,52 @@ class TestCircuitBreakerUTC:
 # H5: quiet hours validation
 # ---------------------------------------------------------------------------
 
+
 class TestQuietHoursValidation:
     def test_invalid_quiet_hours_start_is_error(self):
         cfg = Config(schedule=ScheduleConfig(quiet_hours_start=25))
         errors, _ = validate_config(cfg)
-        assert any(
-            e.field == "schedule.quiet_hours_start" for e in errors
-        )
+        assert any(e.field == "schedule.quiet_hours_start" for e in errors)
 
     def test_negative_quiet_hours_end_is_error(self):
         cfg = Config(schedule=ScheduleConfig(quiet_hours_end=-1))
         errors, _ = validate_config(cfg)
-        assert any(
-            e.field == "schedule.quiet_hours_end" for e in errors
-        )
+        assert any(e.field == "schedule.quiet_hours_end" for e in errors)
 
     def test_valid_quiet_hours_no_error(self):
-        cfg = Config(schedule=ScheduleConfig(
-            quiet_hours_start=23, quiet_hours_end=6,
-        ))
-        errors, _ = validate_config(cfg)
-        assert not any(
-            e.field.startswith("schedule.quiet_hours") for e in errors
+        cfg = Config(
+            schedule=ScheduleConfig(
+                quiet_hours_start=23,
+                quiet_hours_end=6,
+            )
         )
+        errors, _ = validate_config(cfg)
+        assert not any(e.field.startswith("schedule.quiet_hours") for e in errors)
 
 
 # ---------------------------------------------------------------------------
 # M4: negative fetch interval validation
 # ---------------------------------------------------------------------------
 
+
 class TestFetchIntervalValidation:
     def test_negative_fetch_interval_is_error(self):
         cfg = Config(cache=CacheConfig(weather_fetch_interval=-30))
         errors, _ = validate_config(cfg)
-        assert any(
-            e.field == "cache.weather_fetch_interval" for e in errors
-        )
+        assert any(e.field == "cache.weather_fetch_interval" for e in errors)
 
     def test_zero_fetch_interval_is_error(self):
         cfg = Config(cache=CacheConfig(events_fetch_interval=0))
         errors, _ = validate_config(cfg)
-        assert any(
-            e.field == "cache.events_fetch_interval" for e in errors
-        )
+        assert any(e.field == "cache.events_fetch_interval" for e in errors)
 
     def test_positive_fetch_interval_no_error(self):
-        cfg = Config(cache=CacheConfig(
-            weather_fetch_interval=30,
-            events_fetch_interval=120,
-            birthdays_fetch_interval=1440,
-        ))
-        errors, _ = validate_config(cfg)
-        assert not any(
-            e.field.startswith("cache.") and "interval" in e.field
-            for e in errors
+        cfg = Config(
+            cache=CacheConfig(
+                weather_fetch_interval=30,
+                events_fetch_interval=120,
+                birthdays_fetch_interval=1440,
+            )
         )
+        errors, _ = validate_config(cfg)
+        assert not any(e.field.startswith("cache.") and "interval" in e.field for e in errors)

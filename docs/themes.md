@@ -39,9 +39,9 @@ Two rotation cadences are available:
 
 | Theme value | Rotates | State file |
 |---|---|---|
-| `random_daily` | Once per day, at first refresh after midnight | `output/random_theme_state.json` |
-| `random_hourly` | Once per hour, at first refresh after the hour turns | `output/random_theme_hourly_state.json` |
-| `random` | Alias for `random_daily` (backwards compatible) | `output/random_theme_state.json` |
+| `random_daily` | Once per day, at first refresh after midnight | `state/random_theme_state.json` |
+| `random_hourly` | Once per hour, at first refresh after the hour turns | `state/random_theme_hourly_state.json` |
+| `random` | Alias for `random_daily` (backwards compatible) | `state/random_theme_state.json` |
 
 ```yaml
 theme: random_daily    # or random_hourly

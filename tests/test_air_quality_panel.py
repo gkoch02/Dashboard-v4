@@ -1,7 +1,7 @@
 """Tests for src/render/components/air_quality_panel.py
 and src/render/themes/air_quality.py."""
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import pytest
 from PIL import Image, ImageDraw
@@ -10,10 +10,10 @@ from src.data.models import AirQualityData, DashboardData, DayForecast, WeatherD
 from src.render.components.air_quality_panel import draw_air_quality_full
 from src.render.theme import ComponentRegion, ThemeStyle
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -74,6 +74,7 @@ def _make_data(**overrides) -> DashboardData:
 # Smoke tests — full data
 # ---------------------------------------------------------------------------
 
+
 class TestDrawAirQualityFullSmoke:
     def test_renders_with_full_data(self):
         _, draw = _make_draw()
@@ -109,6 +110,7 @@ class TestDrawAirQualityFullSmoke:
 # Unavailable fallback
 # ---------------------------------------------------------------------------
 
+
 class TestDrawAirQualityUnavailable:
     def test_renders_when_air_quality_is_none(self):
         _, draw = _make_draw()
@@ -131,6 +133,7 @@ class TestDrawAirQualityUnavailable:
 # Weather strip variations
 # ---------------------------------------------------------------------------
 
+
 class TestWeatherStrip:
     def test_renders_without_weather(self):
         """Weather=None shows fallback message in strip."""
@@ -147,21 +150,43 @@ class TestWeatherStrip:
     def test_renders_with_empty_precip_chance(self):
         """Forecast items with precip_chance=None or < 0.05 render without precip string."""
         _, draw = _make_draw()
-        wx = _make_weather(forecast=[
-            DayForecast(date=date(2024, 3, 17), high=70.0, low=55.0,
-                        icon="01d", description="clear", precip_chance=None),
-            DayForecast(date=date(2024, 3, 18), high=68.0, low=52.0,
-                        icon="02d", description="cloudy", precip_chance=0.02),
-        ])
+        wx = _make_weather(
+            forecast=[
+                DayForecast(
+                    date=date(2024, 3, 17),
+                    high=70.0,
+                    low=55.0,
+                    icon="01d",
+                    description="clear",
+                    precip_chance=None,
+                ),
+                DayForecast(
+                    date=date(2024, 3, 18),
+                    high=68.0,
+                    low=52.0,
+                    icon="02d",
+                    description="cloudy",
+                    precip_chance=0.02,
+                ),
+            ]
+        )
         data = _make_data(weather=wx)
         draw_air_quality_full(draw, data, date(2024, 3, 15))
 
     def test_renders_with_high_precip_chance(self):
         _, draw = _make_draw()
-        wx = _make_weather(forecast=[
-            DayForecast(date=date(2024, 3, 17), high=65.0, low=50.0,
-                        icon="10d", description="rain", precip_chance=0.90),
-        ])
+        wx = _make_weather(
+            forecast=[
+                DayForecast(
+                    date=date(2024, 3, 17),
+                    high=65.0,
+                    low=50.0,
+                    icon="10d",
+                    description="rain",
+                    precip_chance=0.90,
+                ),
+            ]
+        )
         data = _make_data(weather=wx)
         draw_air_quality_full(draw, data, date(2024, 3, 15))
 
@@ -174,6 +199,7 @@ class TestWeatherStrip:
 # ---------------------------------------------------------------------------
 # PM row variations
 # ---------------------------------------------------------------------------
+
 
 class TestPMRow:
     def test_only_pm25_when_pm1_and_pm10_absent(self):
@@ -205,6 +231,7 @@ class TestPMRow:
 # ---------------------------------------------------------------------------
 # Ambient sensor cards variations
 # ---------------------------------------------------------------------------
+
 
 class TestAmbientCards:
     def test_no_ambient_fields(self):
@@ -249,19 +276,23 @@ class TestAmbientCards:
 # AQI scale bar — various AQI values covering all six zones
 # ---------------------------------------------------------------------------
 
+
 class TestAqiHeroAndScaleBar:
-    @pytest.mark.parametrize("aqi,category", [
-        (0,   "Good"),
-        (25,  "Good"),
-        (50,  "Good"),
-        (75,  "Moderate"),
-        (100, "Moderate"),
-        (125, "Unhealthy for Sensitive Groups"),
-        (151, "Unhealthy"),
-        (201, "Very Unhealthy"),
-        (301, "Hazardous"),
-        (500, "Hazardous"),
-    ])
+    @pytest.mark.parametrize(
+        "aqi,category",
+        [
+            (0, "Good"),
+            (25, "Good"),
+            (50, "Good"),
+            (75, "Moderate"),
+            (100, "Moderate"),
+            (125, "Unhealthy for Sensitive Groups"),
+            (151, "Unhealthy"),
+            (201, "Very Unhealthy"),
+            (301, "Hazardous"),
+            (500, "Hazardous"),
+        ],
+    )
     def test_aqi_zones_render_without_error(self, aqi, category):
         _, draw = _make_draw()
         aq = _make_aq(aqi=aqi, category=category)
@@ -292,25 +323,31 @@ class TestAqiHeroAndScaleBar:
 # air_quality theme factory — src/render/themes/air_quality.py
 # ---------------------------------------------------------------------------
 
+
 class TestAirQualityTheme:
     def test_theme_name(self):
         from src.render.themes.air_quality import air_quality_theme
+
         assert air_quality_theme().name == "air_quality"
 
     def test_theme_in_available_themes(self):
         from src.render.theme import AVAILABLE_THEMES
+
         assert "air_quality" in AVAILABLE_THEMES
 
     def test_load_theme_returns_air_quality(self):
         from src.render.theme import load_theme
+
         assert load_theme("air_quality").name == "air_quality"
 
     def test_air_quality_full_region_visible(self):
         from src.render.themes.air_quality import air_quality_theme
+
         assert air_quality_theme().layout.air_quality_full.visible is True
 
     def test_standard_regions_hidden(self):
         from src.render.themes.air_quality import air_quality_theme
+
         layout = air_quality_theme().layout
         assert layout.header.visible is False
         assert layout.week_view.visible is False
@@ -319,15 +356,18 @@ class TestAirQualityTheme:
     def test_uses_space_grotesk_fonts(self):
         from src.render.fonts import sg_bold, sg_regular
         from src.render.themes.air_quality import air_quality_theme
+
         style = air_quality_theme().style
         assert style.font_regular is sg_regular
         assert style.font_bold is sg_bold
 
     def test_renders_via_canvas(self):
         from PIL import Image as PILImage
+
         from src.config import DisplayConfig
         from src.render.canvas import render_dashboard
         from src.render.theme import load_theme
+
         result = render_dashboard(_make_data(), DisplayConfig(), theme=load_theme("air_quality"))
         assert isinstance(result, PILImage.Image)
         assert result.size == (800, 480)

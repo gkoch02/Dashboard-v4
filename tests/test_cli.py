@@ -5,14 +5,15 @@ import pytest
 from src.cli import build_parser, parse_args
 from src.render.theme import AVAILABLE_THEMES
 
-
 # ---------------------------------------------------------------------------
 # build_parser
 # ---------------------------------------------------------------------------
 
+
 class TestBuildParser:
     def test_returns_parser(self):
         import argparse
+
         parser = build_parser()
         assert isinstance(parser, argparse.ArgumentParser)
 
@@ -24,6 +25,7 @@ class TestBuildParser:
 # ---------------------------------------------------------------------------
 # Default values
 # ---------------------------------------------------------------------------
+
 
 class TestParseArgsDefaults:
     def test_no_args_dry_run_false(self):
@@ -63,6 +65,7 @@ class TestParseArgsDefaults:
 # Individual flags
 # ---------------------------------------------------------------------------
 
+
 class TestParseArgsSingleFlags:
     def test_dry_run_flag(self):
         args = parse_args(["--dry-run"])
@@ -93,6 +96,7 @@ class TestParseArgsSingleFlags:
 # --theme
 # ---------------------------------------------------------------------------
 
+
 class TestParseArgsTheme:
     def test_valid_theme_default(self):
         args = parse_args(["--theme", "default"])
@@ -119,6 +123,7 @@ class TestParseArgsTheme:
 # ---------------------------------------------------------------------------
 # --date validation
 # ---------------------------------------------------------------------------
+
 
 class TestParseArgsDate:
     def test_valid_date_with_dry_run(self):
@@ -159,6 +164,7 @@ class TestParseArgsDate:
 # --version
 # ---------------------------------------------------------------------------
 
+
 class TestParseArgsVersion:
     def test_version_exits_with_zero(self):
         with pytest.raises(SystemExit) as exc_info:
@@ -176,6 +182,7 @@ class TestParseArgsVersion:
 # ---------------------------------------------------------------------------
 # Flag combinations
 # ---------------------------------------------------------------------------
+
 
 class TestParseArgsCombinations:
     def test_dry_run_and_dummy(self):
@@ -201,14 +208,17 @@ class TestParseArgsCombinations:
         assert args.ignore_breakers is True
 
     def test_all_non_conflicting_flags(self):
-        args = parse_args([
-            "--dry-run",
-            "--dummy",
-            "--force-full-refresh",
-            "--ignore-breakers",
-            "--check-config",
-            "--config", "custom.yaml",
-        ])
+        args = parse_args(
+            [
+                "--dry-run",
+                "--dummy",
+                "--force-full-refresh",
+                "--ignore-breakers",
+                "--check-config",
+                "--config",
+                "custom.yaml",
+            ]
+        )
         assert args.dry_run is True
         assert args.dummy is True
         assert args.force_full_refresh is True

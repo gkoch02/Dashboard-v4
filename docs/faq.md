@@ -104,9 +104,9 @@ See [Themes documentation](themes.md) and existing themes for examples.
 ### How does random theme rotation work?
 
 - `theme: random_daily` picks a theme once per day (after midnight) and persists
-  the choice in `output/random_theme_state.json`.
+  the choice in `state/random_theme_state.json`.
 - `theme: random_hourly` picks once per hour and persists in
-  `output/random_theme_hourly_state.json`.
+  `state/random_theme_hourly_state.json`.
 - Delete the state file to force a new pick immediately.
 - Use `random_theme.include` and `random_theme.exclude` in config to control
   which themes are in the rotation pool.

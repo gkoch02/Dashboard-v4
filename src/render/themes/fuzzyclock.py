@@ -29,12 +29,12 @@ actually changes.
 from src.render.fonts import dm_bold, dm_medium, dm_regular, dm_semibold
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
-BANNER_H = 80   # height of the bottom weather strip
+BANNER_H = 80  # height of the bottom weather strip
 
 
 def fuzzyclock_theme() -> Theme:
     """Return the fuzzyclock theme."""
-    clock_h = 480 - BANNER_H   # 400 px for the clock face
+    clock_h = 480 - BANNER_H  # 400 px for the clock face
 
     return Theme(
         name="fuzzyclock",
@@ -55,7 +55,7 @@ def fuzzyclock_theme() -> Theme:
             draw_order=["fuzzyclock", "fuzzyclock_weather"],
         ),
         style=ThemeStyle(
-            fg=0,   # black ink on white paper
+            fg=0,  # black ink on white paper
             bg=1,
             invert_header=False,
             invert_today_col=False,

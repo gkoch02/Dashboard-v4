@@ -35,6 +35,9 @@ the wall fast.
 - [Themes](docs/themes.md) — all 16 built-in themes, random rotation, schedule, creating your own
 - [Configuration Reference](docs/configuration.md) — full config.yaml, cache tuning, filtering, circuit breaker
 - [Development](docs/development.md) — Makefile targets, CLI flags, project structure, dependencies
+- [Architecture](docs/architecture.md) — data flow, module layers, key design decisions
+- [Contributing](CONTRIBUTING.md) — local setup, code style, how to add themes/fetchers, PR checklist
+- [FAQ](docs/faq.md) — quiet hours, troubleshooting, common questions
 - [Upgrading from v3](docs/upgrading-from-v3.md) — migration paths and what's new
 
 ---

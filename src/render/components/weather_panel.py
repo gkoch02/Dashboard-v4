@@ -5,12 +5,20 @@ from PIL import ImageDraw
 from src.data.models import AirQualityData, StalenessLevel, WeatherData
 from src.render import layout as L
 from src.render.fonts import weather_icon as weather_icon_font
-from src.render.primitives import (
-    draw_staleness_glyph, draw_text_truncated, filled_rect, hline, text_width, vline,
-    fmt_time as _fmt_time, deg_to_compass,
-)
 from src.render.icons import draw_weather_icon
 from src.render.moon import moon_phase_glyph
+from src.render.primitives import (
+    deg_to_compass,
+    draw_staleness_glyph,
+    draw_text_truncated,
+    filled_rect,
+    hline,
+    text_width,
+    vline,
+)
+from src.render.primitives import (
+    fmt_time as _fmt_time,
+)
 from src.render.theme import ComponentRegion, ThemeStyle
 
 
@@ -80,12 +88,12 @@ def draw_weather(
 
     # Internal layout computed proportionally from the region dimensions.
     # Reference proportions are based on the original 300×120 weather panel.
-    icon_x_offset = int(w * 0.04)    # ~12px at 300w
-    temp_x_offset = int(w * 0.26)    # ~78px at 300w
-    detail_x_offset = int(w * 0.513) # ~154px at 300w
-    forecast_h = int(h * 0.317)      # ~38px at 120h
+    icon_x_offset = int(w * 0.04)  # ~12px at 300w
+    temp_x_offset = int(w * 0.26)  # ~78px at 300w
+    detail_x_offset = int(w * 0.513)  # ~154px at 300w
+    forecast_h = int(h * 0.317)  # ~38px at 120h
     content_y_offset = int(h * 0.233)  # ~28px at 120h
-    hilo_y_offset = content_y_offset + int(h * 0.117)   # ~14px step = row 2
+    hilo_y_offset = content_y_offset + int(h * 0.117)  # ~14px step = row 2
     detail3_y_offset = content_y_offset + int(h * 0.217)  # ~26px step = row 3
     detail4_y_offset = content_y_offset + int(h * 0.317)  # ~38px step = row 4
 
@@ -106,8 +114,12 @@ def draw_weather(
     # Row 1: description
     desc_font = style.font_medium(13)
     draw_text_truncated(
-        draw, (right_x, y0 + content_y_offset),
-        weather.current_description.title(), desc_font, max_detail_w, fill=style.fg,
+        draw,
+        (right_x, y0 + content_y_offset),
+        weather.current_description.title(),
+        desc_font,
+        max_detail_w,
+        fill=style.fg,
     )
 
     # Row 2: hi/lo + UV index when available
@@ -118,7 +130,11 @@ def draw_weather(
         if text_width(draw, hilo_str + uv_suffix, hilo_font) <= max_detail_w:
             hilo_str += uv_suffix
     draw_text_truncated(
-        draw, (right_x, y0 + hilo_y_offset), hilo_str, hilo_font, max_detail_w,
+        draw,
+        (right_x, y0 + hilo_y_offset),
+        hilo_str,
+        hilo_font,
+        max_detail_w,
         fill=style.fg,
     )
 
@@ -134,8 +150,12 @@ def draw_weather(
         detail3_parts.append(wind_str)
     detail3_text = "  ·  ".join(detail3_parts) if detail3_parts else f"{weather.humidity}% humidity"
     draw_text_truncated(
-        draw, (right_x, y0 + detail3_y_offset),
-        detail3_text, detail3_font, max_detail_w, fill=style.fg,
+        draw,
+        (right_x, y0 + detail3_y_offset),
+        detail3_text,
+        detail3_font,
+        max_detail_w,
+        fill=style.fg,
     )
 
     # Row 4: sunrise / sunset
@@ -146,8 +166,12 @@ def draw_weather(
         if weather.sunset is not None:
             sun_parts.append(f"↓{_fmt_time(weather.sunset)}")
         draw_text_truncated(
-            draw, (right_x, y0 + detail4_y_offset),
-            "  ".join(sun_parts), detail3_font, max_detail_w, fill=style.fg,
+            draw,
+            (right_x, y0 + detail4_y_offset),
+            "  ".join(sun_parts),
+            detail3_font,
+            max_detail_w,
+            fill=style.fg,
         )
 
     # Forecast strip along the bottom.
@@ -188,11 +212,23 @@ def draw_weather(
 
         if n_alerts >= 2 and i < 2:
             _draw_alert_column(
-                draw, weather.alerts[i].event, cx, forecast_top, col_w, forecast_h, style,
+                draw,
+                weather.alerts[i].event,
+                cx,
+                forecast_top,
+                col_w,
+                forecast_h,
+                style,
             )
         elif n_alerts == 1 and i == 0:
             _draw_alert_column(
-                draw, weather.alerts[0].event, cx, forecast_top, col_w, forecast_h, style,
+                draw,
+                weather.alerts[0].event,
+                cx,
+                forecast_top,
+                col_w,
+                forecast_h,
+                style,
             )
         elif show_aqi_col and i == n_cols - 1:
             _draw_aqi_column(draw, air_quality, cx, forecast_top, col_w, forecast_h, style)
@@ -202,22 +238,32 @@ def draw_weather(
                 forecast_idx += 1
                 fx = cx + pad
                 draw_weather_icon(
-                    draw, (fx, forecast_top + 2), fc.icon, size=icon_size, fill=style.fg,
+                    draw,
+                    (fx, forecast_top + 2),
+                    fc.icon,
+                    size=icon_size,
+                    fill=style.fg,
                 )
                 text_x = fx + icon_size + 8
                 draw.text(
                     (text_x, forecast_top + 2),
-                    fc.date.strftime("%a"), font=day_font, fill=style.fg,
+                    fc.date.strftime("%a"),
+                    font=day_font,
+                    fill=style.fg,
                 )
                 draw.text(
                     (text_x, forecast_top + 14),
-                    f"{fc.high:.0f}°/{fc.low:.0f}°", font=hilo_sm_font, fill=style.fg,
+                    f"{fc.high:.0f}°/{fc.low:.0f}°",
+                    font=hilo_sm_font,
+                    fill=style.fg,
                 )
                 if fc.precip_chance is not None and fc.precip_chance >= 0.05:
                     precip_font = style.font_regular(10)
                     draw.text(
                         (text_x, forecast_top + 25),
-                        f"{fc.precip_chance:.0%}", font=precip_font, fill=style.fg,
+                        f"{fc.precip_chance:.0%}",
+                        font=precip_font,
+                        fill=style.fg,
                     )
 
         # Column separators
@@ -272,7 +318,9 @@ def _draw_aqi_column(
     icon_w = icon_bbox[2] - icon_bbox[0]
     draw.text(
         (cx + (col_w - icon_w) // 2 - icon_bbox[0], ty - icon_bbox[1]),
-        _GLYPH_AQI, font=icon_font, fill=style.fg,
+        _GLYPH_AQI,
+        font=icon_font,
+        fill=style.fg,
     )
     ty += icon_h + gap
 
@@ -280,7 +328,9 @@ def _draw_aqi_column(
     val_w = val_bbox[2] - val_bbox[0]
     draw.text(
         (cx + (col_w - val_w) // 2 - val_bbox[0], ty - val_bbox[1]),
-        val_str, font=val_font, fill=style.fg,
+        val_str,
+        font=val_font,
+        fill=style.fg,
     )
     ty += val_h + gap
 
@@ -288,7 +338,9 @@ def _draw_aqi_column(
     lbl_w = lbl_bbox[2] - lbl_bbox[0]
     draw.text(
         (cx + (col_w - lbl_w) // 2 - lbl_bbox[0], ty - lbl_bbox[1]),
-        category, font=lbl_font, fill=style.fg,
+        category,
+        font=lbl_font,
+        fill=style.fg,
     )
 
 

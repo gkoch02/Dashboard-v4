@@ -137,20 +137,23 @@ def _fetch_forecast(
         midday_weather = midday.get("weather") or []
         if not midday_weather:
             continue
-        forecasts.append(DayForecast(
-            date=day_date,
-            high=max(highs),
-            low=min(lows),
-            icon=midday_weather[0]["icon"],
-            description=midday_weather[0]["description"],
-            precip_chance=precip_chance,
-        ))
+        forecasts.append(
+            DayForecast(
+                date=day_date,
+                high=max(highs),
+                low=min(lows),
+                icon=midday_weather[0]["icon"],
+                description=midday_weather[0]["description"],
+                precip_chance=precip_chance,
+            )
+        )
 
     return today_high, today_low, forecasts
 
 
 def _fetch_alerts_and_uv(
-    session: requests.Session, params: dict,
+    session: requests.Session,
+    params: dict,
 ) -> tuple[list[WeatherAlert], float | None]:
     """Fetch active weather alerts and UV index from OWM OneCall 2.5.
 

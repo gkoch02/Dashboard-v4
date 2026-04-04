@@ -105,16 +105,14 @@ def pick_random_theme(
     pool = eligible_themes(include, exclude)
     if not pool:
         logger.warning(
-            "Random theme pool is empty (include=%r, exclude=%r) — "
-            "falling back to 'default'",
+            "Random theme pool is empty (include=%r, exclude=%r) — falling back to 'default'",
             include,
             exclude,
         )
         return "default"
 
     chosen = random.choice(pool)
-    logger.info("Random theme for %s: %s (newly selected from pool: %s)",
-                today_str, chosen, pool)
+    logger.info("Random theme for %s: %s (newly selected from pool: %s)", today_str, chosen, pool)
 
     # Persist the choice
     try:
@@ -173,16 +171,16 @@ def pick_random_theme_hourly(
     pool = eligible_themes(include, exclude)
     if not pool:
         logger.warning(
-            "Random theme pool is empty (include=%r, exclude=%r) — "
-            "falling back to 'default'",
+            "Random theme pool is empty (include=%r, exclude=%r) — falling back to 'default'",
             include,
             exclude,
         )
         return "default"
 
     chosen = random.choice(pool)
-    logger.info("Random hourly theme for %s: %s (newly selected from pool: %s)",
-                hour_key, chosen, pool)
+    logger.info(
+        "Random hourly theme for %s: %s (newly selected from pool: %s)", hour_key, chosen, pool
+    )
 
     # Persist the choice
     try:

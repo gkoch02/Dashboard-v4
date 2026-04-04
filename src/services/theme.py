@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import datetime as _datetime
 
 
@@ -18,9 +20,7 @@ def _resolve_scheduled_theme(entries, now: _datetime) -> str | None:
     return active.theme if active is not None else None
 
 
-def resolve_theme_name(
-    cfg, override_theme: str | None, now: _datetime | None = None
-) -> str:
+def resolve_theme_name(cfg, override_theme: str | None, now: _datetime | None = None) -> str:
     """Resolve the concrete theme name to use for this run.
 
     Priority (highest → lowest):
@@ -39,17 +39,19 @@ def resolve_theme_name(
 
     if theme_name in ("random", "random_daily"):
         from src.render.random_theme import pick_random_theme
+
         theme_name = pick_random_theme(
             include=cfg.random_theme.include,
             exclude=cfg.random_theme.exclude,
-            output_dir=cfg.output_dir,
+            output_dir=cfg.state_dir,
         )
     elif theme_name == "random_hourly":
         from src.render.random_theme import pick_random_theme_hourly
+
         theme_name = pick_random_theme_hourly(
             include=cfg.random_theme.include,
             exclude=cfg.random_theme.exclude,
-            output_dir=cfg.output_dir,
+            output_dir=cfg.state_dir,
             now=now,
         )
     return theme_name
