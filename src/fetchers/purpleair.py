@@ -154,6 +154,14 @@ def fetch_air_quality(cfg: PurpleAirConfig) -> AirQualityData:
         ) from exc
     sensor = _sensor_payload_to_dict(payload)
 
+    # PurpleAir nests 60-minute averages under a "stats" sub-object for some sensor types.
+    # Merge stats into the top-level dict so _first_float can find them uniformly.
+    stats = sensor.get("stats")
+    if isinstance(stats, dict):
+        for k, v in stats.items():
+            if k not in sensor:
+                sensor[k] = v
+
     pm25_60min = _first_float(
         sensor,
         [

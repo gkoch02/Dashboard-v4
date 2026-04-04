@@ -213,6 +213,37 @@ class TestFetchAirQuality:
             with pytest.raises(RuntimeError, match="not found"):
                 fetch_air_quality(cfg)
 
+    def test_fetch_pm25_from_nested_stats(self, cfg):
+        """Sensors that nest pm2.5_60minute under a 'stats' sub-object are handled."""
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.json.return_value = {
+            "sensor": {
+                "sensor_index": 175047,
+                "pm1.0_atm": 0.6,
+                "pm10.0_atm": 2.0,
+                "stats": {
+                    "pm2.5": 1,
+                    "pm2.5_60minute": 1.9,
+                    "time_stamp": 1775334041,
+                },
+            }
+        }
+        with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
+            mock_session = MagicMock()
+            mock_session_cls.return_value.__enter__.return_value = mock_session
+            mock_session.get.return_value = resp
+
+            result = fetch_air_quality(cfg)
+
+        assert result.pm25 == 1.9
+        assert result.pm1 == 0.6
+        assert result.pm10 == 2.0
+        assert result.temperature is None
+        assert result.humidity is None
+        assert result.pressure is None
+        assert result.category == "Good"
+
     def test_correct_url_and_headers(self, cfg):
         resp = _make_response()
         with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
