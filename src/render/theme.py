@@ -84,6 +84,11 @@ class ThemeLayout:
     moonphase_full: ComponentRegion = field(
         default_factory=lambda: ComponentRegion(0, 0, 800, 480, visible=False)
     )
+    # Used by the ``message`` theme for the full-canvas user message area.
+    # Hidden by default so existing themes are not affected.
+    message: ComponentRegion = field(
+        default_factory=lambda: ComponentRegion(0, 0, 800, 400, visible=False)
+    )
     draw_order: list[str] = field(
         default_factory=lambda: ["header", "week_view", "weather", "birthdays", "info"]
     )
@@ -201,6 +206,7 @@ _THEME_REGISTRY: dict[str, tuple[str, str]] = {
     "air_quality": ("src.render.themes.air_quality", "air_quality_theme"),
     "moonphase": ("src.render.themes.moonphase", "moonphase_theme"),
     "moonphase_invert": ("src.render.themes.moonphase_invert", "moonphase_invert_theme"),
+    "message": ("src.render.themes.message", "message_theme"),
 }
 
 # Derived from the registry — adding a theme to _THEME_REGISTRY is all that's needed.
