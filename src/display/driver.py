@@ -4,6 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
+
 from PIL import Image
 
 logger = logging.getLogger(__name__)
@@ -11,13 +12,13 @@ logger = logging.getLogger(__name__)
 # Registry of supported Waveshare eInk display models.
 # Maps model name → (waveshare_epd module path, native width px, native height px)
 WAVESHARE_MODELS: dict[str, tuple[str, int, int]] = {
-    "epd7in5":     ("waveshare_epd.epd7in5",     640,  384),
-    "epd7in5_V2":  ("waveshare_epd.epd7in5_V2",  800,  480),
-    "epd7in5_V3":  ("waveshare_epd.epd7in5_V3",  800,  480),
-    "epd7in5b_V2": ("waveshare_epd.epd7in5b_V2", 800,  480),
-    "epd7in5_HD":  ("waveshare_epd.epd7in5_HD",  880,  528),
-    "epd9in7":     ("waveshare_epd.epd9in7",     1200, 825),
-    "epd13in3k":   ("waveshare_epd.epd13in3k",   1600, 1200),
+    "epd7in5": ("waveshare_epd.epd7in5", 640, 384),
+    "epd7in5_V2": ("waveshare_epd.epd7in5_V2", 800, 480),
+    "epd7in5_V3": ("waveshare_epd.epd7in5_V3", 800, 480),
+    "epd7in5b_V2": ("waveshare_epd.epd7in5b_V2", 800, 480),
+    "epd7in5_HD": ("waveshare_epd.epd7in5_HD", 880, 528),
+    "epd9in7": ("waveshare_epd.epd9in7", 1200, 825),
+    "epd13in3k": ("waveshare_epd.epd13in3k", 1600, 1200),
 }
 
 _HASH_FILENAME = "last_image_hash.txt"
@@ -58,12 +59,10 @@ def image_changed(new_image: Image.Image, output_dir: str) -> bool:
 
 class DisplayDriver(ABC):
     @abstractmethod
-    def show(self, image: Image.Image) -> None:
-        ...
+    def show(self, image: Image.Image) -> None: ...
 
     @abstractmethod
-    def clear(self) -> None:
-        ...
+    def clear(self) -> None: ...
 
 
 class DryRunDisplay(DisplayDriver):
@@ -93,12 +92,12 @@ class DryRunDisplay(DisplayDriver):
 class WaveshareDisplay(DisplayDriver):
     """Drives a Waveshare eInk display. Supports multiple models via WAVESHARE_MODELS."""
 
-    def __init__(self, model: str = "epd7in5_V2", enable_partial: bool = False,
-                 max_partials: int = 6):
+    def __init__(
+        self, model: str = "epd7in5_V2", enable_partial: bool = False, max_partials: int = 6
+    ):
         if model not in WAVESHARE_MODELS:
             raise ValueError(
-                f"Unknown Waveshare model '{model}'. "
-                f"Supported models: {sorted(WAVESHARE_MODELS)}"
+                f"Unknown Waveshare model '{model}'. Supported models: {sorted(WAVESHARE_MODELS)}"
             )
         self.model = model
         self.enable_partial = enable_partial

@@ -6,13 +6,16 @@ interaction work together correctly.
 """
 
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.config import Config, PurpleAirConfig
 from src.data.models import (
-    Birthday, CalendarEvent, StalenessLevel, WeatherData,
+    Birthday,
+    CalendarEvent,
+    StalenessLevel,
+    WeatherData,
 )
 from src.data_pipeline import DataPipeline, retry_fetch
 
@@ -40,6 +43,7 @@ def _make_events():
 
 def _make_birthdays():
     from datetime import date
+
     return [Birthday(name="Alice", date=date(2024, 3, 20), age=30)]
 
 
@@ -59,10 +63,12 @@ class TestDataPipelineE2E:
         weather = _make_weather()
         birthdays = _make_birthdays()
 
-        with patch("src.data_pipeline.fetch_events", return_value=events), \
-             patch("src.data_pipeline.fetch_weather", return_value=weather), \
-             patch("src.data_pipeline.fetch_birthdays", return_value=birthdays), \
-             patch("src.data_pipeline.fetch_host_data", return_value=None):
+        with (
+            patch("src.data_pipeline.fetch_events", return_value=events),
+            patch("src.data_pipeline.fetch_weather", return_value=weather),
+            patch("src.data_pipeline.fetch_birthdays", return_value=birthdays),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
             data = pipeline.fetch()
 
         assert len(data.events) == 1
@@ -82,19 +88,23 @@ class TestDataPipelineE2E:
         weather = _make_weather()
         birthdays = _make_birthdays()
 
-        with patch("src.data_pipeline.fetch_events", return_value=events), \
-             patch("src.data_pipeline.fetch_weather", return_value=weather), \
-             patch("src.data_pipeline.fetch_birthdays", return_value=birthdays), \
-             patch("src.data_pipeline.fetch_host_data", return_value=None):
+        with (
+            patch("src.data_pipeline.fetch_events", return_value=events),
+            patch("src.data_pipeline.fetch_weather", return_value=weather),
+            patch("src.data_pipeline.fetch_birthdays", return_value=birthdays),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
             pipeline1.fetch()
 
         # Second run: weather fails → should use cached weather
         pipeline2 = _make_pipeline(tmp_path, force_refresh=True)
 
-        with patch("src.data_pipeline.fetch_events", return_value=events), \
-             patch("src.data_pipeline.fetch_weather", side_effect=ConnectionError("timeout")), \
-             patch("src.data_pipeline.fetch_birthdays", return_value=birthdays), \
-             patch("src.data_pipeline.fetch_host_data", return_value=None):
+        with (
+            patch("src.data_pipeline.fetch_events", return_value=events),
+            patch("src.data_pipeline.fetch_weather", side_effect=ConnectionError("timeout")),
+            patch("src.data_pipeline.fetch_birthdays", return_value=birthdays),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
             data = pipeline2.fetch()
 
         # Weather should still be available from cache
@@ -106,10 +116,12 @@ class TestDataPipelineE2E:
         """When all fetchers fail and no cache exists, returns empty data."""
         pipeline = _make_pipeline(tmp_path, force_refresh=True)
 
-        with patch("src.data_pipeline.fetch_events", side_effect=ConnectionError("fail")), \
-             patch("src.data_pipeline.fetch_weather", side_effect=ConnectionError("fail")), \
-             patch("src.data_pipeline.fetch_birthdays", side_effect=ConnectionError("fail")), \
-             patch("src.data_pipeline.fetch_host_data", return_value=None):
+        with (
+            patch("src.data_pipeline.fetch_events", side_effect=ConnectionError("fail")),
+            patch("src.data_pipeline.fetch_weather", side_effect=ConnectionError("fail")),
+            patch("src.data_pipeline.fetch_birthdays", side_effect=ConnectionError("fail")),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
             data = pipeline.fetch()
 
         assert data.events == []
@@ -124,10 +136,12 @@ class TestDataPipelineE2E:
         weather = _make_weather()
         birthdays = _make_birthdays()
 
-        with patch("src.data_pipeline.fetch_events", return_value=events), \
-             patch("src.data_pipeline.fetch_weather", return_value=weather), \
-             patch("src.data_pipeline.fetch_birthdays", return_value=birthdays), \
-             patch("src.data_pipeline.fetch_host_data", return_value=None):
+        with (
+            patch("src.data_pipeline.fetch_events", return_value=events),
+            patch("src.data_pipeline.fetch_weather", return_value=weather),
+            patch("src.data_pipeline.fetch_birthdays", return_value=birthdays),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
             pipeline1.fetch()
 
         # Second run: cache is fresh, no force_refresh
@@ -135,10 +149,12 @@ class TestDataPipelineE2E:
         mock_events = MagicMock()
         mock_weather = MagicMock()
 
-        with patch("src.data_pipeline.fetch_events", mock_events), \
-             patch("src.data_pipeline.fetch_weather", mock_weather), \
-             patch("src.data_pipeline.fetch_birthdays", MagicMock()), \
-             patch("src.data_pipeline.fetch_host_data", return_value=None):
+        with (
+            patch("src.data_pipeline.fetch_events", mock_events),
+            patch("src.data_pipeline.fetch_weather", mock_weather),
+            patch("src.data_pipeline.fetch_birthdays", MagicMock()),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
             data = pipeline2.fetch()
 
         # Fetchers should not have been called
@@ -179,6 +195,7 @@ class TestRetryFetch:
 
     def test_retry_failure_raises(self):
         """When retry also fails, the exception from the retry is raised."""
+
         def always_fail():
             raise ConnectionError("network down")
 

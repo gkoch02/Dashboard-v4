@@ -19,8 +19,9 @@ def _make_draw(w: int = 800, h: int = 480):
     return img, ImageDraw.Draw(img)
 
 
-def _timed(d: date, h_start: int, h_end: int, summary: str = "Meeting",
-           location: str | None = None) -> CalendarEvent:
+def _timed(
+    d: date, h_start: int, h_end: int, summary: str = "Meeting", location: str | None = None
+) -> CalendarEvent:
     return CalendarEvent(
         summary=summary,
         start=datetime(d.year, d.month, d.day, h_start, 0),
@@ -44,6 +45,7 @@ TODAY = date(2026, 3, 22)
 # ---------------------------------------------------------------------------
 # _fmt_time
 # ---------------------------------------------------------------------------
+
 
 class TestFmtTime:
     def test_morning_on_the_hour(self):
@@ -93,6 +95,7 @@ class TestFmtTime:
 # ---------------------------------------------------------------------------
 # _events_for_today
 # ---------------------------------------------------------------------------
+
 
 class TestEventsForToday:
     def test_empty_events(self):
@@ -177,6 +180,7 @@ class TestEventsForToday:
 # draw_today — rendering smoke tests
 # ---------------------------------------------------------------------------
 
+
 class TestDrawToday:
     def test_smoke_no_events(self):
         img, draw = _make_draw()
@@ -243,7 +247,9 @@ class TestDrawToday:
             seen_texts.append(args[2])
             return 0
 
-        with patch("src.render.components.today_view.draw_text_truncated", side_effect=_capture_text):
+        with patch(
+            "src.render.components.today_view.draw_text_truncated", side_effect=_capture_text
+        ):
             draw_today(draw, [evt], TODAY)
 
         assert any("Suite 200" in t for t in seen_texts)
@@ -266,6 +272,7 @@ class TestDrawToday:
     def test_smoke_all_day_invert_style(self):
         """With invert_allday_bars style, all-day events should still render."""
         from src.render.theme import ThemeStyle
+
         img, draw = _make_draw()
         style = ThemeStyle(invert_allday_bars=True)
         evt = _all_day(TODAY, TODAY + timedelta(days=1), "Inverted")

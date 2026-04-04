@@ -55,7 +55,8 @@ class TestFilterEvents:
         """Events with calendar_name=None should never be excluded by calendar filter."""
         events = [_event("Meeting", calendar_name=None)]
         result = filter_events(
-            events, FilterConfig(exclude_calendars=["Anything"]),
+            events,
+            FilterConfig(exclude_calendars=["Anything"]),
         )
         assert len(result) == 1
 
@@ -89,10 +90,13 @@ class TestFilterEvents:
             _event("All Day", calendar_name="Personal", is_all_day=True),
             _event("Dinner", calendar_name="Personal"),
         ]
-        result = filter_events(events, FilterConfig(
-            exclude_keywords=["OOO"],
-            exclude_all_day=True,
-        ))
+        result = filter_events(
+            events,
+            FilterConfig(
+                exclude_keywords=["OOO"],
+                exclude_all_day=True,
+            ),
+        )
         assert len(result) == 2
         summaries = {e.summary for e in result}
         assert summaries == {"Meeting", "Dinner"}
@@ -110,7 +114,8 @@ class TestFilterEvents:
             _event("Standup"),
         ]
         result = filter_events(
-            events, FilterConfig(exclude_keywords=["Focus", "Block"]),
+            events,
+            FilterConfig(exclude_keywords=["Focus", "Block"]),
         )
         assert len(result) == 1
         assert result[0].summary == "Standup"

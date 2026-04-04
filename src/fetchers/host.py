@@ -69,8 +69,8 @@ def fetch_host_data() -> Optional[HostData]:
         total_bytes = st.f_blocks * st.f_frsize
         free_bytes = st.f_bavail * st.f_frsize
         used_bytes = total_bytes - free_bytes
-        host.disk_total_gb = total_bytes / (1024 ** 3)
-        host.disk_used_gb = used_bytes / (1024 ** 3)
+        host.disk_total_gb = total_bytes / (1024**3)
+        host.disk_used_gb = used_bytes / (1024**3)
         any_success = True
     except Exception:
         pass

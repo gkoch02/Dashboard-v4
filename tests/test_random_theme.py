@@ -4,7 +4,6 @@ import json
 from datetime import date, datetime
 from unittest.mock import patch
 
-
 from src.render.random_theme import (
     _EXCLUDED_FROM_POOL,
     eligible_themes,
@@ -20,6 +19,7 @@ _REAL_THEMES = AVAILABLE_THEMES - _EXCLUDED_FROM_POOL
 # ---------------------------------------------------------------------------
 # eligible_themes
 # ---------------------------------------------------------------------------
+
 
 class TestEligibleThemes:
     def test_no_filters_returns_all_real_themes(self):
@@ -59,6 +59,7 @@ class TestEligibleThemes:
 # ---------------------------------------------------------------------------
 # pick_random_theme — persistence logic
 # ---------------------------------------------------------------------------
+
 
 class TestPickRandomTheme:
     def test_new_day_picks_and_persists(self, tmp_path):
@@ -159,6 +160,7 @@ class TestPickRandomTheme:
 # _EXCLUDED_FROM_POOL — pseudo-themes must never appear
 # ---------------------------------------------------------------------------
 
+
 class TestExcludedFromPool:
     def test_random_variants_excluded(self):
         assert "random" in _EXCLUDED_FROM_POOL
@@ -176,6 +178,7 @@ class TestExcludedFromPool:
 # ---------------------------------------------------------------------------
 # pick_random_theme_hourly — persistence logic
 # ---------------------------------------------------------------------------
+
 
 class TestPickRandomThemeHourly:
     def test_new_hour_picks_and_persists(self, tmp_path):
@@ -211,7 +214,7 @@ class TestPickRandomThemeHourly:
         state_path.write_text(json.dumps({"hour": "2026-03-22T23", "theme": "terminal"}))
 
         now = datetime(2026, 3, 23, 0, 0)
-        chosen = pick_random_theme_hourly([], [], str(tmp_path), now=now)
+        pick_random_theme_hourly([], [], str(tmp_path), now=now)
         state = json.loads(state_path.read_text())
         assert state["hour"] == "2026-03-23T00"
 

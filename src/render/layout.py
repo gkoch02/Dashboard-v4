@@ -51,14 +51,14 @@ PAD = 8
 PAD_SM = 4
 
 # Weather panel internals
-WEATHER_ICON_X_OFFSET = PAD + 4        # 12px from panel left
-WEATHER_TEMP_X_OFFSET = 78             # right of icon
-WEATHER_DETAIL_X_OFFSET = 154          # right column (desc, hi/lo, feels/wind, sun)
-WEATHER_CONTENT_Y_OFFSET = 28          # top of icon / temp row (row 1: description)
-WEATHER_HILO_Y_OFFSET = WEATHER_CONTENT_Y_OFFSET + 14   # row 2: hi/lo (42px)
+WEATHER_ICON_X_OFFSET = PAD + 4  # 12px from panel left
+WEATHER_TEMP_X_OFFSET = 78  # right of icon
+WEATHER_DETAIL_X_OFFSET = 154  # right column (desc, hi/lo, feels/wind, sun)
+WEATHER_CONTENT_Y_OFFSET = 28  # top of icon / temp row (row 1: description)
+WEATHER_HILO_Y_OFFSET = WEATHER_CONTENT_Y_OFFSET + 14  # row 2: hi/lo (42px)
 WEATHER_DETAIL3_Y_OFFSET = WEATHER_CONTENT_Y_OFFSET + 26  # row 3: feels-like + wind (54px)
 WEATHER_DETAIL4_Y_OFFSET = WEATHER_CONTENT_Y_OFFSET + 38  # row 4: sunrise / sunset (66px)
 # forecast strip hline is at y0+82; row 4 with regular(11) (~12px) ends at ~y0+78 — 4px margin
 WEATHER_HUMID_Y_OFFSET = WEATHER_DETAIL3_Y_OFFSET  # kept for backward compat
-WEATHER_FORECAST_H = 38                # height of forecast strip at bottom
-WEATHER_ALERT_H = 15                   # alert bar replaces humidity row when active
+WEATHER_FORECAST_H = 38  # height of forecast strip at bottom
+WEATHER_ALERT_H = 15  # alert bar replaces humidity row when active

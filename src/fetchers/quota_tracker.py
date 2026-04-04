@@ -45,7 +45,9 @@ class QuotaTracker:
         if count > threshold:
             logger.warning(
                 "API quota warning: %s has made %d calls today (threshold: %d)",
-                source, count, threshold,
+                source,
+                count,
+                threshold,
             )
             return True
         return False

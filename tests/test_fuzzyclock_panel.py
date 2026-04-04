@@ -7,10 +7,10 @@ from PIL import Image, ImageDraw
 from src.render.components.fuzzyclock_panel import draw_fuzzyclock, fuzzy_time
 from src.render.theme import ComponentRegion, ThemeStyle
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -24,6 +24,7 @@ def _dt(hour: int, minute: int) -> datetime:
 # ---------------------------------------------------------------------------
 # fuzzy_time — all 12 buckets
 # ---------------------------------------------------------------------------
+
 
 class TestFuzzyTime:
     # Bucket :00
@@ -144,6 +145,7 @@ class TestFuzzyTime:
 # ---------------------------------------------------------------------------
 # draw_fuzzyclock — smoke tests
 # ---------------------------------------------------------------------------
+
 
 class TestDrawFuzzyclock:
     def test_smoke_default_region(self):

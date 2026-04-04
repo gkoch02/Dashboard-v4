@@ -1,6 +1,7 @@
 """Tests for src/data/models.py — dataclass construction, defaults, and equality."""
 
 from datetime import date, datetime, timezone
+
 from src.data.models import (
     Birthday,
     CalendarEvent,
@@ -170,8 +171,10 @@ class TestWeatherData:
     def test_forecast_list(self):
         fc = DayForecast(
             date=date(2026, 3, 23),
-            high=70.0, low=52.0,
-            icon="02d", description="cloudy",
+            high=70.0,
+            low=52.0,
+            icon="02d",
+            description="cloudy",
         )
         w = self._make(forecast=[fc])
         assert len(w.forecast) == 1
@@ -284,9 +287,11 @@ class TestDashboardData:
         """Each DashboardData instance gets its own list/dict, not a shared reference."""
         d1 = DashboardData()
         d2 = DashboardData()
-        d1.events.append(CalendarEvent(
-            summary="X",
-            start=datetime(2026, 1, 1),
-            end=datetime(2026, 1, 1, 1),
-        ))
+        d1.events.append(
+            CalendarEvent(
+                summary="X",
+                start=datetime(2026, 1, 1),
+                end=datetime(2026, 1, 1, 1),
+            )
+        )
         assert d2.events == []

@@ -21,11 +21,18 @@ from PIL import ImageDraw
 
 from src.data.models import AirQualityData, WeatherData
 from src.render.fonts import weather_icon as weather_icon_font
-from src.render.icons import OWM_ICON_MAP, FALLBACK_ICON
+from src.render.icons import FALLBACK_ICON, OWM_ICON_MAP
 from src.render.moon import moon_phase_glyph, moon_phase_name
 from src.render.primitives import (
-    draw_text_truncated, filled_rect, hline, text_height, text_width,
-    fmt_time as _fmt_time, deg_to_compass,
+    deg_to_compass,
+    draw_text_truncated,
+    filled_rect,
+    hline,
+    text_height,
+    text_width,
+)
+from src.render.primitives import (
+    fmt_time as _fmt_time,
 )
 from src.render.theme import ComponentRegion, ThemeStyle
 
@@ -63,10 +70,10 @@ def draw_weather_full(
     W, H = region.w, region.h
 
     # ── Zone heights (proportional to 480px canvas) ──────────────────
-    hero_h = int(H * 0.44)        # ~211px: icon + temp + desc + hi/lo
-    cards_h = int(H * 0.155)      # ~74px: metric cards row
-    detail_h = int(H * 0.06)      # ~29px: sunrise/sunset/pressure/moon
-    alert_h = int(H * 0.055)      # ~26px: alert banner (if needed)
+    hero_h = int(H * 0.44)  # ~211px: icon + temp + desc + hi/lo
+    cards_h = int(H * 0.155)  # ~74px: metric cards row
+    detail_h = int(H * 0.06)  # ~29px: sunrise/sunset/pressure/moon
+    alert_h = int(H * 0.055)  # ~26px: alert banner (if needed)
     # Remaining space goes to forecast grid
 
     hero_top = y0
@@ -86,8 +93,9 @@ def draw_weather_full(
     # ── Draw each zone ───────────────────────────────────────────────
     _draw_hero(draw, weather, x0, hero_top, W, hero_h, style)
     _draw_metric_cards(draw, weather, x0, cards_top, W, cards_h, style, air_quality=air_quality)
-    _draw_detail_strip(draw, weather, today, x0, detail_top, W, detail_h, style,
-                       air_quality=air_quality)
+    _draw_detail_strip(
+        draw, weather, today, x0, detail_top, W, detail_h, style, air_quality=air_quality
+    )
 
     if has_alerts and alert_top is not None:
         _draw_alert_banner(draw, weather, x0, alert_top, W, alert_h, style)
@@ -199,11 +207,15 @@ def _draw_metric_cards(draw, weather, x0, y0, W, H, style, *, air_quality=None):
 
     # Air quality (optional 5th card from PurpleAir)
     if air_quality is not None:
-        cards.append((
-            _GLYPH_AIR_QUALITY,
-            f"AQI {air_quality.aqi}",
-            air_quality.category[:11],  # truncate "Unhealthy for Sensitive Groups" → "Unhealthy f"
-        ))
+        cards.append(
+            (
+                _GLYPH_AIR_QUALITY,
+                f"AQI {air_quality.aqi}",
+                air_quality.category[
+                    :11
+                ],  # truncate "Unhealthy for Sensitive Groups" → "Unhealthy f"
+            )
+        )
 
     # Layout: variable card count with equal widths
     n = len(cards)
@@ -226,7 +238,9 @@ def _draw_metric_cards(draw, weather, x0, y0, W, H, style, *, air_quality=None):
         # Rounded rectangle outline
         draw.rounded_rectangle(
             [card_x, card_y, card_x + card_w, card_y + card_h],
-            radius=6, outline=fg, width=1,
+            radius=6,
+            outline=fg,
+            width=1,
         )
 
         inner_cx = card_x + card_w // 2
@@ -256,11 +270,15 @@ def _draw_metric_cards(draw, weather, x0, y0, W, H, style, *, air_quality=None):
         val_y = line_y + (row_h - val_h) // 2
         draw.text(
             (line_x - glyph_bbox[0], icon_y - glyph_bbox[1]),
-            glyph, font=icon_font, fill=fg,
+            glyph,
+            font=icon_font,
+            fill=fg,
         )
         draw.text(
             (line_x + glyph_w + spacing - val_bbox[0], val_y - val_bbox[1]),
-            value, font=value_font, fill=fg,
+            value,
+            font=value_font,
+            fill=fg,
         )
 
         # Label centred at bottom of card
@@ -342,9 +360,13 @@ def _draw_detail_strip(draw, weather, today, x0, y0, W, H, style, *, air_quality
         moon_x = start_x + text_w
         glyph_mid_y = mid_y + text_height(font) // 2
         draw.text(
-            (moon_x - glyph_bbox[0],
-             glyph_mid_y - (glyph_bbox[3] - glyph_bbox[1]) // 2 - glyph_bbox[1]),
-            moon_glyph_char, font=moon_icon_font, fill=fg,
+            (
+                moon_x - glyph_bbox[0],
+                glyph_mid_y - (glyph_bbox[3] - glyph_bbox[1]) // 2 - glyph_bbox[1],
+            ),
+            moon_glyph_char,
+            font=moon_icon_font,
+            fill=fg,
         )
 
         # Moon name (regular font)
@@ -375,12 +397,17 @@ def _draw_alert_banner(draw, weather, x0, y0, W, H, style):
         draw_text_truncated(
             draw,
             (x0 + 30, y0 + (H - text_height(alert_font)) // 2),
-            alert_str, alert_font, max_w, fill=bg,
+            alert_str,
+            alert_font,
+            max_w,
+            fill=bg,
         )
     else:
         draw.text(
             (x0 + (W - aw) // 2, y0 + (H - text_height(alert_font)) // 2),
-            alert_str, font=alert_font, fill=bg,
+            alert_str,
+            font=alert_font,
+            fill=bg,
         )
 
 
@@ -395,7 +422,9 @@ def _draw_forecast_grid(draw, weather, x0, y0, W, H, style):
         mw = text_width(draw, msg, font)
         draw.text(
             (x0 + (W - mw) // 2, y0 + (H - text_height(font)) // 2),
-            msg, font=font, fill=fg,
+            msg,
+            font=font,
+            fill=fg,
         )
         return
 
@@ -427,7 +456,9 @@ def _draw_forecast_grid(draw, weather, x0, y0, W, H, style):
         gw = gbbox[2] - gbbox[0]
         draw.text(
             (col_cx - gw // 2 - gbbox[0], icon_y - gbbox[1]),
-            glyph, font=icon_font, fill=fg,
+            glyph,
+            font=icon_font,
+            fill=fg,
         )
 
         # Hi / Lo
@@ -442,8 +473,10 @@ def _draw_forecast_grid(draw, weather, x0, y0, W, H, style):
             pw = text_width(draw, precip_str, precip_font)
             precip_y = hilo_y + text_height(hilo_font) + 3
             draw.text(
-                (col_cx - pw // 2, precip_y), precip_str,
-                font=precip_font, fill=fg,
+                (col_cx - pw // 2, precip_y),
+                precip_str,
+                font=precip_font,
+                fill=fg,
             )
 
 
@@ -455,5 +488,7 @@ def _draw_unavailable(draw, region, style):
     mh = text_height(font)
     draw.text(
         (region.x + (region.w - mw) // 2, region.y + (region.h - mh) // 2),
-        msg, font=font, fill=style.fg,
+        msg,
+        font=font,
+        fill=style.fg,
     )

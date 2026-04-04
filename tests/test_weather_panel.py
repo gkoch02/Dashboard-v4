@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 from PIL import Image, ImageDraw
 
 from src.data.models import DayForecast, WeatherAlert, WeatherData
-from src.render.components.weather_panel import draw_weather, _fmt_time
+from src.render.components.weather_panel import _fmt_time, draw_weather
 
 
 def _make_draw(w: int = 800, h: int = 480):
@@ -68,12 +68,12 @@ class TestDrawWeatherDetails:
         tz = timezone.utc
         today = date(2024, 3, 15)
         weather = _make_weather(
-            sunrise=datetime.combine(
-                today, datetime.min.time().replace(hour=6, minute=24)
-            ).replace(tzinfo=tz),
-            sunset=datetime.combine(
-                today, datetime.min.time().replace(hour=19, minute=51)
-            ).replace(tzinfo=tz),
+            sunrise=datetime.combine(today, datetime.min.time().replace(hour=6, minute=24)).replace(
+                tzinfo=tz
+            ),
+            sunset=datetime.combine(today, datetime.min.time().replace(hour=19, minute=51)).replace(
+                tzinfo=tz
+            ),
         )
         img, draw = _make_draw()
         draw_weather(draw, weather, today=today)
@@ -83,9 +83,9 @@ class TestDrawWeatherDetails:
         tz = timezone.utc
         today = date(2024, 3, 15)
         weather = _make_weather(
-            sunrise=datetime.combine(
-                today, datetime.min.time().replace(hour=6, minute=24)
-            ).replace(tzinfo=tz),
+            sunrise=datetime.combine(today, datetime.min.time().replace(hour=6, minute=24)).replace(
+                tzinfo=tz
+            ),
             sunset=None,
         )
         img, draw = _make_draw()
@@ -97,9 +97,9 @@ class TestDrawWeatherDetails:
         today = date(2024, 3, 15)
         weather = _make_weather(
             sunrise=None,
-            sunset=datetime.combine(
-                today, datetime.min.time().replace(hour=19, minute=51)
-            ).replace(tzinfo=tz),
+            sunset=datetime.combine(today, datetime.min.time().replace(hour=19, minute=51)).replace(
+                tzinfo=tz
+            ),
         )
         img, draw = _make_draw()
         draw_weather(draw, weather, today=today)
@@ -295,10 +295,12 @@ class TestStalenessGlyph:
         """STALE staleness should draw the '!' badge without crashing."""
         from src.data.models import StalenessLevel
         from src.render.theme import ComponentRegion
+
         weather = _make_weather()
         img, draw = _make_draw()
         draw_weather(
-            draw, weather,
+            draw,
+            weather,
             region=ComponentRegion(0, 0, 300, 120),
             staleness=StalenessLevel.STALE,
         )
@@ -308,10 +310,12 @@ class TestStalenessGlyph:
         """EXPIRED staleness should also draw the badge."""
         from src.data.models import StalenessLevel
         from src.render.theme import ComponentRegion
+
         weather = _make_weather()
         img, draw = _make_draw()
         draw_weather(
-            draw, weather,
+            draw,
+            weather,
             region=ComponentRegion(0, 0, 300, 120),
             staleness=StalenessLevel.EXPIRED,
         )
@@ -320,6 +324,7 @@ class TestStalenessGlyph:
     def test_fresh_weather_no_glyph_no_crash(self):
         """FRESH staleness should not draw a badge and must not crash."""
         from src.data.models import StalenessLevel
+
         weather = _make_weather()
         img, draw = _make_draw()
         draw_weather(draw, weather, staleness=StalenessLevel.FRESH)

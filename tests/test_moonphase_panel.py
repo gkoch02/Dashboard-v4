@@ -1,8 +1,6 @@
 """Tests for src/render/components/moonphase_panel.py."""
 
-import hashlib
 import json
-import tempfile
 from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -18,10 +16,10 @@ from src.render.components.moonphase_panel import (
 )
 from src.render.theme import ComponentRegion, ThemeStyle
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -57,25 +55,29 @@ TODAY = date(2024, 3, 15)
 # _ordinal_suffix
 # ---------------------------------------------------------------------------
 
+
 class TestOrdinalSuffix:
-    @pytest.mark.parametrize("n,expected", [
-        (1, "st"),
-        (2, "nd"),
-        (3, "rd"),
-        (4, "th"),
-        (10, "th"),
-        (11, "th"),  # teen exception
-        (12, "th"),  # teen exception
-        (13, "th"),  # teen exception
-        (21, "st"),
-        (22, "nd"),
-        (23, "rd"),
-        (24, "th"),
-        (100, "th"),
-        (101, "st"),
-        (111, "th"),  # teen exception in hundreds
-        (112, "th"),
-    ])
+    @pytest.mark.parametrize(
+        "n,expected",
+        [
+            (1, "st"),
+            (2, "nd"),
+            (3, "rd"),
+            (4, "th"),
+            (10, "th"),
+            (11, "th"),  # teen exception
+            (12, "th"),  # teen exception
+            (13, "th"),  # teen exception
+            (21, "st"),
+            (22, "nd"),
+            (23, "rd"),
+            (24, "th"),
+            (100, "th"),
+            (101, "st"),
+            (111, "th"),  # teen exception in hundreds
+            (112, "th"),
+        ],
+    )
     def test_suffix(self, n, expected):
         assert _ordinal_suffix(n) == expected
 
@@ -83,6 +85,7 @@ class TestOrdinalSuffix:
 # ---------------------------------------------------------------------------
 # _quote_for_panel — refresh modes
 # ---------------------------------------------------------------------------
+
 
 class TestQuoteForPanel:
     def test_daily_refresh_is_deterministic(self):
@@ -94,8 +97,7 @@ class TestQuoteForPanel:
         """Two different dates should generally produce different quotes.
         This is probabilistic but with 5+ quotes it's extremely reliable."""
         quotes = {
-            json.dumps(_quote_for_panel(date(2024, 3, d), refresh="daily"))
-            for d in range(1, 20)
+            json.dumps(_quote_for_panel(date(2024, 3, d), refresh="daily")) for d in range(1, 20)
         }
         assert len(quotes) > 1
 
@@ -149,6 +151,7 @@ class TestQuoteForPanel:
 # draw_moonphase — smoke tests
 # ---------------------------------------------------------------------------
 
+
 class TestDrawMoonphaseSmoke:
     def test_renders_with_full_data(self):
         _, draw = _make_draw()
@@ -190,16 +193,20 @@ class TestDrawMoonphaseSmoke:
 # draw_moonphase — date variations covering lunar cycle
 # ---------------------------------------------------------------------------
 
+
 class TestDrawMoonphasePhases:
-    @pytest.mark.parametrize("d", [
-        date(2024, 1, 11),   # new moon
-        date(2024, 1, 18),   # first quarter
-        date(2024, 1, 25),   # full moon
-        date(2024, 2, 2),    # last quarter
-        date(2024, 3, 15),   # waxing crescent
-        date(2024, 6, 21),   # summer solstice
-        date(2024, 12, 31),  # year boundary
-    ])
+    @pytest.mark.parametrize(
+        "d",
+        [
+            date(2024, 1, 11),  # new moon
+            date(2024, 1, 18),  # first quarter
+            date(2024, 1, 25),  # full moon
+            date(2024, 2, 2),  # last quarter
+            date(2024, 3, 15),  # waxing crescent
+            date(2024, 6, 21),  # summer solstice
+            date(2024, 12, 31),  # year boundary
+        ],
+    )
     def test_renders_across_lunar_cycle(self, d):
         _, draw = _make_draw()
         draw_moonphase(draw, _make_data(), d)
@@ -208,6 +215,7 @@ class TestDrawMoonphasePhases:
 # ---------------------------------------------------------------------------
 # draw_moonphase — weather without sunrise/sunset
 # ---------------------------------------------------------------------------
+
 
 class TestDrawMoonphaseCelestialStrip:
     def test_renders_without_sunrise(self):
@@ -233,6 +241,7 @@ class TestDrawMoonphaseCelestialStrip:
 # draw_moonphase — quote refresh modes
 # ---------------------------------------------------------------------------
 
+
 class TestDrawMoonphaseQuoteRefresh:
     @pytest.mark.parametrize("mode", ["daily", "hourly", "twice_daily"])
     def test_refresh_mode_renders(self, mode):
@@ -244,9 +253,11 @@ class TestDrawMoonphaseQuoteRefresh:
 # Integration: via render_dashboard with moonphase theme
 # ---------------------------------------------------------------------------
 
+
 class TestMoonphaseThemeIntegration:
     def test_moonphase_theme_renders_via_canvas(self):
         from PIL import Image as PILImage
+
         from src.config import DisplayConfig
         from src.render.canvas import render_dashboard
         from src.render.theme import load_theme
@@ -258,6 +269,7 @@ class TestMoonphaseThemeIntegration:
 
     def test_moonphase_invert_theme_renders(self):
         from PIL import Image as PILImage
+
         from src.config import DisplayConfig
         from src.render.canvas import render_dashboard
         from src.render.theme import load_theme
@@ -268,11 +280,13 @@ class TestMoonphaseThemeIntegration:
 
     def test_moonphase_in_available_themes(self):
         from src.render.theme import AVAILABLE_THEMES
+
         assert "moonphase" in AVAILABLE_THEMES
         assert "moonphase_invert" in AVAILABLE_THEMES
 
     def test_moonphase_in_random_pool(self):
         from src.render.random_theme import eligible_themes
+
         pool = eligible_themes(include=[], exclude=[])
         assert "moonphase" in pool
         assert "moonphase_invert" in pool

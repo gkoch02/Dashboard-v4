@@ -6,7 +6,11 @@ and maximum eInk contrast.
 """
 
 from src.render.fonts import (
-    cinzel_bold, playfair_medium, playfair_regular, regular, semibold,
+    cinzel_bold,
+    playfair_medium,
+    playfair_regular,
+    regular,
+    semibold,
 )
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 from src.render.themes.moonphase import _draw_moonphase_overlay
@@ -37,7 +41,7 @@ def moonphase_invert_theme() -> Theme:
             overlay_fn=_draw_moonphase_overlay,
         ),
         style=ThemeStyle(
-            fg=0,   # black on white — parchment / fairy-tale book
+            fg=0,  # black on white — parchment / fairy-tale book
             bg=1,
             invert_header=False,
             invert_today_col=False,

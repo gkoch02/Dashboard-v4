@@ -6,7 +6,11 @@ from PIL import Image
 
 from src.config import DisplayConfig
 from src.data.models import (
-    Birthday, CalendarEvent, DashboardData, DayForecast, WeatherData,
+    Birthday,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    WeatherData,
 )
 from src.render.canvas import render_dashboard
 
@@ -45,16 +49,25 @@ def _make_data(today: date | None = None) -> DashboardData:
             humidity=65,
             forecast=[
                 DayForecast(
-                    date=today + timedelta(days=1), high=45.0, low=33.0,
-                    icon="10d", description="rain",
+                    date=today + timedelta(days=1),
+                    high=45.0,
+                    low=33.0,
+                    icon="10d",
+                    description="rain",
                 ),
                 DayForecast(
-                    date=today + timedelta(days=2), high=50.0, low=38.0,
-                    icon="01d", description="clear",
+                    date=today + timedelta(days=2),
+                    high=50.0,
+                    low=38.0,
+                    icon="01d",
+                    description="clear",
                 ),
                 DayForecast(
-                    date=today + timedelta(days=3), high=47.0, low=36.0,
-                    icon="04d", description="cloudy",
+                    date=today + timedelta(days=3),
+                    high=47.0,
+                    low=36.0,
+                    icon="04d",
+                    description="cloudy",
                 ),
             ],
         ),

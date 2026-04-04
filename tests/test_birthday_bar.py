@@ -72,8 +72,7 @@ class TestDrawBirthdays:
         """When more than 3 birthdays are provided, overflow count should be shown."""
         today = date(2024, 3, 15)
         birthdays = [
-            Birthday(name=f"Person {i}", date=today + timedelta(days=i + 1))
-            for i in range(6)
+            Birthday(name=f"Person {i}", date=today + timedelta(days=i + 1)) for i in range(6)
         ]
         img, draw = _make_draw()
         draw_birthdays(draw, birthdays, today)
@@ -82,8 +81,7 @@ class TestDrawBirthdays:
     def test_exactly_three_birthdays_no_overflow(self):
         today = date(2024, 3, 15)
         birthdays = [
-            Birthday(name=f"Person {i}", date=today + timedelta(days=i + 1))
-            for i in range(3)
+            Birthday(name=f"Person {i}", date=today + timedelta(days=i + 1)) for i in range(3)
         ]
         img, draw = _make_draw()
         draw_birthdays(draw, birthdays, today)
@@ -114,11 +112,14 @@ class TestDrawBirthdays:
         """STALE staleness draws the '!' badge without crashing."""
         from src.data.models import StalenessLevel
         from src.render.theme import ComponentRegion
+
         today = date(2024, 3, 15)
         birthdays = [Birthday(name="Alice", date=today + timedelta(days=3))]
         img, draw = _make_draw()
         draw_birthdays(
-            draw, birthdays, today,
+            draw,
+            birthdays,
+            today,
             region=ComponentRegion(300, 360, 250, 120),
             staleness=StalenessLevel.STALE,
         )
@@ -138,6 +139,7 @@ class TestDrawBirthdays:
         y = y0+32, line_h=22, h=50, pad=8 → 32+22=54 > 50-8=42 → break at i=0
         """
         from src.render.theme import ComponentRegion
+
         today = date(2024, 3, 15)
         birthdays = [
             Birthday(name="Alice", date=today + timedelta(days=1)),

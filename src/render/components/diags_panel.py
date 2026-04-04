@@ -14,33 +14,39 @@ from PIL import ImageDraw
 from src._version import __version__
 from src.data.models import AirQualityData, DashboardData, HostData, StalenessLevel
 from src.render.primitives import (
-    deg_to_compass, draw_text_truncated, fmt_time,
-    hline, text_height, text_width, vline,
+    deg_to_compass,
+    draw_text_truncated,
+    fmt_time,
+    hline,
+    text_height,
+    text_width,
+    vline,
 )
 from src.render.theme import ComponentRegion, ThemeStyle
 
 # ── Layout constants ───────────────────────────────────────────────────────────
-_HEADER_H = 28          # header bar height
-_CONTENT_TOP = 4        # extra gap below header rule before content starts
-_L_X_PAD = 10           # left column left-margin inside region
-_L_W = 378              # left column usable width (10 → 388)
-_DIVIDER_X = 400        # vertical divider x offset from region.x
-_R_X = 412              # right column start x offset from region.x
-_R_W = 376              # right column usable width (412 → 788)
+_HEADER_H = 28  # header bar height
+_CONTENT_TOP = 4  # extra gap below header rule before content starts
+_L_X_PAD = 10  # left column left-margin inside region
+_L_W = 378  # left column usable width (10 → 388)
+_DIVIDER_X = 400  # vertical divider x offset from region.x
+_R_X = 412  # right column start x offset from region.x
+_R_W = 376  # right column usable width (412 → 788)
 
-_LINE_H = 14            # height of each data row
-_LABEL_SIZE = 11        # section label font size (dm_bold)
-_LABEL_PAD = 4          # gap below label before first data row
-_DATA_SIZE = 12         # data row font size (cyber_mono via font_regular)
-_SRC_SIZE = 10          # source attribution font size (right of label)
-_KEY_W = 100            # key-column width in key-value rows
-_SECTION_GAP = 8        # gap added before and after section-separator hlines
+_LINE_H = 14  # height of each data row
+_LABEL_SIZE = 11  # section label font size (dm_bold)
+_LABEL_PAD = 4  # gap below label before first data row
+_DATA_SIZE = 12  # data row font size (cyber_mono via font_regular)
+_SRC_SIZE = 10  # source attribution font size (right of label)
+_KEY_W = 100  # key-column width in key-value rows
+_SECTION_GAP = 8  # gap added before and after section-separator hlines
 _MAX_FORECAST = 6
 _MAX_BIRTHDAYS = 5
 _MAX_ALERTS = 2
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
+
 
 def draw_diags(
     draw: ImageDraw.ImageDraw,
@@ -104,6 +110,7 @@ def draw_diags(
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
+
 def _sep(draw, x, y, w, fg):
     """Draw a horizontal section separator. Returns y after the post-gap."""
     y += _SECTION_GAP
@@ -133,7 +140,9 @@ def _draw_header(draw, rx, ry, w, data: DashboardData, style: ThemeStyle) -> Non
 
 def _label(
     draw: ImageDraw.ImageDraw,
-    x: int, y: int, w: int,
+    x: int,
+    y: int,
+    w: int,
     text: str,
     style: ThemeStyle,
     source: str = "",
@@ -153,8 +162,10 @@ def _label(
 
 def _kv(
     draw: ImageDraw.ImageDraw,
-    x: int, y: int,
-    key: str, value: str,
+    x: int,
+    y: int,
+    key: str,
+    value: str,
     style: ThemeStyle,
     col_w: int,
 ) -> int:
@@ -167,6 +178,7 @@ def _kv(
 
 
 # ── Section renderers ─────────────────────────────────────────────────────────
+
 
 def _weather_section(draw, x, y, w, weather, style) -> int:
     y = _label(draw, x, y, w, "WEATHER", style, source="OpenWeatherMap")
@@ -253,12 +265,19 @@ def _forecast_section(draw, x, y, w, weather, style) -> int:
         draw.text((x, y), fc.date.strftime("%a"), font=f, fill=fg)
         draw.text((x + DAY_W, y), f"{fc.high:.0f}/{fc.low:.0f}", font=f, fill=fg)
         draw_text_truncated(
-            draw, (x + DAY_W + HILO_W, y),
-            fc.description.title(), f, desc_w, fill=fg,
+            draw,
+            (x + DAY_W + HILO_W, y),
+            fc.description.title(),
+            f,
+            desc_w,
+            fill=fg,
         )
         if fc.precip_chance is not None:
             draw.text(
-                (x + w - PRECIP_W, y), f"{fc.precip_chance:.0%}", font=f, fill=fg,
+                (x + w - PRECIP_W, y),
+                f"{fc.precip_chance:.0%}",
+                font=f,
+                fill=fg,
             )
         y += _LINE_H
     return y
@@ -270,7 +289,8 @@ def _calendar_section(draw, x, y, w, events, today, style) -> int:
     for i in range(7):
         day = week_start + timedelta(days=i)
         count = sum(
-            1 for e in events
+            1
+            for e in events
             if (e.start.date() if isinstance(e.start, datetime) else e.start) == day
         )
         value = f"{count} event{'s' if count != 1 else ''}"

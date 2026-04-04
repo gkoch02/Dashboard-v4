@@ -1,14 +1,10 @@
 """Tests for uncovered branches in src/data_pipeline.py."""
 
-import tempfile
 from concurrent.futures import Future
-from datetime import datetime
 from unittest.mock import patch
 
-import pytest
-
 from src.config import Config, PurpleAirConfig
-from src.data.models import AirQualityData, DashboardData, StalenessLevel, WeatherData
+from src.data.models import AirQualityData, StalenessLevel, WeatherData
 from src.data_pipeline import DataPipeline
 
 
@@ -33,6 +29,7 @@ def _make_pipeline(tmp_path, api_key="", sensor_id=0):
 # _launch_fetches: early-return when everything is skipped (line 171)
 # ---------------------------------------------------------------------------
 
+
 class TestLaunchFetchesEarlyReturn:
     def test_all_sources_skipped_returns_none_futures(self, tmp_path):
         """When all sources are skipped and purpleair is disabled,
@@ -51,6 +48,7 @@ class TestLaunchFetchesEarlyReturn:
 # ---------------------------------------------------------------------------
 # _launch_fetches: purpleair fetch submitted (line 191)
 # ---------------------------------------------------------------------------
+
 
 class TestLaunchFetchesPurpleair:
     def test_purpleair_future_submitted_when_not_skipped(self, tmp_path):
@@ -73,6 +71,7 @@ class TestLaunchFetchesPurpleair:
 # ---------------------------------------------------------------------------
 # _resolve_air_quality: exception path (lines 260-277)
 # ---------------------------------------------------------------------------
+
 
 class TestResolveAirQualityFailure:
     def test_exception_with_cached_fallback(self, tmp_path):
@@ -112,6 +111,7 @@ class TestResolveAirQualityFailure:
 # fetch(): purpleair-enabled path (lines 83 and 94)
 # ---------------------------------------------------------------------------
 
+
 class TestFetchWithPurpleair:
     def test_purpleair_enabled_aq_fetched(self, tmp_path):
         """With purpleair configured, fetch() checks air_quality skip (line 83)
@@ -139,8 +139,8 @@ class TestFetchWithPurpleair:
 
         def skip_side_effect(source):
             if source == "air_quality":
-                return cached_aq, True   # skip=True, cached data available
-            return None, False           # other sources: fetch
+                return cached_aq, True  # skip=True, cached data available
+            return None, False  # other sources: fetch
 
         with (
             patch.object(pipeline, "_should_skip", side_effect=skip_side_effect),

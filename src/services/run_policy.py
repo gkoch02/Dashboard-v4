@@ -15,14 +15,17 @@ def is_morning_startup(now: datetime, quiet_hours_end: int) -> bool:
 
 
 def should_skip_refresh(
-    now: datetime, quiet_hours_start: int,
-    quiet_hours_end: int, dry_run: bool,
+    now: datetime,
+    quiet_hours_start: int,
+    quiet_hours_end: int,
+    dry_run: bool,
 ) -> bool:
     return not dry_run and in_quiet_hours(now, quiet_hours_start, quiet_hours_end)
 
 
 def should_force_full_refresh(
-    now: datetime, quiet_hours_end: int,
+    now: datetime,
+    quiet_hours_end: int,
     force_full_refresh_flag: bool,
 ) -> bool:
     return force_full_refresh_flag or is_morning_startup(now, quiet_hours_end)

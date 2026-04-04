@@ -1,13 +1,14 @@
 import logging
-from datetime import date as _date, datetime
+from datetime import date as _date
+from datetime import datetime
 
+from src.config import resolve_tz
 from src.data_pipeline import DataPipeline
 from src.dummy_data import generate_dummy_data
 from src.filters import filter_events
 from src.render.canvas import render_dashboard
-from src.services.output import OutputService
-from src.config import resolve_tz
 from src.render.theme import load_theme
+from src.services.output import OutputService
 from src.services.run_policy import should_force_full_refresh, should_skip_refresh
 from src.services.theme import resolve_theme_name
 
@@ -39,7 +40,9 @@ class DashboardApp:
             return
 
         force_full = should_force_full_refresh(
-            now, self.cfg.schedule.quiet_hours_end, self.args.force_full_refresh,
+            now,
+            self.cfg.schedule.quiet_hours_end,
+            self.args.force_full_refresh,
         )
         if force_full and not self.args.force_full_refresh:
             logger.info("Morning startup — forcing full refresh")
@@ -55,7 +58,8 @@ class DashboardApp:
 
         logger.info("Rendering dashboard")
         image = render_dashboard(
-            data, self.cfg.display,
+            data,
+            self.cfg.display,
             title=self.cfg.title,
             theme=theme,
             quote_refresh=self.cfg.cache.quote_refresh,

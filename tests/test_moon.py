@@ -142,11 +142,14 @@ class TestMoonPhaseGlyph:
         full_moon_glyphs = {_MOON_GLYPHS[i] for i in range(12, 17)}
         assert glyph in full_moon_glyphs
 
-    @pytest.mark.parametrize("d", [
-        date(2024, 1, 11),   # known new moon
-        date(2024, 1, 25),   # known full moon
-        date(2024, 2, 9),    # known new moon
-    ])
+    @pytest.mark.parametrize(
+        "d",
+        [
+            date(2024, 1, 11),  # known new moon
+            date(2024, 1, 25),  # known full moon
+            date(2024, 2, 9),  # known new moon
+        ],
+    )
     def test_known_lunar_events(self, d):
         """Known lunar dates should not crash and return valid glyphs."""
         glyph = moon_phase_glyph(d)

@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.dummy_data import generate_dummy_data
 from src.config import resolve_tz
 from src.data_pipeline import retry_fetch
-from src.services_run_policy import in_quiet_hours, is_morning_startup
+from src.dummy_data import generate_dummy_data
+from src.services.run_policy import in_quiet_hours, is_morning_startup
 
 
 class TestRetryFetch:
@@ -39,6 +39,7 @@ class TestRetryFetch:
 
     def test_label_included_in_warning_log(self, caplog):
         import logging
+
         fn = MagicMock(side_effect=[Exception("boom"), "ok"])
         with caplog.at_level(logging.WARNING, logger="src.data_pipeline"):
             retry_fetch("MyLabel", fn)
@@ -48,6 +49,7 @@ class TestRetryFetch:
 class TestGenerateDummyData:
     def test_returns_dashboard_data(self):
         from src.data.models import DashboardData
+
         data = generate_dummy_data()
         assert isinstance(data, DashboardData)
 
@@ -171,15 +173,17 @@ class TestIsMorningStartup:
 
 class TestResolveThemeName:
     def test_explicit_theme_returned_unchanged(self):
-        from src.services_theme_service import resolve_theme_name
         from src.config import Config
+        from src.services.theme import resolve_theme_name
+
         cfg = Config()
         cfg.theme = "minimalist"
         assert resolve_theme_name(cfg, override_theme=None) == "minimalist"
 
     def test_override_takes_precedence_over_config(self):
-        from src.services_theme_service import resolve_theme_name
         from src.config import Config
+        from src.services.theme import resolve_theme_name
+
         cfg = Config()
         cfg.theme = "default"
         assert resolve_theme_name(cfg, override_theme="terminal") == "terminal"
@@ -187,14 +191,18 @@ class TestResolveThemeName:
     def test_random_theme_delegates_to_pick(self, tmp_path):
         """theme='random' calls pick_random_theme and returns a concrete name."""
         from unittest.mock import patch
-        from src.services_theme_service import resolve_theme_name
+
         from src.config import Config
+        from src.services.theme import resolve_theme_name
+
         cfg = Config()
         cfg.theme = "random"
         cfg.random_theme.include = []
         cfg.random_theme.exclude = []
         cfg.output_dir = str(tmp_path)
-        with patch("src.render.random_theme.pick_random_theme", return_value="minimalist") as mock_pick:
+        with patch(
+            "src.render.random_theme.pick_random_theme", return_value="minimalist"
+        ) as mock_pick:
             result = resolve_theme_name(cfg, override_theme=None)
         assert result == "minimalist"
         mock_pick.assert_called_once()

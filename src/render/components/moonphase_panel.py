@@ -17,17 +17,27 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from src.render.fonts import (
-    cinzel_bold, playfair_regular, playfair_medium, weather_icon,
+    cinzel_bold,
+    playfair_medium,
+    playfair_regular,
+    weather_icon,
 )
 from src.render.moon import (
-    moon_illumination, moon_phase_age, moon_phase_glyph, moon_phase_name,
+    moon_illumination,
+    moon_phase_age,
+    moon_phase_glyph,
+    moon_phase_name,
 )
 from src.render.primitives import (
-    fmt_time, text_height, text_width, wrap_lines,
+    fmt_time,
+    text_height,
+    text_width,
+    wrap_lines,
 )
 
 if TYPE_CHECKING:
     from PIL import ImageDraw
+
     from src.data.models import DashboardData, WeatherData
     from src.render.theme import ComponentRegion, ThemeStyle
 
@@ -35,17 +45,17 @@ QUOTES_FILE = Path(__file__).parent.parent.parent.parent / "config" / "quotes.js
 
 _DEFAULT_QUOTES = [
     {"text": "Not all those who wander are lost.", "author": "J.R.R. Tolkien"},
-    {"text": "The moon is a friend for the lonesome to talk to.",
-     "author": "Carl Sandburg"},
-    {"text": "We are all in the gutter, but some of us are looking at the stars.",
-     "author": "Oscar Wilde"},
+    {"text": "The moon is a friend for the lonesome to talk to.", "author": "Carl Sandburg"},
+    {
+        "text": "We are all in the gutter, but some of us are looking at the stars.",
+        "author": "Oscar Wilde",
+    },
     {"text": "Dwell on the beauty of life.", "author": "Marcus Aurelius"},
     {"text": "The purpose of our lives is to be happy.", "author": "Dalai Lama"},
 ]
 
 
-def _quote_for_panel(today: date, refresh: str = "daily",
-                     now: datetime | None = None) -> dict:
+def _quote_for_panel(today: date, refresh: str = "daily", now: datetime | None = None) -> dict:
     """Pick a quote deterministically, same logic as info_panel."""
     if refresh == "hourly":
         dt = now if now is not None else datetime.now()
@@ -73,6 +83,7 @@ def _quote_for_panel(today: date, refresh: str = "daily",
 # Drawing helpers
 # ---------------------------------------------------------------------------
 
+
 def _ordinal_suffix(n: int) -> str:
     """Return ordinal suffix for a day number (1st, 2nd, 3rd, 4th, ...)."""
     if 11 <= n % 100 <= 13:
@@ -81,8 +92,11 @@ def _ordinal_suffix(n: int) -> str:
 
 
 def _draw_date_line(
-    draw: "ImageDraw.ImageDraw", today: date,
-    cx: int, y: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    today: date,
+    cx: int,
+    y: int,
+    style: ThemeStyle,
 ) -> int:
     """Draw formatted date centered at cx, return y after the line."""
     font = cinzel_bold(17)
@@ -97,8 +111,11 @@ def _draw_date_line(
 
 
 def _draw_phase_name(
-    draw: "ImageDraw.ImageDraw", today: date,
-    cx: int, y: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    today: date,
+    cx: int,
+    y: int,
+    style: ThemeStyle,
 ) -> int:
     """Draw the phase name with decorative tildes, return y after."""
     font = cinzel_bold(22)
@@ -110,8 +127,12 @@ def _draw_phase_name(
 
 
 def _draw_moon_row(
-    draw: "ImageDraw.ImageDraw", today: date,
-    cx: int, y_top: int, row_h: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    today: date,
+    cx: int,
+    y_top: int,
+    row_h: int,
+    style: ThemeStyle,
 ) -> None:
     """Draw the hero moon and 3 flanking moons per side."""
     hero_size = 162
@@ -161,8 +182,11 @@ def _draw_moon_row(
 
 
 def _draw_illumination(
-    draw: "ImageDraw.ImageDraw", today: date,
-    cx: int, y: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    today: date,
+    cx: int,
+    y: int,
+    style: ThemeStyle,
 ) -> int:
     """Draw illumination percentage with star decorations."""
     font = playfair_medium(22)
@@ -174,8 +198,12 @@ def _draw_illumination(
 
 
 def _draw_celestial_strip(
-    draw: "ImageDraw.ImageDraw", weather: "WeatherData | None",
-    today: date, cx: int, y: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    weather: WeatherData | None,
+    today: date,
+    cx: int,
+    y: int,
+    style: ThemeStyle,
 ) -> int:
     """Draw sunrise/sunset times and moon age."""
     font = playfair_regular(19)
@@ -196,8 +224,11 @@ def _draw_celestial_strip(
 
 
 def _draw_weather_strip(
-    draw: "ImageDraw.ImageDraw", weather: "WeatherData | None",
-    cx: int, y: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    weather: WeatherData | None,
+    cx: int,
+    y: int,
+    style: ThemeStyle,
 ) -> int:
     """Draw weather temp, description, and hi/lo (no icon glyph)."""
     if weather is None:
@@ -218,8 +249,11 @@ def _draw_weather_strip(
 
 
 def _draw_separator(
-    draw: "ImageDraw.ImageDraw",
-    cx: int, y: int, w: int, style: "ThemeStyle",
+    draw: ImageDraw.ImageDraw,
+    cx: int,
+    y: int,
+    w: int,
+    style: ThemeStyle,
 ) -> int:
     """Draw a decorative dot-star separator line."""
     sep_w = min(w - 40, 500)
@@ -245,9 +279,14 @@ def _draw_separator(
 
 
 def _draw_quote(
-    draw: "ImageDraw.ImageDraw", today: date,
-    cx: int, y: int, max_w: int, max_h: int,
-    style: "ThemeStyle", quote_refresh: str,
+    draw: ImageDraw.ImageDraw,
+    today: date,
+    cx: int,
+    y: int,
+    max_w: int,
+    max_h: int,
+    style: ThemeStyle,
+    quote_refresh: str,
 ) -> None:
     """Draw a small wrapped quote at the bottom, centered."""
     quote = _quote_for_panel(today, refresh=quote_refresh)
@@ -262,35 +301,36 @@ def _draw_quote(
     cur_y = y
     for line in lines:
         lw = text_width(draw, line, quote_font)
-        draw.text((cx - lw // 2, cur_y), line,
-                  font=quote_font, fill=style.fg)
+        draw.text((cx - lw // 2, cur_y), line, font=quote_font, fill=style.fg)
         cur_y += lines_h + 4
 
     # Attribution
     attr_font = playfair_regular(16)
-    attr = f'-- {quote["author"]}'
+    attr = f"-- {quote['author']}"
     attr_w = text_width(draw, attr, attr_font)
     attr_y = cur_y + 4
     if attr_y + lines_h < y + max_h:
-        draw.text((cx - attr_w // 2, attr_y), attr,
-                  font=attr_font, fill=style.fg)
+        draw.text((cx - attr_w // 2, attr_y), attr, font=attr_font, fill=style.fg)
 
 
 # ---------------------------------------------------------------------------
 # Main draw function
 # ---------------------------------------------------------------------------
 
+
 def draw_moonphase(
-    draw: "ImageDraw.ImageDraw",
-    data: "DashboardData",
+    draw: ImageDraw.ImageDraw,
+    data: DashboardData,
     today: date,
     *,
-    region: "ComponentRegion | None" = None,
-    style: "ThemeStyle | None" = None,
+    region: ComponentRegion | None = None,
+    style: ThemeStyle | None = None,
     quote_refresh: str = "daily",
 ) -> None:
     """Draw the full-canvas moonphase display."""
-    from src.render.theme import ComponentRegion as CR, ThemeStyle as TS
+    from src.render.theme import ComponentRegion as CR
+    from src.render.theme import ThemeStyle as TS
+
     if region is None:
         region = CR(0, 0, 800, 480)
     if style is None:
@@ -329,5 +369,4 @@ def draw_moonphase(
     y = _draw_separator(draw, cx, y, w, style)
 
     # Quote at bottom
-    _draw_quote(draw, today, cx, y, w - 60, region.y + region.h - y,
-                style, quote_refresh)
+    _draw_quote(draw, today, cx, y, w - 60, region.y + region.h - y, style, quote_refresh)

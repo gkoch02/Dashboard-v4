@@ -10,9 +10,17 @@ from PIL import ImageDraw
 
 from src.data.models import CalendarEvent, DayForecast
 from src.render.primitives import (
-    filled_rect, vline,
-    draw_text_truncated, draw_text_wrapped, text_height,
-    fmt_time as _fmt_time, events_for_day as _events_for_today,
+    draw_text_truncated,
+    draw_text_wrapped,
+    filled_rect,
+    text_height,
+    vline,
+)
+from src.render.primitives import (
+    events_for_day as _events_for_today,
+)
+from src.render.primitives import (
+    fmt_time as _fmt_time,
 )
 from src.render.theme import ComponentRegion, ThemeStyle
 
@@ -89,8 +97,12 @@ def draw_today(
     # --- Right events panel ---
     today_events = _events_for_today(events, today)
     _draw_event_list(
-        draw, today_events,
-        events_x + PAD, y0, events_w - PAD * 2, total_h,
+        draw,
+        today_events,
+        events_x + PAD,
+        y0,
+        events_w - PAD * 2,
+        total_h,
         style,
     )
 
@@ -121,7 +133,9 @@ def _draw_event_list(
         msg_h = msg_bb[3] - msg_bb[1]
         draw.text(
             (x + (max_w - msg_w) // 2 - msg_bb[0], y0 + (total_h - msg_h) // 2 - msg_bb[1]),
-            msg, font=empty_font, fill=style.fg,
+            msg,
+            font=empty_font,
+            fill=style.fg,
         )
         return
 
@@ -150,14 +164,22 @@ def _draw_event_list(
             if style.invert_allday_bars:
                 filled_rect(draw, (x, y, bar_x1, y + allday_bar_h - 1), fill=style.fg)
                 draw_text_truncated(
-                    draw, (x + 6, y + 4),
-                    event.summary, allday_font, max_w - 12, fill=style.bg,
+                    draw,
+                    (x + 6, y + 4),
+                    event.summary,
+                    allday_font,
+                    max_w - 12,
+                    fill=style.bg,
                 )
             else:
                 draw.rectangle((x, y, bar_x1, y + allday_bar_h - 1), outline=style.fg)
                 draw_text_truncated(
-                    draw, (x + 6, y + 4),
-                    event.summary, allday_font, max_w - 12, fill=style.fg,
+                    draw,
+                    (x + 6, y + 4),
+                    event.summary,
+                    allday_font,
+                    max_w - 12,
+                    fill=style.fg,
                 )
             y += allday_bar_h + event_spacing
         else:
@@ -174,8 +196,14 @@ def _draw_event_list(
             remaining_for_title = bottom - event_spacing - y
             max_lines = max(1, remaining_for_title // (title_h + 2))
             used_h = draw_text_wrapped(
-                draw, (x, y), event.summary, title_font,
-                max_w, max_lines=min(2, max_lines), line_spacing=2, fill=style.fg,
+                draw,
+                (x, y),
+                event.summary,
+                title_font,
+                max_w,
+                max_lines=min(2, max_lines),
+                line_spacing=2,
+                fill=style.fg,
             )
             y += max(used_h, title_h)
 

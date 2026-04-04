@@ -43,6 +43,7 @@ TODAY = date(2026, 3, 22)
 # _wrap_lines helper
 # ---------------------------------------------------------------------------
 
+
 class TestWrapLines:
     def _font(self, size: int = 20):
         return jakarta_bold(size)
@@ -90,6 +91,7 @@ class TestWrapLines:
 # _icon_width helper
 # ---------------------------------------------------------------------------
 
+
 class TestIconWidth:
     def test_returns_positive_int(self):
         _, draw = _make_draw()
@@ -113,6 +115,7 @@ class TestIconWidth:
 # ---------------------------------------------------------------------------
 # draw_qotd
 # ---------------------------------------------------------------------------
+
 
 class TestDrawQotd:
     def test_smoke_renders_without_error(self):
@@ -146,6 +149,7 @@ class TestDrawQotd:
         qfile.write_text(json.dumps(custom_quotes))
 
         from src.render.components.info_panel import _quote_for_today
+
         _quote_for_today.cache_clear()
 
         with patch("src.render.components.info_panel.QUOTES_FILE", qfile):
@@ -162,6 +166,7 @@ class TestDrawQotd:
         qfile.write_text(json.dumps(custom_quotes))
 
         from src.render.components.info_panel import _quote_for_today
+
         _quote_for_today.cache_clear()
 
         with patch("src.render.components.info_panel.QUOTES_FILE", qfile):
@@ -173,11 +178,13 @@ class TestDrawQotd:
     def test_different_dates_produce_different_output(self, tmp_path):
         """Different dates with different quotes should differ in output."""
         import hashlib
+
         quotes = [{"text": f"Quote number {i}.", "author": f"Author {i}"} for i in range(10)]
         qfile = tmp_path / "quotes.json"
         qfile.write_text(json.dumps(quotes))
 
         from src.render.components.info_panel import _quote_for_today
+
         _quote_for_today.cache_clear()
 
         with patch("src.render.components.info_panel.QUOTES_FILE", qfile):
@@ -194,6 +201,7 @@ class TestDrawQotd:
 # ---------------------------------------------------------------------------
 # draw_qotd_weather
 # ---------------------------------------------------------------------------
+
 
 class TestDrawQotdWeather:
     def test_smoke_none_weather(self):
@@ -241,6 +249,7 @@ class TestDrawQotdWeather:
 
     def test_smoke_with_alerts(self):
         from src.data.models import WeatherAlert
+
         img, draw = _make_draw()
         weather = _make_weather(alerts=[WeatherAlert(event="Wind Advisory")])
         draw_qotd_weather(draw, weather)

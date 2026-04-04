@@ -81,9 +81,10 @@ class CircuitBreaker:
         if st.consecutive_failures >= self._max_failures:
             st.state = "open"
             logger.warning(
-                "Circuit breaker for %s: → OPEN after %d failures "
-                "(cooldown: %dm)",
-                source, st.consecutive_failures, self._cooldown_minutes,
+                "Circuit breaker for %s: → OPEN after %d failures (cooldown: %dm)",
+                source,
+                st.consecutive_failures,
+                self._cooldown_minutes,
             )
         elif st.state == "half_open":
             # Probe failed — back to open
@@ -126,9 +127,10 @@ class CircuitBreaker:
             for source, st in self._states.items():
                 if st.state != "closed":
                     logger.info(
-                        "Circuit breaker for '%s' loaded in %s state "
-                        "(%d consecutive failures)",
-                        source, st.state.upper(), st.consecutive_failures,
+                        "Circuit breaker for '%s' loaded in %s state (%d consecutive failures)",
+                        source,
+                        st.state.upper(),
+                        st.consecutive_failures,
                     )
         except Exception as exc:
             logger.debug("Could not load breaker state: %s", exc)

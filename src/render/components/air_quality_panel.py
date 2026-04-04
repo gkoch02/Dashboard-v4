@@ -60,7 +60,7 @@ _GLYPH_WIND = "\uf050"
 
 # AQI health-scale zones: (upper_bound_inclusive, short_label)
 _AQI_ZONES: list[tuple[int, str]] = [
-    (50,  "Good"),
+    (50, "Good"),
     (100, "Moderate"),
     (150, "USG"),
     (200, "Unhealthy"),
@@ -92,11 +92,11 @@ def draw_air_quality_full(
     W, H = region.w, region.h
 
     # Zone heights — tuned for 480px canvas
-    hero_h = int(H * 0.375)      # ~180px
-    pm_h = int(H * 0.146)        # ~70px
-    cards_h = int(H * 0.208)     # ~100px
+    hero_h = int(H * 0.375)  # ~180px
+    pm_h = int(H * 0.146)  # ~70px
+    cards_h = int(H * 0.208)  # ~100px
     # Weather strip gets the remainder
-    weather_h = H - hero_h - pm_h - cards_h   # ~130px
+    weather_h = H - hero_h - pm_h - cards_h  # ~130px
 
     hero_top = y0
     pm_top = hero_top + hero_h
@@ -118,16 +118,20 @@ def draw_air_quality_full(
 # Zone 1: AQI hero + scale bar
 # ---------------------------------------------------------------------------
 
+
 def _draw_aqi_hero(
     draw: ImageDraw.ImageDraw,
     aq: AirQualityData,
-    x0: int, y0: int, W: int, H: int,
+    x0: int,
+    y0: int,
+    W: int,
+    H: int,
     style: ThemeStyle,
 ) -> None:
     """Left: large AQI number + category label.  Right: 6-zone scale bar."""
     fg = style.fg
 
-    split = int(W * 0.28)   # left column width
+    split = int(W * 0.28)  # left column width
     pad = 20
 
     # ── Left: AQI number, category, section label ────────────────────────
@@ -173,7 +177,10 @@ def _draw_aqi_hero(
 def _draw_scale_bar(
     draw: ImageDraw.ImageDraw,
     aqi: int,
-    bar_x: int, bar_y: int, bar_w: int, bar_h: int,
+    bar_x: int,
+    bar_y: int,
+    bar_w: int,
+    bar_h: int,
     style: ThemeStyle,
 ) -> None:
     """Horizontal 6-zone AQI health scale with filled progress and tick."""
@@ -189,7 +196,8 @@ def _draw_scale_bar(
     # Draw the outline of the full bar
     draw.rectangle(
         [bar_x, bar_y, bar_x + bar_w, bar_y + bar_h],
-        outline=fg, width=1,
+        outline=fg,
+        width=1,
     )
 
     # Fill from left to fill_x (solid black = "used up" portion)
@@ -213,7 +221,9 @@ def _draw_scale_bar(
         lw = text_width(draw, zone_label, label_font)
         draw.text(
             (zone_mid_x - lw // 2, bar_y + bar_h + 4),
-            zone_label, font=label_font, fill=fg,
+            zone_label,
+            font=label_font,
+            fill=fg,
         )
         prev_bound = upper
 
@@ -231,10 +241,14 @@ def _draw_scale_bar(
 # Zone 2: Particulate matter row
 # ---------------------------------------------------------------------------
 
+
 def _draw_pm_row(
     draw: ImageDraw.ImageDraw,
     aq: AirQualityData,
-    x0: int, y0: int, W: int, H: int,
+    x0: int,
+    y0: int,
+    W: int,
+    H: int,
     style: ThemeStyle,
 ) -> None:
     """Three-column PM1.0 / PM2.5 / PM10 readings."""
@@ -282,7 +296,9 @@ def _draw_pm_row(
     uw = text_width(draw, unit_str, unit_font)
     draw.text(
         (x0 + W - uw - 14, y0 + H - text_height(unit_font) - 6),
-        unit_str, font=unit_font, fill=fg,
+        unit_str,
+        font=unit_font,
+        fill=fg,
     )
 
 
@@ -290,10 +306,14 @@ def _draw_pm_row(
 # Zone 3: Ambient sensor cards (temp / humidity / pressure)
 # ---------------------------------------------------------------------------
 
+
 def _draw_ambient_cards(
     draw: ImageDraw.ImageDraw,
     aq: AirQualityData,
-    x0: int, y0: int, W: int, H: int,
+    x0: int,
+    y0: int,
+    W: int,
+    H: int,
     style: ThemeStyle,
 ) -> None:
     """Up to three rounded-rect metric cards for sensor ambient readings."""
@@ -328,7 +348,9 @@ def _draw_ambient_cards(
 
         draw.rounded_rectangle(
             [card_x, card_y, card_x + card_w, card_y + card_h],
-            radius=6, outline=fg, width=1,
+            radius=6,
+            outline=fg,
+            width=1,
         )
 
         inner_cx = card_x + card_w // 2
@@ -357,18 +379,24 @@ def _draw_ambient_cards(
         val_y = row_y + (row_h - vh) // 2
         draw.text(
             (row_x - gbbox[0], icon_y - gbbox[1]),
-            glyph, font=icon_font, fill=fg,
+            glyph,
+            font=icon_font,
+            fill=fg,
         )
         draw.text(
             (row_x + gw + 6 - vbbox[0], val_y - vbbox[1]),
-            value, font=val_font, fill=fg,
+            value,
+            font=val_font,
+            fill=fg,
         )
 
         # Label centred at bottom of card
         lw = text_width(draw, label, label_font)
         draw.text(
             (inner_cx - lw // 2, label_top),
-            label, font=label_font, fill=fg,
+            label,
+            font=label_font,
+            fill=fg,
         )
 
 
@@ -376,11 +404,15 @@ def _draw_ambient_cards(
 # Zone 4: Weather + forecast strip
 # ---------------------------------------------------------------------------
 
+
 def _draw_weather_strip(
     draw: ImageDraw.ImageDraw,
     wx: WeatherData | None,
     today: date | None,
-    x0: int, y0: int, W: int, H: int,
+    x0: int,
+    y0: int,
+    W: int,
+    H: int,
     style: ThemeStyle,
 ) -> None:
     """Left: current conditions.  Right: 4-day forecast columns."""
@@ -392,7 +424,9 @@ def _draw_weather_strip(
         mw = text_width(draw, msg, font)
         draw.text(
             (x0 + (W - mw) // 2, y0 + (H - text_height(font)) // 2),
-            msg, font=font, fill=fg,
+            msg,
+            font=font,
+            fill=fg,
         )
         return
 
@@ -411,7 +445,10 @@ def _draw_weather_strip(
 def _draw_current_conditions(
     draw: ImageDraw.ImageDraw,
     wx: WeatherData,
-    x0: int, y0: int, W: int, H: int,
+    x0: int,
+    y0: int,
+    W: int,
+    H: int,
     style: ThemeStyle,
 ) -> None:
     """Current weather icon, temperature, description, and hi/lo."""
@@ -429,7 +466,9 @@ def _draw_current_conditions(
     icon_y = cy - gh - 2
     draw.text(
         (x0 + pad - gbbox[0], icon_y - gbbox[1]),
-        glyph, font=icon_font, fill=fg,
+        glyph,
+        font=icon_font,
+        fill=fg,
     )
     icon_right = x0 + pad + (gbbox[2] - gbbox[0]) + 8
 
@@ -439,7 +478,9 @@ def _draw_current_conditions(
     tbbox = draw.textbbox((0, 0), temp_str, font=temp_font)
     draw.text(
         (icon_right - tbbox[0], icon_y - tbbox[1]),
-        temp_str, font=temp_font, fill=fg,
+        temp_str,
+        font=temp_font,
+        fill=fg,
     )
 
     # Description below icon row
@@ -460,7 +501,10 @@ def _draw_forecast_columns(
     draw: ImageDraw.ImageDraw,
     wx: WeatherData,
     today: date | None,
-    x0: int, y0: int, W: int, H: int,
+    x0: int,
+    y0: int,
+    W: int,
+    H: int,
     style: ThemeStyle,
 ) -> None:
     """Up to 4 forecast day columns."""
@@ -493,7 +537,9 @@ def _draw_forecast_columns(
         gw = gbbox[2] - gbbox[0]
         draw.text(
             (col_cx - gw // 2 - gbbox[0], row_y - gbbox[1]),
-            glyph, font=icon_font, fill=fg,
+            glyph,
+            font=icon_font,
+            fill=fg,
         )
         row_y += icon_size + 7
 
@@ -515,6 +561,7 @@ def _draw_forecast_columns(
 # Fallback
 # ---------------------------------------------------------------------------
 
+
 def _draw_unavailable(
     draw: ImageDraw.ImageDraw,
     region: ComponentRegion,
@@ -527,5 +574,7 @@ def _draw_unavailable(
     mh = text_height(font)
     draw.text(
         (region.x + (region.w - mw) // 2, region.y + (region.h - mh) // 2),
-        msg, font=font, fill=style.fg,
+        msg,
+        font=font,
+        fill=style.fg,
     )

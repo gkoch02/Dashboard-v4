@@ -13,10 +13,14 @@ import yaml
 
 def _write_minimal_config(path: Path) -> None:
     """Write a minimal valid config to *path*."""
-    path.write_text(yaml.dump({
-        "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
-        "output": {"dry_run_dir": str(path.parent)},
-    }))
+    path.write_text(
+        yaml.dump(
+            {
+                "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
+                "output": {"dry_run_dir": str(path.parent)},
+            }
+        )
+    )
 
 
 class TestMainDryRunDummy:
@@ -28,6 +32,7 @@ class TestMainDryRunDummy:
 
         with patch("sys.argv", ["main", "--dry-run", "--dummy", "--config", str(config_path)]):
             from src.main import main
+
             main()
 
         assert (tmp_path / "latest.png").exists()
@@ -38,6 +43,7 @@ class TestMainDryRunDummy:
 
         with patch("sys.argv", ["main", "--dry-run", "--dummy", "--config", str(config_path)]):
             from src.main import main
+
             main()
 
         assert (tmp_path / "last_success.txt").exists()
@@ -46,28 +52,41 @@ class TestMainDryRunDummy:
         config_path = tmp_path / "config.yaml"
         _write_minimal_config(config_path)
 
-        with patch("sys.argv", [
-            "main", "--dry-run", "--dummy", "--force-full-refresh",
-            "--config", str(config_path),
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "main",
+                "--dry-run",
+                "--dummy",
+                "--force-full-refresh",
+                "--config",
+                str(config_path),
+            ],
+        ):
             from src.main import main
+
             main()
 
         assert (tmp_path / "latest.png").exists()
 
     def test_dry_run_dummy_with_event_filters(self, tmp_path):
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(yaml.dump({
-            "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
-            "output": {"dry_run_dir": str(tmp_path)},
-            "filters": {
-                "exclude_keywords": ["Standup"],
-                "exclude_all_day": True,
-            },
-        }))
+        config_path.write_text(
+            yaml.dump(
+                {
+                    "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
+                    "output": {"dry_run_dir": str(tmp_path)},
+                    "filters": {
+                        "exclude_keywords": ["Standup"],
+                        "exclude_all_day": True,
+                    },
+                }
+            )
+        )
 
         with patch("sys.argv", ["main", "--dry-run", "--dummy", "--config", str(config_path)]):
             from src.main import main
+
             main()
 
         assert (tmp_path / "latest.png").exists()
@@ -82,6 +101,7 @@ class TestMainCheckConfig:
 
         with patch("sys.argv", ["main", "--check-config", "--config", str(config_path)]):
             from src.main import main
+
             with pytest.raises(SystemExit) as exc_info:
                 main()
         assert exc_info.value.code == 0
@@ -92,6 +112,7 @@ class TestMainCheckConfig:
 
         with patch("sys.argv", ["main", "--check-config", "--config", str(config_path)]):
             from src.main import main
+
             with patch("src.app.render_dashboard") as mock_render:
                 with pytest.raises(SystemExit):
                     main()
@@ -103,17 +124,24 @@ class TestMainQuietHours:
 
     def test_quiet_hours_skips_render(self, tmp_path):
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(yaml.dump({
-            "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
-            "output": {"dry_run_dir": str(tmp_path)},
-            "schedule": {"quiet_hours_start": 0, "quiet_hours_end": 23},
-        }))
+        config_path.write_text(
+            yaml.dump(
+                {
+                    "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
+                    "output": {"dry_run_dir": str(tmp_path)},
+                    "schedule": {"quiet_hours_start": 0, "quiet_hours_end": 23},
+                }
+            )
+        )
 
         with patch("sys.argv", ["main", "--config", str(config_path)]):
             from src.main import main
+
             with patch("src.app.render_dashboard") as mock_render:
-                with patch("src.data_pipeline.DataPipeline.fetch") as mock_fetch, \
-                     patch("src.app.should_skip_refresh", return_value=True):
+                with (
+                    patch("src.data_pipeline.DataPipeline.fetch") as mock_fetch,
+                    patch("src.app.should_skip_refresh", return_value=True),
+                ):
                     main()
 
         mock_render.assert_not_called()
@@ -128,10 +156,12 @@ class TestMainConfigErrors:
         _write_minimal_config(config_path)
 
         from src.config import ConfigError
+
         fake_error = ConfigError(field="test", message="fatal error")
 
         with patch("sys.argv", ["main", "--config", str(config_path)]):
             from src.main import main
+
             with patch("src.main.validate_config", return_value=([fake_error], [])):
                 with pytest.raises(SystemExit) as exc_info:
                     main()
@@ -147,6 +177,7 @@ class TestMainMorningStartup:
 
         with patch("sys.argv", ["main", "--dry-run", "--dummy", "--config", str(config_path)]):
             from src.main import main
+
             with patch("src.services.run_policy.is_morning_startup", return_value=True):
                 main()
 
@@ -162,6 +193,7 @@ class TestMainLastSuccessWriteFailure:
 
         with patch("sys.argv", ["main", "--dry-run", "--dummy", "--config", str(config_path)]):
             from src.main import main
+
             with patch("pathlib.Path.write_text", side_effect=OSError("disk full")):
                 main()
 
@@ -177,6 +209,7 @@ class TestMainModule:
 
         with patch("sys.argv", ["main", "--dry-run", "--dummy", "--config", str(config_path)]):
             import src.main as main_mod
+
             with patch.object(main_mod, "main") as mock_main:
                 if True:
                     main_mod.main()
@@ -190,11 +223,20 @@ class TestMainDateFlag:
         config_path = tmp_path / "config.yaml"
         _write_minimal_config(config_path)
 
-        with patch("sys.argv", [
-            "main", "--dry-run", "--dummy", "--date", "2025-12-25",
-            "--config", str(config_path),
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "main",
+                "--dry-run",
+                "--dummy",
+                "--date",
+                "2025-12-25",
+                "--config",
+                str(config_path),
+            ],
+        ):
             from src.main import main
+
             main()
 
         assert (tmp_path / "latest.png").exists()
@@ -203,17 +245,32 @@ class TestMainDateFlag:
         config_path = tmp_path / "config.yaml"
         _write_minimal_config(config_path)
 
-        with patch("sys.argv", [
-            "main", "--dry-run", "--dummy", "--date", "2025-07-04",
-            "--config", str(config_path),
-        ]):
-            from src.main import main
+        with patch(
+            "sys.argv",
+            [
+                "main",
+                "--dry-run",
+                "--dummy",
+                "--date",
+                "2025-07-04",
+                "--config",
+                str(config_path),
+            ],
+        ):
             from datetime import date
-            with patch("src.app.generate_dummy_data", wraps=__import__("src.app", fromlist=["generate_dummy_data"]).generate_dummy_data) as mock_gen:
+
+            from src.main import main
+
+            with patch(
+                "src.app.generate_dummy_data",
+                wraps=__import__("src.app", fromlist=["generate_dummy_data"]).generate_dummy_data,
+            ) as mock_gen:
                 main()
 
         call_kwargs = mock_gen.call_args
-        passed_now = call_kwargs.kwargs.get("now") or (call_kwargs.args[1] if len(call_kwargs.args) > 1 else None)
+        passed_now = call_kwargs.kwargs.get("now") or (
+            call_kwargs.args[1] if len(call_kwargs.args) > 1 else None
+        )
         assert passed_now is not None
         assert passed_now.date() == date(2025, 7, 4)
 
@@ -221,11 +278,19 @@ class TestMainDateFlag:
         config_path = tmp_path / "config.yaml"
         _write_minimal_config(config_path)
 
-        with patch("sys.argv", [
-            "main", "--dummy", "--date", "2025-12-25",
-            "--config", str(config_path),
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "main",
+                "--dummy",
+                "--date",
+                "2025-12-25",
+                "--config",
+                str(config_path),
+            ],
+        ):
             from src.main import main
+
             with pytest.raises(SystemExit) as exc_info:
                 main()
         assert exc_info.value.code != 0
@@ -234,11 +299,20 @@ class TestMainDateFlag:
         config_path = tmp_path / "config.yaml"
         _write_minimal_config(config_path)
 
-        with patch("sys.argv", [
-            "main", "--dry-run", "--dummy", "--date", "not-a-date",
-            "--config", str(config_path),
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "main",
+                "--dry-run",
+                "--dummy",
+                "--date",
+                "not-a-date",
+                "--config",
+                str(config_path),
+            ],
+        ):
             from src.main import main
+
             with pytest.raises(SystemExit) as exc_info:
                 main()
         assert exc_info.value.code != 0
@@ -252,11 +326,15 @@ class TestMainLiveDataPath:
         _write_minimal_config(config_path)
 
         from src.dummy_data import generate_dummy_data
+
         fake_data = generate_dummy_data()
 
         with patch("sys.argv", ["main", "--dry-run", "--config", str(config_path)]):
             from src.main import main
-            with patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data) as mock_fetch:
+
+            with patch(
+                "src.data_pipeline.DataPipeline.fetch", return_value=fake_data
+            ) as mock_fetch:
                 main()
 
         mock_fetch.assert_called_once()
@@ -271,58 +349,92 @@ class TestMainLiveDataPath:
 
         def spying_init(self, cfg, cache_dir, tz=None, force_refresh=False, ignore_breakers=False):
             captured["ignore_breakers"] = ignore_breakers
-            real_init(self, cfg, cache_dir, tz=tz, force_refresh=force_refresh, ignore_breakers=ignore_breakers)
+            real_init(
+                self,
+                cfg,
+                cache_dir,
+                tz=tz,
+                force_refresh=force_refresh,
+                ignore_breakers=ignore_breakers,
+            )
 
         from src.dummy_data import generate_dummy_data
+
         fake_data = generate_dummy_data()
 
-        with patch("sys.argv", [
-            "main", "--dry-run", "--ignore-breakers", "--config", str(config_path),
-        ]):
+        with patch(
+            "sys.argv",
+            [
+                "main",
+                "--dry-run",
+                "--ignore-breakers",
+                "--config",
+                str(config_path),
+            ],
+        ):
             from src.main import main
-            with patch("src.data_pipeline.DataPipeline.__init__", new=spying_init), \
-                 patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data):
+
+            with (
+                patch("src.data_pipeline.DataPipeline.__init__", new=spying_init),
+                patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data),
+            ):
                 main()
 
         assert captured["ignore_breakers"] is True
 
     def test_image_unchanged_skips_hardware_refresh(self, tmp_path):
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(yaml.dump({
-            "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
-            "output": {"dry_run_dir": str(tmp_path)},
-        }))
+        config_path.write_text(
+            yaml.dump(
+                {
+                    "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
+                    "output": {"dry_run_dir": str(tmp_path)},
+                }
+            )
+        )
 
         from src.dummy_data import generate_dummy_data
+
         fake_data = generate_dummy_data()
 
         with patch("sys.argv", ["main", "--config", str(config_path)]):
             from src.main import main
-            with patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data), \
-                 patch("src.services.output.image_changed", return_value=False) as mock_changed, \
-                 patch("src.services.run_policy.in_quiet_hours", return_value=False):
+
+            with (
+                patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data),
+                patch("src.services.output.image_changed", return_value=False) as mock_changed,
+                patch("src.services.run_policy.in_quiet_hours", return_value=False),
+            ):
                 main()
 
         mock_changed.assert_called_once()
 
     def test_image_changed_calls_waveshare_display(self, tmp_path):
         config_path = tmp_path / "config.yaml"
-        config_path.write_text(yaml.dump({
-            "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
-            "output": {"dry_run_dir": str(tmp_path)},
-        }))
+        config_path.write_text(
+            yaml.dump(
+                {
+                    "weather": {"api_key": "test", "latitude": 37.0, "longitude": -122.0},
+                    "output": {"dry_run_dir": str(tmp_path)},
+                }
+            )
+        )
 
         from src.dummy_data import generate_dummy_data
+
         fake_data = generate_dummy_data()
 
         mock_display = MagicMock()
 
         with patch("sys.argv", ["main", "--config", str(config_path)]):
             from src.main import main
-            with patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data), \
-                 patch("src.services.output.image_changed", return_value=True), \
-                 patch("src.services.run_policy.in_quiet_hours", return_value=False), \
-                 patch("src.display.driver.WaveshareDisplay", return_value=mock_display):
+
+            with (
+                patch("src.data_pipeline.DataPipeline.fetch", return_value=fake_data),
+                patch("src.services.output.image_changed", return_value=True),
+                patch("src.services.run_policy.in_quiet_hours", return_value=False),
+                patch("src.display.driver.WaveshareDisplay", return_value=mock_display),
+            ):
                 main()
 
         mock_display.show.assert_called_once()

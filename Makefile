@@ -1,4 +1,4 @@
-.PHONY: dry test deploy setup install check previews version \
+.PHONY: dry test deploy setup install check previews version lint fmt \
         pi-install pi-enable pi-status pi-logs configure
 
 VENV = venv/bin/python
@@ -22,6 +22,12 @@ previews: _check-venv
 
 test: _check-venv
 	$(VENV) -m pytest tests/ -v
+
+lint: _check-venv
+	$(VENV) -m ruff check src/ tests/
+
+fmt: _check-venv
+	$(VENV) -m ruff format src/ tests/
 
 check: _check-venv
 	$(VENV) -m src.main --check-config

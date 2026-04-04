@@ -7,13 +7,19 @@ from src.render.theme import AVAILABLE_THEMES
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Home Dashboard for eInk display")
     parser.add_argument(
-        "--dry-run", action="store_true", help="Render to PNG instead of display",
+        "--dry-run",
+        action="store_true",
+        help="Render to PNG instead of display",
     )
     parser.add_argument(
-        "--config", default="config/config.yaml", help="Path to config file",
+        "--config",
+        default="config/config.yaml",
+        help="Path to config file",
     )
     parser.add_argument(
-        "--force-full-refresh", action="store_true", help="Force a full display refresh",
+        "--force-full-refresh",
+        action="store_true",
+        help="Force a full display refresh",
     )
     parser.add_argument(
         "--ignore-breakers",
@@ -21,11 +27,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Ignore circuit breaker OPEN state for this run and attempt fetches anyway",
     )
     parser.add_argument(
-        "--dummy", action="store_true",
+        "--dummy",
+        action="store_true",
         help="Use dummy data instead of fetching from APIs",
     )
     parser.add_argument(
-        "--check-config", action="store_true",
+        "--check-config",
+        action="store_true",
         help="Validate config and exit without rendering",
     )
     parser.add_argument(
@@ -42,13 +50,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=sorted(AVAILABLE_THEMES),
         default=None,
         metavar="THEME",
-        help=(
-            "Override the theme from config. "
-            f"Choices: {', '.join(sorted(AVAILABLE_THEMES))}"
-        ),
+        help=(f"Override the theme from config. Choices: {', '.join(sorted(AVAILABLE_THEMES))}"),
     )
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s {__version__}",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     return parser
 
@@ -60,6 +67,7 @@ def parse_args(argv: list[str] | None = None):
         parser.error("--date requires --dry-run")
     if args.date is not None:
         from datetime import date as _date
+
         try:
             _date.fromisoformat(args.date)
         except ValueError:

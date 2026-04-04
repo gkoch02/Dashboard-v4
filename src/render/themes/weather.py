@@ -28,8 +28,8 @@ Layout (800 × 480):
 Font: DM Sans — geometric, modern, excellent legibility on eInk.
 """
 
+from src.render.fonts import dm_bold, dm_medium, dm_regular, dm_semibold
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
-from src.render.fonts import dm_regular, dm_medium, dm_semibold, dm_bold
 
 
 def weather_theme() -> Theme:
@@ -52,12 +52,12 @@ def weather_theme() -> Theme:
             draw_order=["weather_full"],
         ),
         style=ThemeStyle(
-            fg=0,   # black on white — optimal eInk contrast
+            fg=0,  # black on white — optimal eInk contrast
             bg=1,
             invert_header=False,
             invert_today_col=False,
             invert_allday_bars=False,
-            show_borders=False,   # whitespace-defined layout
+            show_borders=False,  # whitespace-defined layout
             font_regular=dm_regular,
             font_medium=dm_medium,
             font_semibold=dm_semibold,

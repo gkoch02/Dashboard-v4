@@ -1,12 +1,25 @@
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
+
 from PIL import ImageDraw
 
 from src.data.models import CalendarEvent, DayForecast
 from src.render import layout as L
 from src.render.primitives import (
-    hline, vline, dashed_vline, filled_rect,
-    draw_text_truncated, draw_text_wrapped, text_height, text_width,
-    fmt_time as _fmt_time, events_for_day as _events_for_day, wrap_lines,
+    dashed_vline,
+    draw_text_truncated,
+    draw_text_wrapped,
+    filled_rect,
+    hline,
+    text_height,
+    text_width,
+    vline,
+    wrap_lines,
+)
+from src.render.primitives import (
+    events_for_day as _events_for_day,
+)
+from src.render.primitives import (
+    fmt_time as _fmt_time,
 )
 from src.render.theme import ComponentRegion, ThemeStyle
 
@@ -48,21 +61,33 @@ def _fonts_for_tier(tier: str, style: ThemeStyle | None = None) -> tuple:
     scale = style.spacing_scale
     if tier == "dense":
         return (
-            style.font_regular(9), style.font_medium(11),
+            style.font_regular(9),
+            style.font_medium(11),
             style.font_semibold(11),
-            max(1, int(2 * scale)), 1, False, 4,
+            max(1, int(2 * scale)),
+            1,
+            False,
+            4,
         )
     if tier == "compact":
         return (
-            style.font_regular(10), style.font_medium(12),
+            style.font_regular(10),
+            style.font_medium(12),
             style.font_semibold(11),
-            max(1, int(3 * scale)), 1, False, 4,
+            max(1, int(3 * scale)),
+            1,
+            False,
+            4,
         )
     # normal
     return (
-        style.font_regular(11), style.font_semibold(14),
+        style.font_regular(11),
+        style.font_semibold(14),
         style.font_semibold(13),
-        max(1, int(6 * scale)), 2, True, 6,
+        max(1, int(6 * scale)),
+        2,
+        True,
+        6,
     )
 
 
@@ -87,7 +112,7 @@ def draw_week(
     total_h = region.h
 
     # Compute derived layout values proportionally from the region
-    header_h = max(24, total_h * 32 // 320)   # 32px at 320h → scales proportionally
+    header_h = max(24, total_h * 32 // 320)  # 32px at 320h → scales proportionally
     body_h = total_h - header_h
     body_top = y0 + header_h
 
@@ -112,7 +137,7 @@ def draw_week(
     # Saturday is col 5 (Mon=0 … Sat=5, Sun=6)
     SAT_COL = 5
     sat_cx = x0 + SAT_COL * col_w_base
-    combined_date_w = col_w_base + last_col_w   # last two columns merged
+    combined_date_w = col_w_base + last_col_w  # last two columns merged
 
     week_end = week_start + timedelta(days=7)
 
@@ -136,15 +161,23 @@ def draw_week(
                 filled_rect(draw, (bar_x0, bar_y, bar_x1, bar_y + span_bar_h), fill=style.fg)
                 bar_text_w = bar_x1 - bar_x0 - PAD * 2
                 draw_text_truncated(
-                    draw, (bar_x0 + PAD, bar_y + 3),
-                    evt.summary, allday_font, bar_text_w, fill=style.bg,
+                    draw,
+                    (bar_x0 + PAD, bar_y + 3),
+                    evt.summary,
+                    allday_font,
+                    bar_text_w,
+                    fill=style.bg,
                 )
             else:
                 draw.rectangle((bar_x0, bar_y, bar_x1, bar_y + span_bar_h), outline=style.fg)
                 bar_text_w = bar_x1 - bar_x0 - PAD * 2
                 draw_text_truncated(
-                    draw, (bar_x0 + PAD, bar_y + 3),
-                    evt.summary, allday_font, bar_text_w, fill=style.fg,
+                    draw,
+                    (bar_x0 + PAD, bar_y + 3),
+                    evt.summary,
+                    allday_font,
+                    bar_text_w,
+                    fill=style.fg,
                 )
             span_total_h += span_bar_h + span_spacing
 
@@ -236,14 +269,24 @@ def draw_week(
 
         if day_events_filtered:
             tier = _density_tier(len(day_events_filtered), is_weekend)
-            (t_font, ti_font, ad_font,
-             spacing, max_lines, show_loc, ad_pad) = _fonts_for_tier(tier, style)
+            (t_font, ti_font, ad_font, spacing, max_lines, show_loc, ad_pad) = _fonts_for_tier(
+                tier, style
+            )
             _draw_day_events(
-                draw, day_events_filtered, cx, events_y_start,
-                col_w, adjusted_body_h, t_font, ti_font,
-                allday_font=ad_font, event_spacing=spacing,
-                max_title_lines=max_lines, show_location=show_loc,
-                allday_pad=ad_pad, style=style,
+                draw,
+                day_events_filtered,
+                cx,
+                events_y_start,
+                col_w,
+                adjusted_body_h,
+                t_font,
+                ti_font,
+                allday_font=ad_font,
+                event_spacing=spacing,
+                max_title_lines=max_lines,
+                show_location=show_loc,
+                allday_pad=ad_pad,
+                style=style,
             )
         elif not day_events:  # only show dash if truly empty (no spanning events either)
             empty_font = style.font_regular(12)
@@ -252,7 +295,9 @@ def draw_week(
             dh = text_height(empty_font)
             draw.text(
                 (cx + (col_w - dw) // 2, events_y_start + adjusted_body_h // 3 - dh // 2),
-                dash, font=empty_font, fill=style.fg,
+                dash,
+                font=empty_font,
+                fill=style.fg,
             )
 
     # Solid left border for the combined date cell (Saturday's left edge)
@@ -321,8 +366,8 @@ def _autofit_font(
     while size > min_size:
         words = text.split()
         words_fit = all(
-            draw.textbbox((0, 0), w, font=current)[2]
-            - draw.textbbox((0, 0), w, font=current)[0] <= max_w
+            draw.textbbox((0, 0), w, font=current)[2] - draw.textbbox((0, 0), w, font=current)[0]
+            <= max_w
             for w in words
         )
         if words_fit and _wrap_line_count(draw, text, current, max_w) <= max_lines:
@@ -348,7 +393,9 @@ def _is_multiday(e: CalendarEvent) -> bool:
 
 
 def _collect_spanning_events(
-    events: list[CalendarEvent], week_start: date, week_end: date,
+    events: list[CalendarEvent],
+    week_start: date,
+    week_end: date,
 ) -> list[tuple[CalendarEvent, int, int]]:
     """Identify multi-day all-day events visible in the week and return their column spans.
 
@@ -409,19 +456,30 @@ def _draw_day_events(
             bar_h = text_height(allday_font) + allday_pad
             if style.invert_allday_bars:
                 filled_rect(
-                    draw, (cx + PAD - 1, y, cx + col_w - PAD, y + bar_h), fill=style.fg,
+                    draw,
+                    (cx + PAD - 1, y, cx + col_w - PAD, y + bar_h),
+                    fill=style.fg,
                 )
                 draw_text_truncated(
-                    draw, (cx + PAD + 2, y + allday_pad // 2),
-                    event.summary, allday_font, max_w - 6, fill=style.bg,
+                    draw,
+                    (cx + PAD + 2, y + allday_pad // 2),
+                    event.summary,
+                    allday_font,
+                    max_w - 6,
+                    fill=style.bg,
                 )
             else:
                 draw.rectangle(
-                    (cx + PAD - 1, y, cx + col_w - PAD, y + bar_h), outline=style.fg,
+                    (cx + PAD - 1, y, cx + col_w - PAD, y + bar_h),
+                    outline=style.fg,
                 )
                 draw_text_truncated(
-                    draw, (cx + PAD + 2, y + allday_pad // 2),
-                    event.summary, allday_font, max_w - 6, fill=style.fg,
+                    draw,
+                    (cx + PAD + 2, y + allday_pad // 2),
+                    event.summary,
+                    allday_font,
+                    max_w - 6,
+                    fill=style.fg,
                 )
             y += bar_h + event_spacing
         else:
@@ -431,16 +489,31 @@ def _draw_day_events(
                 start_s = start_s.rstrip("ap")
             time_str = f"{start_s}–{end_s}"
             draw_text_truncated(
-                draw, (cx + PAD, y), time_str, time_font, max_w, fill=style.fg,
+                draw,
+                (cx + PAD, y),
+                time_str,
+                time_font,
+                max_w,
+                fill=style.fg,
             )
             y += time_h + 1
             fitted_font = _autofit_font(
-                draw, event.summary, title_font, style, max_w,
+                draw,
+                event.summary,
+                title_font,
+                style,
+                max_w,
                 max_lines=max_title_lines,
             )
             used_h = draw_text_wrapped(
-                draw, (cx + PAD, y), event.summary, fitted_font,
-                max_w, max_lines=max_title_lines, line_spacing=1, fill=style.fg,
+                draw,
+                (cx + PAD, y),
+                event.summary,
+                fitted_font,
+                max_w,
+                max_lines=max_title_lines,
+                line_spacing=1,
+                fill=style.fg,
             )
             y += max(used_h, title_h)
 
@@ -451,7 +524,12 @@ def _draw_day_events(
                 if loc_text and y - y_start + loc_h <= max_h - PAD:
                     y += 1
                     draw_text_truncated(
-                        draw, (cx + PAD, y), loc_text, loc_font, max_w, fill=style.fg,
+                        draw,
+                        (cx + PAD, y),
+                        loc_text,
+                        loc_font,
+                        max_w,
+                        fill=style.fg,
                     )
                     y += loc_h
 

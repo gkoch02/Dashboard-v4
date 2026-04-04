@@ -11,22 +11,32 @@ from unittest.mock import MagicMock, patch
 from PIL import Image, ImageDraw
 
 from src.data.models import (
-    CalendarEvent, DashboardData, DayForecast, WeatherAlert, WeatherData,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    WeatherAlert,
+    WeatherData,
 )
 from src.fetchers.cache import (
-    load_cached, load_cached_source, save_cache, save_source,
+    load_cached,
+    load_cached_source,
+    save_cache,
+    save_source,
 )
 from src.fetchers.calendar import (
-    _apply_delta, _deser_sync_event, _fetch_incremental, _filter_to_window,
+    _apply_delta,
+    _deser_sync_event,
+    _fetch_incremental,
+    _filter_to_window,
     _ser_sync_event,
 )
-from src.render.components.week_view import draw_week
 from src.render.components.weather_panel import draw_weather
-
+from src.render.components.week_view import draw_week
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -44,12 +54,21 @@ def _timed(day: date, h_start: int, h_end: int, summary: str = "Evt", location: 
 
 def _make_weather(**kwargs) -> WeatherData:
     defaults = dict(
-        current_temp=55.0, current_icon="01d", current_description="clear",
-        high=60.0, low=45.0, humidity=50,
-        forecast=[DayForecast(
-            date=date.today() + timedelta(days=1), high=58.0, low=44.0,
-            icon="02d", description="cloudy",
-        )],
+        current_temp=55.0,
+        current_icon="01d",
+        current_description="clear",
+        high=60.0,
+        low=45.0,
+        humidity=50,
+        forecast=[
+            DayForecast(
+                date=date.today() + timedelta(days=1),
+                high=58.0,
+                low=44.0,
+                icon="02d",
+                description="cloudy",
+            )
+        ],
     )
     defaults.update(kwargs)
     return WeatherData(**defaults)
@@ -58,6 +77,7 @@ def _make_weather(**kwargs) -> WeatherData:
 # ---------------------------------------------------------------------------
 # Event location display (week_view)
 # ---------------------------------------------------------------------------
+
 
 class TestEventLocationDisplay:
     def test_event_with_location_renders(self):
@@ -87,10 +107,7 @@ class TestEventLocationDisplay:
     def test_many_events_with_locations_overflow(self):
         """Overflow (+N more) should still work when events have locations."""
         today = date(2024, 3, 15)
-        events = [
-            _timed(today, 8 + i, 9 + i, f"Evt {i}", location=f"Room {i}")
-            for i in range(8)
-        ]
+        events = [_timed(today, 8 + i, 9 + i, f"Evt {i}", location=f"Room {i}") for i in range(8)]
         img, draw = _make_draw()
         draw_week(draw, events, today)
         assert img.getbbox() is not None
@@ -99,6 +116,7 @@ class TestEventLocationDisplay:
 # ---------------------------------------------------------------------------
 # Week view header rendering (busyness indicators removed)
 # ---------------------------------------------------------------------------
+
 
 class TestBusynessHeatmap:
     def test_no_crash_with_max_events(self):
@@ -113,6 +131,7 @@ class TestBusynessHeatmap:
 # ---------------------------------------------------------------------------
 # Weather alerts
 # ---------------------------------------------------------------------------
+
 
 class TestWeatherAlerts:
     def test_alert_renders_without_crash(self):
@@ -145,6 +164,7 @@ class TestWeatherAlerts:
     def test_fetch_alerts_returns_empty_on_failure(self):
         """_fetch_alerts_and_uv must silently return ([], None) on any HTTP error."""
         from src.fetchers.weather import _fetch_alerts_and_uv
+
         params = {"lat": 0, "lon": 0, "appid": "key", "units": "imperial"}
         session = MagicMock()
         session.get.side_effect = Exception("network")
@@ -155,6 +175,7 @@ class TestWeatherAlerts:
     def test_fetch_alerts_parses_response(self):
         """_fetch_alerts_and_uv should parse event names from a valid response."""
         from src.fetchers.weather import _fetch_alerts_and_uv
+
         params = {"lat": 0, "lon": 0, "appid": "key", "units": "imperial"}
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
@@ -175,6 +196,7 @@ class TestWeatherAlerts:
 
     def test_fetch_alerts_skips_empty_event_names(self):
         from src.fetchers.weather import _fetch_alerts_and_uv
+
         params = {"lat": 0, "lon": 0, "appid": "key", "units": "imperial"}
         mock_resp = MagicMock()
         mock_resp.raise_for_status = MagicMock()
@@ -219,6 +241,7 @@ class TestWeatherAlerts:
 # ---------------------------------------------------------------------------
 # Per-source cache (v2 format)
 # ---------------------------------------------------------------------------
+
 
 class TestPerSourceCache:
     def test_save_source_creates_v2_file(self):
@@ -344,11 +367,14 @@ class TestPerSourceCache:
         with tempfile.TemporaryDirectory() as tmpdir:
             # Pre-populate cache for weather (recent enough to be within TTL)
             from datetime import timedelta
+
             save_source("weather", _make_weather(), datetime.now() - timedelta(hours=3), tmpdir)
 
-            with patch("src.data_pipeline.fetch_events", return_value=[]), \
-                 patch("src.data_pipeline.fetch_weather", side_effect=RuntimeError("down")), \
-                 patch("src.data_pipeline.fetch_birthdays", return_value=[]):
+            with (
+                patch("src.data_pipeline.fetch_events", return_value=[]),
+                patch("src.data_pipeline.fetch_weather", side_effect=RuntimeError("down")),
+                patch("src.data_pipeline.fetch_birthdays", return_value=[]),
+            ):
                 data = DataPipeline(Config(), cache_dir=tmpdir).fetch()
 
         assert "weather" in data.stale_sources
@@ -359,6 +385,7 @@ class TestPerSourceCache:
 # ---------------------------------------------------------------------------
 # Incremental calendar sync
 # ---------------------------------------------------------------------------
+
 
 class TestIncrementalSync:
     def _make_service(self, result: dict):
@@ -383,8 +410,10 @@ class TestIncrementalSync:
     def test_apply_delta_removes_cancelled_event(self):
         """Cancelled events in delta are removed from the stored list."""
         stored_event = CalendarEvent(
-            summary="To Delete", event_id="evt1",
-            start=datetime(2024, 3, 15, 9), end=datetime(2024, 3, 15, 10),
+            summary="To Delete",
+            event_id="evt1",
+            start=datetime(2024, 3, 15, 9),
+            end=datetime(2024, 3, 15, 10),
         )
         stored = [_ser_sync_event(stored_event)]
         cancelled_item = {"id": "evt1", "status": "cancelled"}
@@ -394,8 +423,10 @@ class TestIncrementalSync:
     def test_apply_delta_updates_existing_event(self):
         """Updated events replace their previous version by event_id."""
         stored_event = CalendarEvent(
-            summary="Old Title", event_id="evt1",
-            start=datetime(2024, 3, 15, 9), end=datetime(2024, 3, 15, 10),
+            summary="Old Title",
+            event_id="evt1",
+            start=datetime(2024, 3, 15, 9),
+            end=datetime(2024, 3, 15, 10),
         )
         stored = [_ser_sync_event(stored_event)]
         updated_item = {
@@ -411,8 +442,14 @@ class TestIncrementalSync:
 
     def test_apply_delta_preserves_events_without_id(self):
         """Events without an event_id (legacy) are left untouched."""
-        stored = [{"summary": "No ID Event", "start": "2024-03-15T09:00:00",
-                   "end": "2024-03-15T10:00:00", "is_all_day": False}]
+        stored = [
+            {
+                "summary": "No ID Event",
+                "start": "2024-03-15T09:00:00",
+                "end": "2024-03-15T10:00:00",
+                "is_all_day": False,
+            }
+        ]
         merged = _apply_delta(stored, [], "Cal")
         assert len(merged) == 1
 
@@ -484,6 +521,7 @@ class TestIncrementalSync:
 
     def test_load_sync_state_returns_empty_when_missing(self):
         from src.fetchers.calendar import _load_sync_state
+
         with tempfile.TemporaryDirectory() as tmpdir:
             result = _load_sync_state(tmpdir)
         assert result == {}

@@ -42,9 +42,9 @@ _TIMEOUT = 10
 
 # EPA PM2.5 AQI breakpoints: (C_lo, C_hi, I_lo, I_hi)
 _PM25_BP = [
-    (0.0,   12.0,   0,  50),
-    (12.1,  35.4,  51, 100),
-    (35.5,  55.4, 101, 150),
+    (0.0, 12.0, 0, 50),
+    (12.1, 35.4, 51, 100),
+    (35.5, 55.4, 101, 150),
     (55.5, 150.4, 151, 200),
     (150.5, 250.4, 201, 300),
     (250.5, 350.4, 301, 400),
@@ -52,7 +52,7 @@ _PM25_BP = [
 ]
 
 _AQI_CATEGORIES = [
-    (50,  "Good"),
+    (50, "Good"),
     (100, "Moderate"),
     (150, "Unhealthy for Sensitive Groups"),
     (200, "Unhealthy"),
@@ -181,7 +181,10 @@ def fetch_air_quality(cfg: PurpleAirConfig) -> AirQualityData:
 
     logger.info(
         "PurpleAir sensor %d: PM2.5 60m=%.1f µg/m³  AQI=%d (%s)",
-        cfg.sensor_id, pm25_60min, aqi, category,
+        cfg.sensor_id,
+        pm25_60min,
+        aqi,
+        category,
     )
 
     return AirQualityData(

@@ -1,12 +1,13 @@
-import json
 import hashlib
+import json
 from datetime import date, datetime
 from functools import lru_cache
 from pathlib import Path
+
 from PIL import ImageDraw
 
 from src.render import layout as L
-from src.render.primitives import hline, draw_text_wrapped, wrap_lines
+from src.render.primitives import draw_text_wrapped, hline, wrap_lines
 from src.render.theme import ComponentRegion, ThemeStyle
 
 QUOTES_FILE = Path(__file__).parent.parent.parent.parent / "config" / "quotes.json"
@@ -43,7 +44,7 @@ DEFAULT_QUOTES = [
     {"text": "No pressure, no diamonds.", "author": "Thomas Carlyle"},
     {
         "text": "What lies behind us and what lies before us are tiny matters"
-                " compared to what lies within us.",
+        " compared to what lies within us.",
         "author": "Ralph Waldo Emerson",
     },
     {"text": "The purpose of our lives is to be happy.", "author": "Dalai Lama"},
@@ -154,13 +155,21 @@ def draw_info(
         max_lines = 3
 
     used_h = draw_text_wrapped(
-        draw, (x0 + pad, y), text, quote_font,
-        max_width, max_lines=max_lines, line_spacing=3, fill=style.fg,
+        draw,
+        (x0 + pad, y),
+        text,
+        quote_font,
+        max_width,
+        max_lines=max_lines,
+        line_spacing=3,
+        fill=style.fg,
     )
 
     # Attribution
-    _author_fn = style.font_quote_author if style.font_quote_author is not None else style.font_regular
+    _author_fn = (
+        style.font_quote_author if style.font_quote_author is not None else style.font_regular
+    )
     author_font = _author_fn(12)
     attr_y = y + used_h + 6
     if attr_y + 16 < y0 + h:
-        draw.text((x0 + pad, attr_y), f'— {quote["author"]}', font=author_font, fill=style.fg)
+        draw.text((x0 + pad, attr_y), f"— {quote['author']}", font=author_font, fill=style.fg)

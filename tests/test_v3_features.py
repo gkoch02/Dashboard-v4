@@ -10,18 +10,24 @@ from unittest.mock import patch
 from PIL import Image, ImageDraw
 
 from src.data.models import (
-    CalendarEvent, DashboardData, DayForecast, WeatherData,
+    CalendarEvent,
+    DashboardData,
+    DayForecast,
+    WeatherData,
 )
 from src.display.driver import image_changed, image_hash
 from src.render.components.week_view import (
-    _collect_spanning_events, _events_for_day, _is_multiday, draw_week,
+    _collect_spanning_events,
+    _events_for_day,
+    _is_multiday,
+    draw_week,
 )
 from src.render.moon import moon_phase_age, moon_phase_glyph, moon_phase_name
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_draw(w: int = 800, h: int = 480):
     img = Image.new("1", (w, h), 1)
@@ -47,12 +53,21 @@ def _all_day(start: date, end: date, summary: str = "All Day"):
 
 def _make_weather(**kwargs) -> WeatherData:
     defaults = dict(
-        current_temp=55.0, current_icon="01d", current_description="clear",
-        high=60.0, low=45.0, humidity=50,
-        forecast=[DayForecast(
-            date=date.today() + timedelta(days=1), high=58.0, low=44.0,
-            icon="02d", description="cloudy",
-        )],
+        current_temp=55.0,
+        current_icon="01d",
+        current_description="clear",
+        high=60.0,
+        low=45.0,
+        humidity=50,
+        forecast=[
+            DayForecast(
+                date=date.today() + timedelta(days=1),
+                high=58.0,
+                low=44.0,
+                icon="02d",
+                description="cloudy",
+            )
+        ],
     )
     defaults.update(kwargs)
     return WeatherData(**defaults)
@@ -61,6 +76,7 @@ def _make_weather(**kwargs) -> WeatherData:
 # ---------------------------------------------------------------------------
 # Conditional refresh (image diffing)
 # ---------------------------------------------------------------------------
+
 
 class TestImageDiffing:
     def test_image_hash_deterministic(self):
@@ -104,6 +120,7 @@ class TestImageDiffing:
 # Parallel fetcher execution
 # ---------------------------------------------------------------------------
 
+
 class TestParallelFetchers:
     def test_fetch_live_data_runs_fetchers_concurrently(self):
         """All three fetchers should be submitted to the thread pool."""
@@ -111,9 +128,11 @@ class TestParallelFetchers:
         from src.data_pipeline import DataPipeline
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            with patch("src.data_pipeline.fetch_events", return_value=[]) as mock_cal, \
-                 patch("src.data_pipeline.fetch_weather", return_value=_make_weather()) as mock_wx, \
-                 patch("src.data_pipeline.fetch_birthdays", return_value=[]) as mock_bd:
+            with (
+                patch("src.data_pipeline.fetch_events", return_value=[]) as mock_cal,
+                patch("src.data_pipeline.fetch_weather", return_value=_make_weather()) as mock_wx,
+                patch("src.data_pipeline.fetch_birthdays", return_value=[]) as mock_bd,
+            ):
                 data = DataPipeline(Config(), cache_dir=tmpdir).fetch()
 
             assert mock_cal.called
@@ -125,17 +144,20 @@ class TestParallelFetchers:
     def test_parallel_failure_falls_back_to_cache(self):
         """A single fetcher failure should not block the others."""
         from src.config import Config
-        from src.fetchers.cache import save_source
         from src.data_pipeline import DataPipeline
+        from src.fetchers.cache import save_source
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Pre-populate weather cache (recent enough to be within TTL)
             from datetime import timedelta
+
             save_source("weather", _make_weather(), datetime.now() - timedelta(hours=3), tmpdir)
 
-            with patch("src.data_pipeline.fetch_events", return_value=[]), \
-                 patch("src.data_pipeline.fetch_weather", side_effect=RuntimeError("down")), \
-                 patch("src.data_pipeline.fetch_birthdays", return_value=[]):
+            with (
+                patch("src.data_pipeline.fetch_events", return_value=[]),
+                patch("src.data_pipeline.fetch_weather", side_effect=RuntimeError("down")),
+                patch("src.data_pipeline.fetch_birthdays", return_value=[]),
+            ):
                 data = DataPipeline(Config(), cache_dir=tmpdir).fetch()
 
             assert "weather" in data.stale_sources
@@ -145,6 +167,7 @@ class TestParallelFetchers:
 # ---------------------------------------------------------------------------
 # Moon phase
 # ---------------------------------------------------------------------------
+
 
 class TestMoonPhase:
     def test_age_is_positive(self):
@@ -188,6 +211,7 @@ class TestMoonPhase:
 # ---------------------------------------------------------------------------
 # Multi-day spanning event bars
 # ---------------------------------------------------------------------------
+
 
 class TestMultidaySpanning:
     def test_is_multiday_single_day_event(self):
@@ -280,13 +304,17 @@ class TestMultidaySpanning:
 # Extended forecast in week view
 # ---------------------------------------------------------------------------
 
+
 class TestWeekViewForecast:
     def test_draw_week_with_forecast_no_crash(self):
         today = date(2024, 3, 15)
         forecast = [
             DayForecast(
-                date=today + timedelta(days=i), high=50.0 + i, low=40.0 + i,
-                icon="02d", description="cloudy",
+                date=today + timedelta(days=i),
+                high=50.0 + i,
+                low=40.0 + i,
+                icon="02d",
+                description="cloudy",
             )
             for i in range(1, 6)
         ]
@@ -311,9 +339,11 @@ class TestWeekViewForecast:
 # Weather panel with moon phase
 # ---------------------------------------------------------------------------
 
+
 class TestWeatherPanelMoon:
     def test_draw_weather_with_today_no_crash(self):
         from src.render.components.weather_panel import draw_weather
+
         weather = _make_weather()
         img, draw = _make_draw()
         draw_weather(draw, weather, today=date(2024, 3, 15))
@@ -322,6 +352,7 @@ class TestWeatherPanelMoon:
     def test_draw_weather_without_today_no_crash(self):
         """Backward compat: today=None should still work."""
         from src.render.components.weather_panel import draw_weather
+
         weather = _make_weather()
         img, draw = _make_draw()
         draw_weather(draw, weather, today=None)
@@ -329,6 +360,7 @@ class TestWeatherPanelMoon:
 
     def test_draw_weather_none_with_today(self):
         from src.render.components.weather_panel import draw_weather
+
         img, draw = _make_draw()
         draw_weather(draw, None, today=date(2024, 3, 15))
         assert img.getbbox() is not None
@@ -337,6 +369,7 @@ class TestWeatherPanelMoon:
 # ---------------------------------------------------------------------------
 # Full render pipeline with v3 features
 # ---------------------------------------------------------------------------
+
 
 class TestRenderPipelineV3:
     def test_render_dashboard_with_all_v3_features(self):
@@ -354,15 +387,21 @@ class TestRenderPipelineV3:
         ]
         forecast = [
             DayForecast(
-                date=today + timedelta(days=i), high=50.0, low=40.0,
-                icon="02d", description="cloudy",
+                date=today + timedelta(days=i),
+                high=50.0,
+                low=40.0,
+                icon="02d",
+                description="cloudy",
             )
             for i in range(1, 6)
         ]
         weather = _make_weather(forecast=forecast)
 
         data = DashboardData(
-            events=events, weather=weather, birthdays=[], fetched_at=now,
+            events=events,
+            weather=weather,
+            birthdays=[],
+            fetched_at=now,
         )
         cfg = DisplayConfig()
         result = render_dashboard(data, cfg)

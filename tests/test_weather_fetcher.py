@@ -6,13 +6,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.config import WeatherConfig
-from src.fetchers.weather import fetch_weather, _pick_midday
+from src.fetchers.weather import _pick_midday, fetch_weather
 from src.render.primitives import deg_to_compass
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def cfg():
@@ -28,6 +28,7 @@ def _make_slot(hour: int, day_offset: int = 1, temp: float = 50.0, icon: str = "
     """Helper to build a minimal OWM forecast slot."""
     base = datetime(2024, 3, 15, hour, 0, tzinfo=timezone.utc)
     from datetime import timedelta
+
     dt = base + timedelta(days=day_offset)
     return {
         "dt": int(dt.timestamp()),
@@ -54,6 +55,7 @@ def _mock_forecast_response(today: date) -> dict:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestFetchWeather:
     def test_raises_without_api_key(self):
@@ -139,10 +141,11 @@ class TestFetchWeather:
     @patch("src.fetchers.weather.requests.Session")
     def test_forecast_excludes_today(self, mock_session_cls, cfg):
         from datetime import timezone
+
         today = date.today()
-        today_dt = datetime.combine(
-            today, datetime.min.time().replace(hour=12)
-        ).replace(tzinfo=timezone.utc)
+        today_dt = datetime.combine(today, datetime.min.time().replace(hour=12)).replace(
+            tzinfo=timezone.utc
+        )
 
         current_resp = MagicMock()
         current_resp.json.return_value = _mock_current_response()
@@ -182,17 +185,20 @@ class TestFetchWeather:
 
         # 8 future days of slots — only 6 should be returned
         from datetime import timedelta, timezone
+
         slots = []
         for day_offset in range(1, 9):
-            dt = datetime.combine(
-                today, datetime.min.time().replace(hour=12)
-            ).replace(tzinfo=timezone.utc)
+            dt = datetime.combine(today, datetime.min.time().replace(hour=12)).replace(
+                tzinfo=timezone.utc
+            )
             dt = dt + timedelta(days=day_offset)
-            slots.append({
-                "dt": int(dt.timestamp()),
-                "main": {"temp": 50.0, "temp_max": 55.0, "temp_min": 45.0},
-                "weather": [{"icon": "01d", "description": "clear"}],
-            })
+            slots.append(
+                {
+                    "dt": int(dt.timestamp()),
+                    "main": {"temp": 50.0, "temp_max": 55.0, "temp_min": 45.0},
+                    "weather": [{"icon": "01d", "description": "clear"}],
+                }
+            )
 
         forecast_resp = MagicMock()
         forecast_resp.json.return_value = {"list": slots}
@@ -216,6 +222,7 @@ class TestPickMidday:
         slots = [_make_slot(6), _make_slot(12), _make_slot(18)]
         result = _pick_midday(slots)
         from datetime import timezone
+
         dt = datetime.fromtimestamp(result["dt"], tz=timezone.utc)
         assert dt.hour in (11, 12, 13, 14)
 
@@ -228,6 +235,7 @@ class TestPickMidday:
 
     def test_uses_local_tz_for_noon(self):
         import zoneinfo
+
         # UTC+0: slot at hour 12 UTC is noon UTC
         # UTC-5 (EST): same slot is hour 7 local — not midday
         # UTC+12: same slot is hour 0 next day — not midday
@@ -243,6 +251,7 @@ class TestPickMidday:
 # ---------------------------------------------------------------------------
 # deg_to_compass
 # ---------------------------------------------------------------------------
+
 
 class TestDegToCompass:
     def test_north(self):
@@ -301,15 +310,19 @@ class TestDegToCompass:
 # _today() with timezone (line 22)
 # ---------------------------------------------------------------------------
 
+
 class TestToday:
     def test_today_with_none_tz_returns_local_date(self):
         from src.fetchers.weather import _today
+
         result = _today(None)
         assert result == date.today()
 
     def test_today_with_tz_returns_tz_aware_date(self):
         import zoneinfo
+
         from src.fetchers.weather import _today
+
         tz = zoneinfo.ZoneInfo("America/Los_Angeles")
         result = _today(tz)
         expected = datetime.now(tz).date()
@@ -320,20 +333,29 @@ class TestToday:
 # Sunrise / sunset parsing (lines 54-57)
 # ---------------------------------------------------------------------------
 
+
 class TestSunriseSunset:
     @patch("src.fetchers.weather.requests.Session")
     def test_sunrise_sunset_parsed(self, mock_session_cls, cfg):
         """Verify sunrise and sunset are populated when sys key is present."""
         from datetime import timezone as _tz
+
         today = date.today()
 
-        sunrise_ts = int(datetime(today.year, today.month, today.day, 6, 24, tzinfo=_tz.utc).timestamp())
-        sunset_ts = int(datetime(today.year, today.month, today.day, 19, 51, tzinfo=_tz.utc).timestamp())
+        sunrise_ts = int(
+            datetime(today.year, today.month, today.day, 6, 24, tzinfo=_tz.utc).timestamp()
+        )
+        sunset_ts = int(
+            datetime(today.year, today.month, today.day, 19, 51, tzinfo=_tz.utc).timestamp()
+        )
 
         current_resp = MagicMock()
         current_resp.json.return_value = {
             "main": {
-                "temp": 42.0, "temp_max": 48.0, "temp_min": 35.0, "humidity": 65,
+                "temp": 42.0,
+                "temp_max": 48.0,
+                "temp_min": 35.0,
+                "humidity": 65,
                 "feels_like": 38.0,
             },
             "weather": [{"icon": "02d", "description": "partly cloudy"}],

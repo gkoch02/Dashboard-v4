@@ -23,6 +23,7 @@ class OutputService:
             return
 
         from src.display.driver import WaveshareDisplay
+
         display = WaveshareDisplay(
             model=self.cfg.display.model,
             enable_partial=self.cfg.display.enable_partial_refresh,

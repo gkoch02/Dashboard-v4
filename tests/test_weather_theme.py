@@ -6,18 +6,24 @@ from PIL import Image, ImageDraw
 
 from src.config import DisplayConfig
 from src.data.models import (
-    DashboardData, DayForecast, WeatherAlert, WeatherData,
+    DashboardData,
+    DayForecast,
+    WeatherAlert,
+    WeatherData,
 )
 from src.render.canvas import render_dashboard
 from src.render.components.weather_full import draw_weather_full
 from src.render.theme import (
-    AVAILABLE_THEMES, ComponentRegion, ThemeLayout, load_theme,
+    AVAILABLE_THEMES,
+    ComponentRegion,
+    ThemeLayout,
+    load_theme,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_weather(**overrides) -> WeatherData:
     defaults = dict(
@@ -70,6 +76,7 @@ def _draw_surface():
 # Theme registration tests
 # ---------------------------------------------------------------------------
 
+
 class TestWeatherThemeRegistration:
     def test_weather_in_available_themes(self):
         assert "weather" in AVAILABLE_THEMES
@@ -119,6 +126,7 @@ class TestWeatherThemeRegistration:
 # Rendering integration tests
 # ---------------------------------------------------------------------------
 
+
 class TestWeatherThemeRendering:
     def test_renders_valid_image_with_full_data(self):
         theme = load_theme("weather")
@@ -166,6 +174,7 @@ class TestWeatherThemeRendering:
 # Component unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestDrawWeatherFull:
     def test_none_weather_does_not_crash(self):
         draw = _draw_surface()
@@ -210,8 +219,10 @@ class TestDrawWeatherFull:
         forecast = [
             DayForecast(
                 date=date(2024, 3, 16) + timedelta(days=i),
-                high=60.0 + i, low=40.0 + i,
-                icon="02d", description="cloudy",
+                high=60.0 + i,
+                low=40.0 + i,
+                icon="02d",
+                description="cloudy",
             )
             for i in range(10)
         ]

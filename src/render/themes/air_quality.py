@@ -41,15 +41,15 @@ def air_quality_theme() -> Theme:
             draw_order=["air_quality_full"],
         ),
         style=ThemeStyle(
-            fg=0,   # black on white — optimal eInk contrast
+            fg=0,  # black on white — optimal eInk contrast
             bg=1,
             invert_header=False,
             invert_today_col=False,
             invert_allday_bars=False,
-            show_borders=False,      # whitespace-defined layout
+            show_borders=False,  # whitespace-defined layout
             font_regular=sg_regular,
             font_medium=sg_medium,
-            font_semibold=sg_bold,   # no SemiBold weight in bundled cut; use Bold
+            font_semibold=sg_bold,  # no SemiBold weight in bundled cut; use Bold
             font_bold=sg_bold,
             label_font_size=10,
             label_font_weight="semibold",

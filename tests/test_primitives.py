@@ -4,10 +4,17 @@ import pytest
 from PIL import Image, ImageDraw, ImageFont
 
 from src.render.primitives import (
-    BLACK, WHITE,
-    draw_staleness_glyph, draw_text_truncated, draw_text_wrapped,
-    filled_rect, hline, inverted_text,
-    text_height, text_width, vline,
+    BLACK,
+    WHITE,
+    draw_staleness_glyph,
+    draw_text_truncated,
+    draw_text_wrapped,
+    filled_rect,
+    hline,
+    inverted_text,
+    text_height,
+    text_width,
+    vline,
 )
 
 
@@ -97,10 +104,20 @@ class TestDrawTextWrapped:
         _, draw = canvas
         # With a very narrow width, more lines would be needed than allowed
         h_one = draw_text_wrapped(
-            draw, (0, 0), "A B C D E F G H", font, max_width=20, max_lines=1,
+            draw,
+            (0, 0),
+            "A B C D E F G H",
+            font,
+            max_width=20,
+            max_lines=1,
         )
         h_three = draw_text_wrapped(
-            draw, (0, 40), "A B C D E F G H", font, max_width=20, max_lines=3,
+            draw,
+            (0, 40),
+            "A B C D E F G H",
+            font,
+            max_width=20,
+            max_lines=3,
         )
         assert h_three >= h_one
 
@@ -152,6 +169,7 @@ class TestDrawStalenessGlyph:
         """draw_staleness_glyph should draw a filled rectangle near the bottom-right."""
         img, draw = canvas
         from unittest.mock import MagicMock
+
         region = MagicMock()
         region.x, region.y, region.w, region.h = 0, 0, 200, 100
         style = MagicMock()
@@ -166,6 +184,7 @@ class TestDrawStalenessGlyph:
         img = Image.new("1", (30, 20), WHITE)
         draw = ImageDraw.Draw(img)
         from unittest.mock import MagicMock
+
         region = MagicMock()
         region.x, region.y, region.w, region.h = 0, 0, 30, 20
         style = MagicMock()

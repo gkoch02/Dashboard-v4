@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from PIL import ImageDraw
 
 from src.data.models import StalenessLevel
@@ -58,8 +59,10 @@ def draw_header(
         for level in source_staleness.values():
             if level.value != StalenessLevel.FRESH.value:
                 severity = {
-                    StalenessLevel.FRESH: 0, StalenessLevel.AGING: 1,
-                    StalenessLevel.STALE: 2, StalenessLevel.EXPIRED: 3,
+                    StalenessLevel.FRESH: 0,
+                    StalenessLevel.AGING: 1,
+                    StalenessLevel.STALE: 2,
+                    StalenessLevel.EXPIRED: 3,
                 }
                 if severity.get(level, 0) > severity.get(worst, 0):
                     worst = level

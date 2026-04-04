@@ -98,6 +98,7 @@ def _build_people_service(cfg: GoogleConfig):
 # Sync state persistence
 # ---------------------------------------------------------------------------
 
+
 def _load_sync_state(cache_dir: str) -> dict:
     """Load per-calendar sync state (tokens + stored events).  Returns {} if absent."""
     path = Path(cache_dir) / _SYNC_STATE_FILENAME
@@ -115,6 +116,7 @@ def _save_sync_state(state: dict, cache_dir: str) -> None:
     """Persist per-calendar sync state atomically."""
     import os
     import tempfile
+
     path = Path(cache_dir) / _SYNC_STATE_FILENAME
     try:
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
@@ -137,6 +139,7 @@ def _save_sync_state(state: dict, cache_dir: str) -> None:
 # ---------------------------------------------------------------------------
 # ICS feed fetching
 # ---------------------------------------------------------------------------
+
 
 def _fetch_from_ical(
     urls: list[str],
@@ -281,6 +284,7 @@ def _url_hostname(url: str) -> str:
     """Extract a human-readable name from a URL (hostname only)."""
     try:
         from urllib.parse import urlparse
+
         return urlparse(url).hostname or url
     except Exception:
         return url
@@ -337,7 +341,9 @@ def fetch_events(
                 events.extend(week_events)
                 logger.info(
                     "Incremental sync %s: %d delta items → %d in week window",
-                    cal_id, len(delta_items), len(week_events),
+                    cal_id,
+                    len(delta_items),
+                    len(week_events),
                 )
                 continue  # skip full sync below
 
@@ -540,6 +546,7 @@ def _filter_to_window(
 # Sync state serialisation helpers
 # ---------------------------------------------------------------------------
 
+
 def _ser_sync_event(e: CalendarEvent) -> dict:
     """Serialise a CalendarEvent for the sync state store (includes event_id)."""
     return {
@@ -603,6 +610,7 @@ def _parse_event(item: dict, calendar_name: str, tz: tzinfo | None = None) -> Ca
 # Birthday fetching
 # ---------------------------------------------------------------------------
 
+
 def fetch_birthdays(
     google_cfg: GoogleConfig,
     birthday_cfg: BirthdayConfig,
@@ -653,9 +661,7 @@ def _birthdays_from_file(cfg: BirthdayConfig, tz: tzinfo | None = None) -> list[
     return birthdays
 
 
-def _parse_birthday_entry(
-    entry: dict, today: date, lookahead: date
-) -> Birthday | None:
+def _parse_birthday_entry(entry: dict, today: date, lookahead: date) -> Birthday | None:
     name = entry["name"]
     # Accept "MM-DD" or "YYYY-MM-DD"
     raw = entry["date"]
@@ -766,9 +772,7 @@ def _birthdays_from_contacts(
     return birthdays
 
 
-def _parse_contact_birthday(
-    person: dict, today: date, lookahead: date
-) -> Birthday | None:
+def _parse_contact_birthday(person: dict, today: date, lookahead: date) -> Birthday | None:
     """Extract a Birthday from a People API person resource, or None if unusable."""
     names = person.get("names", [])
     if not names:

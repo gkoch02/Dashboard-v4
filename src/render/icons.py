@@ -1,4 +1,5 @@
 from PIL import ImageDraw
+
 from src.render.fonts import weather_icon
 
 # OpenWeatherMap icon code -> Weather Icons font glyph

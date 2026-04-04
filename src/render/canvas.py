@@ -1,12 +1,24 @@
 from datetime import datetime
+
 from PIL import Image, ImageDraw
 
-from src.data.models import DashboardData
 from src.config import DisplayConfig
+from src.data.models import DashboardData
 from src.render.components import (
-    header, week_view, weather_panel, birthday_bar, info_panel, today_view, qotd_panel,
-    weather_full as weather_full_comp, fuzzyclock_panel, diags_panel, air_quality_panel,
+    air_quality_panel,
+    birthday_bar,
+    diags_panel,
+    fuzzyclock_panel,
+    header,
+    info_panel,
     moonphase_panel,
+    qotd_panel,
+    today_view,
+    weather_panel,
+    week_view,
+)
+from src.render.components import (
+    weather_full as weather_full_comp,
 )
 from src.render.theme import Theme, default_theme
 
@@ -48,7 +60,8 @@ def render_dashboard(
     # Build the dispatcher: component name → lambda that draws it
     component_drawers = {
         "header": lambda: header.draw_header(
-            draw, now,
+            draw,
+            now,
             is_stale=data.is_stale,
             title=title,
             source_staleness=data.source_staleness,
@@ -56,75 +69,98 @@ def render_dashboard(
             style=style,
         ),
         "week_view": lambda: week_view.draw_week(
-            draw, data.events, today,
+            draw,
+            data.events,
+            today,
             forecast=week_forecast,
             region=layout.week_view,
             style=style,
         ),
         "weather": lambda: weather_panel.draw_weather(
-            draw, data.weather, today=today,
+            draw,
+            data.weather,
+            today=today,
             air_quality=data.air_quality,
             region=layout.weather,
             style=style,
             staleness=data.source_staleness.get("weather"),
         ),
         "birthdays": lambda: birthday_bar.draw_birthdays(
-            draw, data.birthdays, today,
+            draw,
+            data.birthdays,
+            today,
             region=layout.birthdays,
             style=style,
             staleness=data.source_staleness.get("birthdays"),
         ),
         "info": lambda: info_panel.draw_info(
-            draw, today,
+            draw,
+            today,
             region=layout.info,
             style=style,
             quote_refresh=quote_refresh,
         ),
         "today_view": lambda: today_view.draw_today(
-            draw, data.events, today,
+            draw,
+            data.events,
+            today,
             forecast=week_forecast,
             region=layout.today_view,
             style=style,
         ),
         "qotd": lambda: qotd_panel.draw_qotd(
-            draw, today,
+            draw,
+            today,
             region=layout.qotd,
             style=style,
             quote_refresh=quote_refresh,
         ),
         "qotd_weather": lambda: qotd_panel.draw_qotd_weather(
-            draw, data.weather, today,
+            draw,
+            data.weather,
+            today,
             region=layout.weather,
             style=style,
         ),
         "weather_full": lambda: weather_full_comp.draw_weather_full(
-            draw, data.weather, today,
+            draw,
+            data.weather,
+            today,
             air_quality=data.air_quality,
             region=layout.weather_full,
             style=style,
         ),
         "fuzzyclock": lambda: fuzzyclock_panel.draw_fuzzyclock(
-            draw, now,
+            draw,
+            now,
             region=layout.fuzzyclock,
             style=style,
         ),
         "fuzzyclock_weather": lambda: qotd_panel.draw_qotd_weather(
-            draw, data.weather, today,
+            draw,
+            data.weather,
+            today,
             region=layout.weather,
             style=style,
         ),
         "diags": lambda: diags_panel.draw_diags(
-            draw, data, today,
+            draw,
+            data,
+            today,
             region=layout.diags,
             style=style,
         ),
         "air_quality_full": lambda: air_quality_panel.draw_air_quality_full(
-            draw, data, today,
+            draw,
+            data,
+            today,
             region=layout.air_quality_full,
             style=style,
         ),
         "moonphase_full": lambda: moonphase_panel.draw_moonphase(
-            draw, data, today,
+            draw,
+            data,
+            today,
             region=layout.moonphase_full,
             style=style,
             quote_refresh=quote_refresh,
@@ -156,10 +192,6 @@ def render_dashboard(
 
     # Scale to native display resolution when it differs from the base canvas size
     if (config.width, config.height) != (layout.canvas_w, layout.canvas_h):
-        image = (
-            image.convert("L")
-            .resize((config.width, config.height), Image.LANCZOS)
-            .convert("1")
-        )
+        image = image.convert("L").resize((config.width, config.height), Image.LANCZOS).convert("1")
 
     return image
