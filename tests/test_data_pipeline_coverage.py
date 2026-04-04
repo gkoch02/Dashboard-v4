@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from src.config import Config, PurpleAirConfig
 from src.data.models import AirQualityData, StalenessLevel, WeatherData
-from src.data_pipeline import DataPipeline
+from src.data_pipeline import DataPipeline, _merge_air_quality_with_weather_fallback
 
 
 def _make_weather():
@@ -115,7 +115,7 @@ class TestResolveAirQualityFailure:
 class TestFetchWithPurpleair:
     def test_purpleair_enabled_aq_fetched(self, tmp_path):
         """With purpleair configured, fetch() checks air_quality skip (line 83)
-        and returns fetched AQ data."""
+        and returns fetched AQ data with OWM fallback for missing fields."""
         pipeline = _make_pipeline(tmp_path, api_key="key", sensor_id=123)
         aq = AirQualityData(aqi=42, category="Good", pm25=8.0)
 
@@ -129,11 +129,16 @@ class TestFetchWithPurpleair:
         ):
             data = pipeline.fetch()
 
-        assert data.air_quality is aq
+        # AQ data is merged with OWM fallback for missing sensor fields
+        assert data.air_quality.aqi == 42
+        assert data.air_quality.category == "Good"
+        assert data.air_quality.pm25 == 8.0
+        assert data.air_quality.temperature == 68.0  # From OWM fallback
+        assert data.air_quality.humidity == 40.0  # From OWM fallback
 
     def test_purpleair_enabled_cached_aq_used_when_skipped(self, tmp_path):
         """When purpleair enabled and AQ should be skipped with cached data,
-        the cached value is used (line 94)."""
+        the cached value is used and merged with OWM fallback (line 94)."""
         pipeline = _make_pipeline(tmp_path, api_key="key", sensor_id=123)
         cached_aq = AirQualityData(aqi=30, category="Good", pm25=6.0)
 
@@ -152,4 +157,137 @@ class TestFetchWithPurpleair:
         ):
             data = pipeline.fetch()
 
-        assert data.air_quality is cached_aq
+        # Cached AQ data is merged with OWM fallback for missing sensor fields
+        assert data.air_quality.aqi == 30
+        assert data.air_quality.category == "Good"
+        assert data.air_quality.pm25 == 6.0
+        assert data.air_quality.temperature == 68.0  # From OWM fallback
+        assert data.air_quality.humidity == 40.0  # From OWM fallback
+
+
+# ---------------------------------------------------------------------------
+# _merge_air_quality_with_weather_fallback: OWM fallback integration
+# ---------------------------------------------------------------------------
+
+
+class TestMergeAirQualityWithWeatherFallback:
+    """Test OWM fallback for missing PurpleAir sensor fields."""
+
+    def test_no_merge_when_air_quality_is_none(self):
+        """Returns None when air_quality is None (no merge needed)."""
+        weather = _make_weather()
+        result = _merge_air_quality_with_weather_fallback(None, weather)
+        assert result is None
+
+    def test_no_merge_when_weather_is_none(self):
+        """Returns original air_quality when weather is None."""
+        aq = AirQualityData(aqi=50, category="Good", pm25=10.0)
+        result = _merge_air_quality_with_weather_fallback(aq, None)
+        assert result is aq
+
+    def test_no_merge_when_all_fields_present(self):
+        """Returns original when all AQ fields are already present."""
+        aq = AirQualityData(
+            aqi=50,
+            category="Good",
+            pm25=10.0,
+            temperature=72.0,
+            humidity=45.0,
+            pressure=1013.0,
+        )
+        weather = _make_weather()
+        result = _merge_air_quality_with_weather_fallback(aq, weather)
+        # Should return same object since no merge was needed
+        assert result is aq
+
+    def test_merge_all_missing_fields_from_weather(self):
+        """Fills all missing AQ fields from weather data."""
+        aq = AirQualityData(aqi=50, category="Good", pm25=10.0)
+        weather = WeatherData(
+            current_temp=72.0,
+            current_icon="01d",
+            current_description="clear sky",
+            high=75.0,
+            low=55.0,
+            humidity=45,
+            pressure=1013.0,
+        )
+        result = _merge_air_quality_with_weather_fallback(aq, weather)
+
+        assert result.temperature == 72.0
+        assert result.humidity == 45.0  # int converted to float
+        assert result.pressure == 1013.0
+        # Other fields unchanged
+        assert result.aqi == 50
+        assert result.category == "Good"
+        assert result.pm25 == 10.0
+
+    def test_merge_partial_missing_fields(self):
+        """Only fills the specific missing fields."""
+        aq = AirQualityData(
+            aqi=50,
+            category="Good",
+            pm25=10.0,
+            temperature=70.0,  # Present
+            # humidity and pressure missing
+        )
+        weather = _make_weather()
+        result = _merge_air_quality_with_weather_fallback(aq, weather)
+
+        assert result.temperature == 70.0  # Kept from AQ
+        assert result.humidity == 40.0  # Filled from weather
+        assert result.pressure is None  # weather.pressure is None, stays None
+
+    def test_preserves_other_fields(self):
+        """Preserves pm10, pm1, sensor_id when merging."""
+        aq = AirQualityData(
+            aqi=50,
+            category="Good",
+            pm25=10.0,
+            pm10=15.0,
+            pm1=5.0,
+            sensor_id=12345,
+        )
+        weather = _make_weather()
+        result = _merge_air_quality_with_weather_fallback(aq, weather)
+
+        assert result.pm10 == 15.0
+        assert result.pm1 == 5.0
+        assert result.sensor_id == 12345
+
+    def test_weather_pressure_none_does_not_overwrite(self):
+        """Does not use weather.pressure if None."""
+        aq = AirQualityData(
+            aqi=50,
+            category="Good",
+            pm25=10.0,
+            pressure=1010.0,  # Present
+        )
+        weather = WeatherData(
+            current_temp=68.0,
+            current_icon="01d",
+            current_description="clear sky",
+            high=75.0,
+            low=55.0,
+            humidity=40,
+            pressure=None,  # Explicitly None
+        )
+        result = _merge_air_quality_with_weather_fallback(aq, weather)
+
+        assert result.pressure == 1010.0  # Kept from AQ, not overwritten
+
+    def test_weather_pressure_none_missing_aq_pressure_stays_none(self):
+        """When both AQ and weather pressure are missing, stays None."""
+        aq = AirQualityData(aqi=50, category="Good", pm25=10.0)
+        weather = WeatherData(
+            current_temp=68.0,
+            current_icon="01d",
+            current_description="clear sky",
+            high=75.0,
+            low=55.0,
+            humidity=40,
+            pressure=None,
+        )
+        result = _merge_air_quality_with_weather_fallback(aq, weather)
+
+        assert result.pressure is None
