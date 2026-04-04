@@ -53,6 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
         help=(f"Override the theme from config. Choices: {', '.join(sorted(AVAILABLE_THEMES))}"),
     )
     parser.add_argument(
+        "--message",
+        default=None,
+        metavar="TEXT",
+        help="Text to display when using the message theme.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",

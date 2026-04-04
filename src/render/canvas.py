@@ -11,6 +11,7 @@ from src.render.components import (
     fuzzyclock_panel,
     header,
     info_panel,
+    message_panel,
     moonphase_panel,
     qotd_panel,
     today_view,
@@ -33,6 +34,7 @@ def render_dashboard(
     title: str = "Home Dashboard",
     theme: Theme | None = None,
     quote_refresh: str = "daily",
+    message_text: str | None = None,
 ) -> Image.Image:
     """Compose all components onto a 1-bit image at the configured display resolution.
 
@@ -164,6 +166,19 @@ def render_dashboard(
             region=layout.moonphase_full,
             style=style,
             quote_refresh=quote_refresh,
+        ),
+        "message": lambda: message_panel.draw_message(
+            draw,
+            message_text or "",
+            region=layout.message,
+            style=style,
+        ),
+        "message_weather": lambda: qotd_panel.draw_qotd_weather(
+            draw,
+            data.weather,
+            today,
+            region=layout.weather,
+            style=style,
         ),
     }
 

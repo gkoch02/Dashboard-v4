@@ -94,6 +94,7 @@ class DashboardApp:
             title=self.cfg.title,
             theme=theme,
             quote_refresh=self.cfg.cache.quote_refresh,
+            message_text=getattr(self.args, "message", None),
         )
         self.output.publish(image, dry_run=self.args.dry_run, force_full=force_full)
         self.output.write_health_marker()
