@@ -105,9 +105,12 @@ class CircuitBreaker:
             return True
         # Use UTC for consistent cooldown calculation regardless of clock changes
         now = datetime.now(timezone.utc)
-        # Handle legacy naive timestamps by assuming UTC
+        # Handle legacy naive timestamps: interpret as local wall-clock time, not UTC.
+        # (Older state files and some tools write naive local timestamps; treating them
+        # as UTC would shift the apparent failure time by the UTC offset, causing OPEN
+        # breakers to appear expired before cooldown actually elapses.)
         if last.tzinfo is None:
-            last = last.replace(tzinfo=timezone.utc)
+            last = last.astimezone(timezone.utc)
         age = (now - last).total_seconds() / 60
         return age >= self._cooldown_minutes
 

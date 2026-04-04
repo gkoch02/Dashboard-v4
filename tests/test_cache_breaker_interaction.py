@@ -1,7 +1,7 @@
 """Tests for cache + circuit breaker interaction scenarios in DataPipeline."""
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from src.config import Config
@@ -220,7 +220,7 @@ def _write_breaker_open(cache_dir: str, source: str, cooldown: int = 9999):
     state = {
         source: {
             "consecutive_failures": 5,
-            "last_failure_at": datetime.now().isoformat(),
+            "last_failure_at": datetime.now(timezone.utc).isoformat(),
             "state": "open",
         }
     }
