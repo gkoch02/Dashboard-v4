@@ -95,7 +95,7 @@ pi-install:
 	rm -rf /tmp/waveshare-epd
 	venv/bin/python -c "import waveshare_epd; print('  Waveshare EPD: OK')"
 	@echo ""
-	@mkdir -p credentials output
+	@mkdir -p credentials output state
 	@if [ ! -f config/config.yaml ]; then \
 		cp config/config.example.yaml config/config.yaml; \
 	fi
@@ -153,7 +153,7 @@ setup:
 		echo "Raspberry Pi detected — installing Pi-specific dependencies..."; \
 		venv/bin/pip install -r requirements-pi.txt; \
 	fi
-	@mkdir -p credentials output
+	@mkdir -p credentials output state
 	@if [ ! -f config/config.yaml ]; then \
 		cp config/config.example.yaml config/config.yaml; \
 		echo ""; \

@@ -13,6 +13,9 @@ output/*.png
 output/*.json
 output/*.txt
 
+# Runtime state (cache, breaker, quota, sync tokens, theme state)
+state/
+
 # Config and credentials (user-specific, sensitive)
 config/config.yaml
 credentials/

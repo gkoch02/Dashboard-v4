@@ -141,6 +141,7 @@ class Config:
     title: str = "Home Dashboard"
     theme: str = "default"
     output_dir: str = "output"
+    state_dir: str = "state"
     log_level: str = "INFO"
     timezone: str = "local"
 
@@ -286,6 +287,9 @@ def load_config(path: str = "config/config.yaml") -> Config:
 
     if "output" in raw:
         cfg.output_dir = raw["output"].get("dry_run_dir", "output")
+
+    if "state_dir" in raw:
+        cfg.state_dir = str(raw["state_dir"])
 
     if "logging" in raw:
         cfg.log_level = raw["logging"].get("level", "INFO")

@@ -41,7 +41,7 @@ def resolve_theme_name(cfg, override_theme: str | None, now: _datetime | None = 
         theme_name = pick_random_theme(
             include=cfg.random_theme.include,
             exclude=cfg.random_theme.exclude,
-            output_dir=cfg.output_dir,
+            output_dir=cfg.state_dir,
         )
     elif theme_name == "random_hourly":
         from src.render.random_theme import pick_random_theme_hourly
@@ -49,7 +49,7 @@ def resolve_theme_name(cfg, override_theme: str | None, now: _datetime | None = 
         theme_name = pick_random_theme_hourly(
             include=cfg.random_theme.include,
             exclude=cfg.random_theme.exclude,
-            output_dir=cfg.output_dir,
+            output_dir=cfg.state_dir,
             now=now,
         )
     return theme_name
