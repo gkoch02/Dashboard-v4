@@ -91,12 +91,15 @@ def draw_air_quality_full(
     x0, y0 = region.x, region.y
     W, H = region.w, region.h
 
+    aq = data.air_quality
+    has_ambient = aq.temperature is not None or aq.humidity is not None or aq.pressure is not None
+
     # Zone heights — tuned for 480px canvas
     hero_h = int(H * 0.375)  # ~180px
     pm_h = int(H * 0.146)  # ~70px
-    cards_h = int(H * 0.208)  # ~100px
+    cards_h = int(H * 0.208) if has_ambient else 0  # ~100px, or 0 when absent
     # Weather strip gets the remainder
-    weather_h = H - hero_h - pm_h - cards_h  # ~130px
+    weather_h = H - hero_h - pm_h - cards_h
 
     hero_top = y0
     pm_top = hero_top + hero_h
@@ -105,12 +108,14 @@ def draw_air_quality_full(
 
     # Thin separator rules between zones
     hline(draw, pm_top, x0 + 20, x0 + W - 20, fill=style.fg)
-    hline(draw, cards_top, x0 + 20, x0 + W - 20, fill=style.fg)
+    if has_ambient:
+        hline(draw, cards_top, x0 + 20, x0 + W - 20, fill=style.fg)
     hline(draw, weather_top, x0, x0 + W, fill=style.fg)
 
-    _draw_aqi_hero(draw, data.air_quality, x0, hero_top, W, hero_h, style)
-    _draw_pm_row(draw, data.air_quality, x0, pm_top, W, pm_h, style)
-    _draw_ambient_cards(draw, data.air_quality, x0, cards_top, W, cards_h, style)
+    _draw_aqi_hero(draw, aq, x0, hero_top, W, hero_h, style)
+    _draw_pm_row(draw, aq, x0, pm_top, W, pm_h, style)
+    if has_ambient:
+        _draw_ambient_cards(draw, aq, x0, cards_top, W, cards_h, style)
     _draw_weather_strip(draw, data.weather, today, x0, weather_top, W, weather_h, style)
 
 
