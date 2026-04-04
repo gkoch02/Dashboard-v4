@@ -4,7 +4,7 @@ All notable changes to Home Dashboard are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [4.1.2] - 2026-04-04
+## [4.1.3] - 2026-04-04
 
 ### Fixed
 - **KeyError in data pipeline**: Resolved a race condition where `source_staleness`
