@@ -6,7 +6,7 @@ time visually obvious at a glance.  A dashed "now" line marks the current time.
 
 from __future__ import annotations
 
-from datetime import date, datetime, time
+from datetime import date, datetime
 
 from PIL import ImageDraw
 
