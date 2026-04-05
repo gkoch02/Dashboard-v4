@@ -22,13 +22,13 @@ from src.render.primitives import (
 from src.render.theme import ComponentRegion, ThemeStyle
 
 # Visible hour range on the timeline
-_START_HOUR = 7   # 7 AM
-_END_HOUR = 21    # 9 PM (exclusive top boundary)
+_START_HOUR = 7  # 7 AM
+_END_HOUR = 21  # 9 PM (exclusive top boundary)
 _VISIBLE_HOURS = _END_HOUR - _START_HOUR  # 14 hours
 
 # Layout constants
-_AXIS_W = 52       # width of the left hour-label axis
-_ALLDAY_H = 14     # height of the all-day bar strip at the very top
+_AXIS_W = 52  # width of the left hour-label axis
+_ALLDAY_H = 14  # height of the all-day bar strip at the very top
 _PAD_RIGHT = 6
 
 
@@ -111,15 +111,25 @@ def draw_timeline(
             bx0 = timeline_x + i * segment_w
             bx1 = bx0 + segment_w - 2
             if style.invert_allday_bars:
-                filled_rect(draw, (bx0, allday_top, bx1, allday_top + _ALLDAY_H - 1),
-                            fill=style.fg)
-                draw_text_truncated(draw, (bx0 + 3, allday_top + 2), event.summary,
-                                    allday_font, bx1 - bx0 - 6, fill=style.bg)
+                filled_rect(draw, (bx0, allday_top, bx1, allday_top + _ALLDAY_H - 1), fill=style.fg)
+                draw_text_truncated(
+                    draw,
+                    (bx0 + 3, allday_top + 2),
+                    event.summary,
+                    allday_font,
+                    bx1 - bx0 - 6,
+                    fill=style.bg,
+                )
             else:
-                draw.rectangle((bx0, allday_top, bx1, allday_top + _ALLDAY_H - 1),
-                                outline=style.fg)
-                draw_text_truncated(draw, (bx0 + 3, allday_top + 2), event.summary,
-                                    allday_font, bx1 - bx0 - 6, fill=style.fg)
+                draw.rectangle((bx0, allday_top, bx1, allday_top + _ALLDAY_H - 1), outline=style.fg)
+                draw_text_truncated(
+                    draw,
+                    (bx0 + 3, allday_top + 2),
+                    event.summary,
+                    allday_font,
+                    bx1 - bx0 - 6,
+                    fill=style.fg,
+                )
 
     # --- Timed event blocks ---
     # Group overlapping events into columns to avoid visual collisions
@@ -152,8 +162,12 @@ def draw_timeline(
         filled_rect(draw, (ex0, ey0, ex1, ey0 + block_h - 1), fill=style.fg)
         if block_h >= text_height(event_font) + 4:
             draw_text_truncated(
-                draw, (ex0 + 3, ey0 + 2), event.summary,
-                event_font, ex1 - ex0 - 6, fill=style.bg,
+                draw,
+                (ex0 + 3, ey0 + 2),
+                event.summary,
+                event_font,
+                ex1 - ex0 - 6,
+                fill=style.bg,
             )
 
     # --- Current-time indicator ---
@@ -164,8 +178,9 @@ def draw_timeline(
             # Dashed line: 4px on, 3px off
             x = timeline_x
             while x <= timeline_x + timeline_w:
-                draw.line([(x, ny), (min(x + 3, timeline_x + timeline_w), ny)],
-                          fill=style.fg, width=2)
+                draw.line(
+                    [(x, ny), (min(x + 3, timeline_x + timeline_w), ny)], fill=style.fg, width=2
+                )
                 x += 7
 
 

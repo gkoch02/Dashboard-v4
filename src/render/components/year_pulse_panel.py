@@ -22,8 +22,8 @@ from src.render.primitives import (
 from src.render.theme import ComponentRegion, ThemeStyle
 
 PAD = 14
-BAR_H = 16          # height of the year progress bar
-BAR_RADIUS = 3      # corner rounding for the progress bar outline
+BAR_H = 16  # height of the year progress bar
+BAR_RADIUS = 3  # corner rounding for the progress bar outline
 MAX_COUNTDOWNS = 5  # max upcoming items to display
 
 
@@ -70,7 +70,9 @@ def draw_year_pulse(
     year_h = year_bb[3] - year_bb[1]
     draw.text(
         (x0 + PAD - year_bb[0], y0 + PAD - year_bb[1]),
-        year_str, font=year_font, fill=style.fg,
+        year_str,
+        font=year_font,
+        fill=style.fg,
     )
 
     # Week number (right-aligned, vertically centred with year)
@@ -92,8 +94,9 @@ def draw_year_pulse(
     draw.rectangle((bar_x0, bar_top, bar_x1, bar_top + BAR_H - 1), outline=style.fg)
     # Filled portion
     if filled_w > 0:
-        filled_rect(draw, (bar_x0, bar_top, bar_x0 + filled_w - 1, bar_top + BAR_H - 1),
-                    fill=style.fg)
+        filled_rect(
+            draw, (bar_x0, bar_top, bar_x0 + filled_w - 1, bar_top + BAR_H - 1), fill=style.fg
+        )
 
     # Bar label below: "Day X of Y · Z% complete"
     pct_int = int(pct * 100)
@@ -102,7 +105,9 @@ def draw_year_pulse(
     bl_h = bl_bb[3] - bl_bb[1]
     draw.text(
         (bar_x0 - bl_bb[0], bar_top + BAR_H + 5 - bl_bb[1]),
-        bar_label, font=bar_label_font, fill=style.fg,
+        bar_label,
+        font=bar_label_font,
+        fill=style.fg,
     )
 
     stats_bottom = bar_top + BAR_H + 5 + bl_h + PAD
@@ -119,7 +124,9 @@ def draw_year_pulse(
     label_text = style.component_labels.get("year_pulse", "COMING UP")
     draw.text(
         (x0 + PAD, stats_bottom + 8),
-        label_text, font=label_font, fill=style.fg,
+        label_text,
+        font=label_font,
+        fill=style.fg,
     )
     list_top = stats_bottom + 8 + text_height(label_font) + 6
 

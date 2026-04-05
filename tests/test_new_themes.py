@@ -31,6 +31,7 @@ def _render(theme_name: str) -> Image.Image:
 # Theme registration
 # ---------------------------------------------------------------------------
 
+
 class TestThemeRegistration:
     def test_timeline_in_available_themes(self):
         assert "timeline" in AVAILABLE_THEMES
@@ -50,6 +51,7 @@ class TestThemeRegistration:
 # ---------------------------------------------------------------------------
 # Timeline theme smoke tests
 # ---------------------------------------------------------------------------
+
 
 class TestTimelineTheme:
     def test_renders_correct_size(self):
@@ -74,6 +76,7 @@ class TestTimelineTheme:
 # Year Pulse theme smoke tests
 # ---------------------------------------------------------------------------
 
+
 class TestYearPulseTheme:
     def test_renders_correct_size(self):
         img = _render("year_pulse")
@@ -97,23 +100,26 @@ class TestYearPulseTheme:
 # Timeline panel unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestTimelinePanel:
     def _make_draw(self):
         from PIL import Image, ImageDraw
+
         img = Image.new("1", (800, 360), 1)
         return ImageDraw.Draw(img), img
 
     def test_renders_empty(self):
         from src.render.components.timeline_panel import draw_timeline
         from src.render.theme import ComponentRegion
+
         draw, img = self._make_draw()
-        draw_timeline(draw, [], date(2026, 4, 5), FIXED_NOW,
-                      region=ComponentRegion(0, 0, 800, 360))
+        draw_timeline(draw, [], date(2026, 4, 5), FIXED_NOW, region=ComponentRegion(0, 0, 800, 360))
         assert img.mode == "1"
 
     def test_renders_with_events(self):
         from src.render.components.timeline_panel import draw_timeline
         from src.render.theme import ComponentRegion
+
         draw, img = self._make_draw()
         events = [
             CalendarEvent(
@@ -127,8 +133,9 @@ class TestTimelinePanel:
                 end=datetime(2026, 4, 5, 13, 0),
             ),
         ]
-        draw_timeline(draw, events, date(2026, 4, 5), FIXED_NOW,
-                      region=ComponentRegion(0, 0, 800, 360))
+        draw_timeline(
+            draw, events, date(2026, 4, 5), FIXED_NOW, region=ComponentRegion(0, 0, 800, 360)
+        )
         pixels = list(img.tobytes())
         assert not all(p == 255 for p in pixels), "Timeline is blank"
 
@@ -136,6 +143,7 @@ class TestTimelinePanel:
         """Overlapping events should be assigned separate columns without crashing."""
         from src.render.components.timeline_panel import draw_timeline
         from src.render.theme import ComponentRegion
+
         draw, img = self._make_draw()
         events = [
             CalendarEvent(
@@ -149,13 +157,15 @@ class TestTimelinePanel:
                 end=datetime(2026, 4, 5, 12, 0),
             ),
         ]
-        draw_timeline(draw, events, date(2026, 4, 5), FIXED_NOW,
-                      region=ComponentRegion(0, 0, 800, 360))
+        draw_timeline(
+            draw, events, date(2026, 4, 5), FIXED_NOW, region=ComponentRegion(0, 0, 800, 360)
+        )
         assert img.mode == "1"
 
     def test_column_assignment_no_overlap(self):
         """Non-overlapping events should all be in column 0."""
         from src.render.components.timeline_panel import _assign_columns
+
         events = [
             CalendarEvent("A", datetime(2026, 4, 5, 9, 0), datetime(2026, 4, 5, 10, 0)),
             CalendarEvent("B", datetime(2026, 4, 5, 11, 0), datetime(2026, 4, 5, 12, 0)),
@@ -167,6 +177,7 @@ class TestTimelinePanel:
     def test_column_assignment_overlap(self):
         """Overlapping events should be in different columns."""
         from src.render.components.timeline_panel import _assign_columns
+
         events = [
             CalendarEvent("A", datetime(2026, 4, 5, 9, 0), datetime(2026, 4, 5, 11, 0)),
             CalendarEvent("B", datetime(2026, 4, 5, 10, 0), datetime(2026, 4, 5, 12, 0)),
@@ -180,9 +191,11 @@ class TestTimelinePanel:
 # Year pulse panel unit tests
 # ---------------------------------------------------------------------------
 
+
 class TestYearPulsePanel:
     def _make_draw(self):
         from PIL import Image, ImageDraw
+
         img = Image.new("1", (800, 360), 1)
         return ImageDraw.Draw(img), img
 
@@ -196,28 +209,36 @@ class TestYearPulsePanel:
     def test_renders_empty_data(self):
         from src.render.components.year_pulse_panel import draw_year_pulse
         from src.render.theme import ComponentRegion
+
         draw, img = self._make_draw()
-        draw_year_pulse(draw, self._make_data(), date(2026, 4, 5),
-                        region=ComponentRegion(0, 0, 800, 360))
+        draw_year_pulse(
+            draw, self._make_data(), date(2026, 4, 5), region=ComponentRegion(0, 0, 800, 360)
+        )
         pixels = list(img.tobytes())
         assert not all(p == 255 for p in pixels), "Panel is blank"
 
     def test_renders_with_birthdays(self):
         from src.render.components.year_pulse_panel import draw_year_pulse
         from src.render.theme import ComponentRegion
+
         draw, img = self._make_draw()
         bdays = [
             Birthday(name="Alice", date=date(1990, 5, 10), age=35),
             Birthday(name="Bob", date=date(1985, 7, 4), age=40),
         ]
-        draw_year_pulse(draw, self._make_data(birthdays=bdays), date(2026, 4, 5),
-                        region=ComponentRegion(0, 0, 800, 360))
+        draw_year_pulse(
+            draw,
+            self._make_data(birthdays=bdays),
+            date(2026, 4, 5),
+            region=ComponentRegion(0, 0, 800, 360),
+        )
         pixels = list(img.tobytes())
         assert not all(p == 255 for p in pixels), "Panel is blank"
 
     def test_renders_with_events(self):
         from src.render.components.year_pulse_panel import draw_year_pulse
         from src.render.theme import ComponentRegion
+
         draw, img = self._make_draw()
         events = [
             CalendarEvent(
@@ -226,13 +247,18 @@ class TestYearPulsePanel:
                 end=datetime(2026, 4, 10, 17, 0),
             ),
         ]
-        draw_year_pulse(draw, self._make_data(events=events), date(2026, 4, 5),
-                        region=ComponentRegion(0, 0, 800, 360))
+        draw_year_pulse(
+            draw,
+            self._make_data(events=events),
+            date(2026, 4, 5),
+            region=ComponentRegion(0, 0, 800, 360),
+        )
         pixels = list(img.tobytes())
         assert not all(p == 255 for p in pixels), "Panel is blank"
 
     def test_build_countdowns_sorts_by_days(self):
         from src.render.components.year_pulse_panel import _build_countdowns
+
         today = date(2026, 4, 5)
         events = [
             CalendarEvent("Far Event", datetime(2026, 4, 12), datetime(2026, 4, 12)),
@@ -245,6 +271,7 @@ class TestYearPulsePanel:
 
     def test_build_countdowns_excludes_past(self):
         from src.render.components.year_pulse_panel import _build_countdowns
+
         today = date(2026, 4, 5)
         events = [
             CalendarEvent("Past Event", datetime(2026, 4, 1), datetime(2026, 4, 1)),
@@ -256,6 +283,7 @@ class TestYearPulsePanel:
     def test_leap_year_birthday_handled(self):
         """Feb 29 birthdays should not crash when the current year is not a leap year."""
         from src.render.components.year_pulse_panel import _build_countdowns
+
         today = date(2026, 4, 5)  # 2026 is not a leap year
         bdays = [Birthday(name="Leap", date=date(2000, 2, 29), age=25)]
         data = DashboardData(events=[], birthdays=bdays)
