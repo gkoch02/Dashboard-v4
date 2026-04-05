@@ -9,7 +9,12 @@ import pytest
 from src.config import resolve_tz
 from src.data_pipeline import retry_fetch
 from src.dummy_data import generate_dummy_data
-from src.services.run_policy import in_quiet_hours, is_morning_startup
+from src.services.run_policy import (
+    in_quiet_hours,
+    is_morning_startup,
+    should_force_full_refresh,
+    should_skip_refresh,
+)
 
 
 class TestRetryFetch:
@@ -206,6 +211,38 @@ class TestResolveThemeName:
             result = resolve_theme_name(cfg, override_theme=None)
         assert result == "minimalist"
         mock_pick.assert_called_once()
+
+
+class TestShouldSkipRefresh:
+    def _dt(self, hour: int) -> datetime:
+        return datetime(2026, 3, 17, hour, 0)
+
+    def test_quiet_hours_and_not_dry_run_returns_true(self):
+        # hour=2 is inside the 23:00–06:00 quiet window
+        assert should_skip_refresh(self._dt(2), 23, 6, dry_run=False) is True
+
+    def test_quiet_hours_but_dry_run_returns_false(self):
+        assert should_skip_refresh(self._dt(2), 23, 6, dry_run=True) is False
+
+    def test_outside_quiet_hours_returns_false(self):
+        # hour=12 is outside the quiet window
+        assert should_skip_refresh(self._dt(12), 23, 6, dry_run=False) is False
+
+
+class TestShouldForceFullRefresh:
+    def _dt(self, hour: int, minute: int = 0) -> datetime:
+        return datetime(2026, 3, 17, hour, minute)
+
+    def test_force_flag_true_returns_true(self):
+        assert should_force_full_refresh(self._dt(12), quiet_hours_end=6, force_full_refresh_flag=True) is True
+
+    def test_morning_startup_returns_true(self):
+        # hour=6, minute=10 → morning startup window (quiet_hours_end=6)
+        assert should_force_full_refresh(self._dt(6, 10), quiet_hours_end=6, force_full_refresh_flag=False) is True
+
+    def test_neither_flag_nor_morning_startup_returns_false(self):
+        # hour=12 is not morning startup
+        assert should_force_full_refresh(self._dt(12), quiet_hours_end=6, force_full_refresh_flag=False) is False
 
 
 class TestResolveTz:
