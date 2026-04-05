@@ -22,6 +22,68 @@ from src.fetchers.weather import fetch_weather
 logger = logging.getLogger(__name__)
 
 
+def _merge_air_quality_with_weather_fallback(
+    air_quality: AirQualityData | None,
+    weather: WeatherData | None,
+) -> AirQualityData | None:
+    """Fill missing air_quality sensor fields from weather data.
+
+    When PurpleAir sensor lacks ambient readings (temp/humidity/pressure),
+    fallback to OWM data if available. Tracks which fields came from fallback
+    so the renderer can hide them if desired.
+
+    Args:
+        air_quality: AirQualityData from PurpleAir, or None.
+        weather: WeatherData from OWM, or None.
+
+    Returns:
+        AirQualityData with fallback fields filled, or original if no merge needed.
+    """
+    if air_quality is None or weather is None:
+        return air_quality
+
+    # Only merge if at least one field is missing
+    if (
+        air_quality.temperature is not None
+        and air_quality.humidity is not None
+        and air_quality.pressure is not None
+    ):
+        return air_quality
+
+    # Track which fields are filled from fallback
+    fallback_fields: set[str] = set()
+
+    # Build fallback values
+    temperature = air_quality.temperature
+    if temperature is None:
+        temperature = weather.current_temp
+        fallback_fields.add("temperature")
+
+    humidity = air_quality.humidity
+    if humidity is None:
+        humidity = float(weather.humidity)
+        fallback_fields.add("humidity")
+
+    pressure = air_quality.pressure
+    if pressure is None and weather.pressure is not None:
+        pressure = weather.pressure
+        fallback_fields.add("pressure")
+
+    # Return new AirQualityData with merged values and fallback tracking
+    return AirQualityData(
+        aqi=air_quality.aqi,
+        category=air_quality.category,
+        pm25=air_quality.pm25,
+        pm10=air_quality.pm10,
+        sensor_id=air_quality.sensor_id,
+        pm1=air_quality.pm1,
+        temperature=temperature,
+        humidity=humidity,
+        pressure=pressure,
+        fallback_fields=fallback_fields,
+    )
+
+
 def retry_fetch(label: str, fn):
     """Attempt fn() twice only for likely transient failures."""
     try:
@@ -138,6 +200,9 @@ class DataPipeline:
             air_quality,
             lambda d: logger.info("Fetched air quality: AQI=%d (%s)", d.aqi, d.category),
         )
+
+        # Merge missing air quality sensor fields from weather fallback
+        air_quality = _merge_air_quality_with_weather_fallback(air_quality, weather)
 
         quota_threshold = self.cfg.google.daily_quota_warning
         for src in ("events", "weather", "birthdays"):
