@@ -30,8 +30,8 @@ from src.render.fonts import sg_bold, sg_medium, sg_regular
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
 _HEADER_H = 40
-_WEATHER_H = 80
-_PULSE_H = 480 - _HEADER_H - _WEATHER_H  # 360
+_WEATHER_H = 100
+_PULSE_H = 480 - _HEADER_H - _WEATHER_H  # 340
 
 
 def year_pulse_theme() -> Theme:
@@ -66,5 +66,6 @@ def year_pulse_theme() -> Theme:
             label_font_weight="bold",
             component_labels={"year_pulse": "COMING UP"},
             show_borders=False,
+            show_forecast_strip=False,
         ),
     )

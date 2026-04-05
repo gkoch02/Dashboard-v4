@@ -26,8 +26,8 @@ from src.render.fonts import dm_bold, dm_medium, dm_regular, dm_semibold
 from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 
 _HEADER_H = 40
-_WEATHER_H = 80
-_TIMELINE_H = 480 - _HEADER_H - _WEATHER_H  # 360
+_WEATHER_H = 100
+_TIMELINE_H = 480 - _HEADER_H - _WEATHER_H  # 340
 
 
 def timeline_theme() -> Theme:
@@ -60,5 +60,6 @@ def timeline_theme() -> Theme:
             label_font_size=10,
             label_font_weight="semibold",
             show_borders=True,
+            show_forecast_strip=False,
         ),
     )

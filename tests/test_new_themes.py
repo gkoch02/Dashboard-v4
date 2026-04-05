@@ -67,7 +67,7 @@ class TestTimelineTheme:
     def test_layout_timeline_region_visible(self):
         theme = load_theme("timeline")
         assert theme.layout.timeline.visible is True
-        assert theme.layout.timeline.h == 360
+        assert theme.layout.timeline.h == 340
 
 
 # ---------------------------------------------------------------------------
@@ -90,7 +90,7 @@ class TestYearPulseTheme:
     def test_layout_year_pulse_region_visible(self):
         theme = load_theme("year_pulse")
         assert theme.layout.year_pulse.visible is True
-        assert theme.layout.year_pulse.h == 360
+        assert theme.layout.year_pulse.h == 340
 
 
 # ---------------------------------------------------------------------------

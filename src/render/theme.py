@@ -157,6 +157,12 @@ class ThemeStyle:
     # Useful for borderless themes like minimalist.
     show_borders: bool = True
 
+    # When False, the forecast strip at the bottom of the weather panel is
+    # omitted and the current-conditions text rows are spread more evenly
+    # across the full panel height.  Useful for compact strip layouts where
+    # the panel is too short to accommodate the forecast without overlap.
+    show_forecast_strip: bool = True
+
     def __post_init__(self) -> None:
         """Fill in default fonts from fonts.py when callables were not provided."""
         if any(
