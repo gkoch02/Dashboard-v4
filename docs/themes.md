@@ -313,9 +313,9 @@ Hourly day-view that makes free time and busy stretches immediately obvious. The
   the full width above the hourly grid, dividing available horizontal space equally between
   events.
 
-- **Weather strip (bottom 80px):** A compact full-width weather banner shows current
-  conditions, hi/lo, feel, wind speed/direction, and a 3-day forecast strip (identical to
-  the `fuzzyclock` and `qotd` weather bars).
+- **Weather strip (bottom 100px):** A compact full-width weather banner shows current
+  conditions, hi/lo, UV index, feels-like, and wind speed/direction. The four detail rows
+  are spread evenly across the strip height; no forecast grid is shown.
 
 Font: DM Sans throughout — the same screen-optimised geometric sans used by `minimalist`,
 `weather`, and `fuzzyclock`.
@@ -344,7 +344,7 @@ a periodic big-picture check-in alongside the regular weekly themes.
   Items are sorted by days-until ascending. Up to five items are shown; the list truncates
   cleanly when the region fills.
 
-- **Weather strip (bottom 80px):** Same compact weather banner as `timeline` and `fuzzyclock`.
+- **Weather strip (bottom 100px):** Same compact weather banner as `timeline` — current conditions, hi/lo, UV index, feels-like, and wind. No forecast grid.
 
 Feb 29 birthdays in non-leap years are gracefully shifted to Feb 28 of the next year, so
 they always appear in the countdown without crashing.
