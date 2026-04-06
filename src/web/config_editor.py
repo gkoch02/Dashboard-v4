@@ -102,7 +102,9 @@ def list_config_backups(config_path: str, limit: int = 5) -> list[dict]:
                 {
                     "name": candidate.name,
                     "size": stat.st_size,
-                    "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
+                    "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(
+                        timespec="seconds"
+                    ),
                 }
             )
         except OSError:

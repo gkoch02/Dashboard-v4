@@ -82,10 +82,7 @@ def test_api_status_shape(client):
 def test_api_status_reports_theme_resolution(client, app):
     config_path = Path(app.config["APP_CONFIG_PATH"])
     config_path.write_text(
-        "theme: random_daily\n"
-        "theme_schedule:\n"
-        "  - time: '06:00'\n"
-        "    theme: terminal\n"
+        "theme: random_daily\ntheme_schedule:\n  - time: '06:00'\n    theme: terminal\n"
     )
     resp = client.get("/api/status")
     data = json.loads(resp.data)

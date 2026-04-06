@@ -50,14 +50,18 @@ def _source_summary(source: str, source_state: dict) -> dict:
             "severity": "warn",
             "status": "degraded",
             "message": "Using stale cached data.",
-            "detail": f"Last successful fetch was about {age:.0f} minutes ago." if age else "Last successful fetch time is unavailable.",
+            "detail": f"Last successful fetch was about {age:.0f} minutes ago."
+            if age
+            else "Last successful fetch time is unavailable.",
         }
     if staleness == "aging":
         return {
             "severity": "warn",
             "status": "ok",
             "message": "Cache is getting old but still usable.",
-            "detail": f"Last successful fetch was about {age:.0f} minutes ago." if age else "Last successful fetch time is unavailable.",
+            "detail": f"Last successful fetch was about {age:.0f} minutes ago."
+            if age
+            else "Last successful fetch time is unavailable.",
         }
     if staleness == "unknown":
         return {
@@ -70,11 +74,15 @@ def _source_summary(source: str, source_state: dict) -> dict:
         "severity": "ok",
         "status": "ok",
         "message": "Healthy.",
-        "detail": f"Last successful fetch was about {age:.0f} minutes ago." if age else "Cache is present and current.",
+        "detail": f"Last successful fetch was about {age:.0f} minutes ago."
+        if age
+        else "Cache is present and current.",
     }
 
 
-def _overall_health(last_run_seconds: int | None, quiet_hours_active: bool, sources: dict[str, dict]) -> dict:
+def _overall_health(
+    last_run_seconds: int | None, quiet_hours_active: bool, sources: dict[str, dict]
+) -> dict:
     issues: list[dict] = []
     status = "healthy"
     severity = "ok"
@@ -140,7 +148,9 @@ def _describe_theme_mode(cfg, effective_theme: str, now: datetime) -> dict:
 
     if schedule_entries:
         mode = "scheduled"
-        detail = "Theme schedule is active and overrides the base theme once its time window begins."
+        detail = (
+            "Theme schedule is active and overrides the base theme once its time window begins."
+        )
     elif cfg.theme in ("random", "random_daily", "random_hourly"):
         mode = "randomized"
         detail = "The dashboard is rotating through a pool of themes automatically."
@@ -167,32 +177,49 @@ def _build_integrations(cfg) -> list[dict]:
         {
             "name": "OpenWeather",
             "status": "ok" if bool(cfg.weather.api_key) else "missing",
-            "detail": "API key configured" if cfg.weather.api_key else "Weather API key is missing.",
+            "detail": "API key configured"
+            if cfg.weather.api_key
+            else "Weather API key is missing.",
         },
         {
             "name": "Google service account",
             "status": "ok" if google_path.exists() else "missing",
-            "detail": f"Found at {google_path}" if google_path.exists() else f"Expected at {google_path}",
+            "detail": f"Found at {google_path}"
+            if google_path.exists()
+            else f"Expected at {google_path}",
         },
         {
             "name": "Google calendar / ICS",
-            "status": "ok" if (cfg.google.calendar_id and cfg.google.calendar_id != "primary") or cfg.google.ical_url else "warn",
+            "status": "ok"
+            if (cfg.google.calendar_id and cfg.google.calendar_id != "primary")
+            or cfg.google.ical_url
+            else "warn",
             "detail": (
-                "Using ICS feed" if cfg.google.ical_url else f"Calendar id: {cfg.google.calendar_id}"
+                "Using ICS feed"
+                if cfg.google.ical_url
+                else f"Calendar id: {cfg.google.calendar_id}"
             ),
         },
         {
             "name": "Birthdays source",
-            "status": "ok" if (cfg.birthdays.source != "file" or birthdays_path.exists()) else "missing",
+            "status": "ok"
+            if (cfg.birthdays.source != "file" or birthdays_path.exists())
+            else "missing",
             "detail": (
-                f"Source: {cfg.birthdays.source}" if cfg.birthdays.source != "file" else f"File expected at {birthdays_path}"
+                f"Source: {cfg.birthdays.source}"
+                if cfg.birthdays.source != "file"
+                else f"File expected at {birthdays_path}"
             ),
         },
         {
             "name": "PurpleAir",
-            "status": "ok" if (bool(cfg.purpleair.api_key) and bool(cfg.purpleair.sensor_id)) else "warn",
+            "status": "ok"
+            if (bool(cfg.purpleair.api_key) and bool(cfg.purpleair.sensor_id))
+            else "warn",
             "detail": (
-                f"Sensor {cfg.purpleair.sensor_id} configured" if (cfg.purpleair.api_key and cfg.purpleair.sensor_id) else "API key or sensor id missing."
+                f"Sensor {cfg.purpleair.sensor_id} configured"
+                if (cfg.purpleair.api_key and cfg.purpleair.sensor_id)
+                else "API key or sensor id missing."
             ),
         },
     ]
@@ -210,7 +237,9 @@ def _build_status() -> dict:
     breakers = read_breakers(state_dir)
     cache_ages = read_cache_ages(state_dir, ttls)
     quota = read_quota(state_dir)
-    quiet_hours_active = is_quiet_hours_now(cfg.schedule.quiet_hours_start, cfg.schedule.quiet_hours_end)
+    quiet_hours_active = is_quiet_hours_now(
+        cfg.schedule.quiet_hours_start, cfg.schedule.quiet_hours_end
+    )
     now = datetime.now()
 
     sources: dict = {}

@@ -33,7 +33,9 @@ def trigger_refresh():
         trigger_path.parent.mkdir(parents=True, exist_ok=True)
         trigger_path.touch()
         logger.info("Web trigger created: %s", trigger_path)
-        append_event(current_app.config["STATE_DIR"], "refresh_requested", "Manual refresh requested")
+        append_event(
+            current_app.config["STATE_DIR"], "refresh_requested", "Manual refresh requested"
+        )
         return jsonify({"ok": True, "message": "Refresh triggered"})
     except Exception as exc:
         logger.error("Could not create trigger file: %s", exc)
@@ -62,7 +64,12 @@ def reset_breaker():
         }
         _atomic_write_json(state_path, raw)
         logger.info("Breaker reset via web UI: source=%s", source)
-        append_event(current_app.config["STATE_DIR"], "breaker_reset", f"Breaker reset for {source}", source=source)
+        append_event(
+            current_app.config["STATE_DIR"],
+            "breaker_reset",
+            f"Breaker reset for {source}",
+            source=source,
+        )
         return jsonify({"ok": True, "source": source})
     except Exception as exc:
         logger.error("Could not reset breaker for %s: %s", source, exc)
@@ -92,7 +99,12 @@ def clear_cache():
 
         _atomic_write_json(cache_path, raw)
         logger.info("Cache cleared via web UI: source=%s", source)
-        append_event(current_app.config["STATE_DIR"], "cache_cleared", f"Cache cleared for {source}", source=source)
+        append_event(
+            current_app.config["STATE_DIR"],
+            "cache_cleared",
+            f"Cache cleared for {source}",
+            source=source,
+        )
         return jsonify({"ok": True, "source": source})
     except Exception as exc:
         logger.error("Could not clear cache for %s: %s", source, exc)
