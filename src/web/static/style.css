@@ -581,6 +581,7 @@ input[readonly], input[disabled] { background: var(--bg); color: var(--text-mute
   border-radius: 99px;
   vertical-align: middle;
 }
+.dirty-badge[hidden] { display: none; }
 
 /* Inline field error highlighting */
 .field-error { border-color: var(--bad) !important; }

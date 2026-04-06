@@ -112,7 +112,7 @@
     <div class="field-row">
       <label class="field-label" for="cfg-loglevel">Log level</label>
       <div class="field-input-wrap">
-        <select id="cfg-loglevel">
+        <select id="cfg-loglevel" data-field="log_level">
           {% for level in ["DEBUG", "INFO", "WARNING", "ERROR"] %}
             <option value="{{ level }}" {{ "selected" if cfg.log_level == level }}>{{ level }}</option>
           {% endfor %}
@@ -130,7 +130,7 @@
     <div class="field-row">
       <label class="field-label" for="cfg-theme">Active theme</label>
       <div class="field-input-wrap">
-        <select id="cfg-theme" onchange="syncThemeGrid(this.value)">
+        <select id="cfg-theme" data-field="theme" onchange="syncThemeGrid(this.value)">
           {% for t in all_theme_options %}
             <option value="{{ t }}" {{ "selected" if cfg.theme == t }}>{{ t }}</option>
           {% endfor %}
@@ -167,19 +167,19 @@
     <div class="field-hint">Hardware model — change in config.yaml directly.</div>
 
     <div class="check-row" style="padding-left:208px;">
-      <input type="checkbox" id="cfg-show-weather" {{ "checked" if cfg.display.show_weather }}>
+      <input type="checkbox" id="cfg-show-weather" data-field="display.show_weather" {{ "checked" if cfg.display.show_weather }}>
       <label for="cfg-show-weather">Show weather panel</label>
     </div>
     <div class="check-row" style="padding-left:208px;">
-      <input type="checkbox" id="cfg-show-birthdays" {{ "checked" if cfg.display.show_birthdays }}>
+      <input type="checkbox" id="cfg-show-birthdays" data-field="display.show_birthdays" {{ "checked" if cfg.display.show_birthdays }}>
       <label for="cfg-show-birthdays">Show birthdays bar</label>
     </div>
     <div class="check-row" style="padding-left:208px;">
-      <input type="checkbox" id="cfg-show-info" {{ "checked" if cfg.display.show_info_panel }}>
+      <input type="checkbox" id="cfg-show-info" data-field="display.show_info_panel" {{ "checked" if cfg.display.show_info_panel }}>
       <label for="cfg-show-info">Show info panel (quote / system)</label>
     </div>
     <div class="check-row" style="padding-left:208px;">
-      <input type="checkbox" id="cfg-partial-refresh" {{ "checked" if cfg.display.enable_partial_refresh }}>
+      <input type="checkbox" id="cfg-partial-refresh" data-field="display.enable_partial_refresh" {{ "checked" if cfg.display.enable_partial_refresh }}>
       <label for="cfg-partial-refresh">Enable partial eInk refresh</label>
     </div>
 
@@ -259,7 +259,7 @@
     <div class="field-row">
       <label class="field-label" for="cfg-units">Units</label>
       <div class="field-input-wrap" style="max-width:140px;">
-        <select id="cfg-units">
+        <select id="cfg-units" data-field="weather.units">
           {% for u in ["imperial", "metric", "standard"] %}
             <option value="{{ u }}" {{ "selected" if cfg.weather.units == u }}>{{ u }}</option>
           {% endfor %}
@@ -277,7 +277,7 @@
     <div class="field-row">
       <label class="field-label" for="cfg-bday-source">Source</label>
       <div class="field-input-wrap" style="max-width:160px;">
-        <select id="cfg-bday-source">
+        <select id="cfg-bday-source" data-field="birthdays.source">
           {% for s in ["file", "calendar", "contacts"] %}
             <option value="{{ s }}" {{ "selected" if cfg.birthdays.source == s }}>{{ s }}</option>
           {% endfor %}
@@ -287,14 +287,14 @@
     <div class="field-row">
       <label class="field-label" for="cfg-bday-lookahead">Look-ahead days</label>
       <div class="field-input-wrap" style="max-width:80px;">
-        <input type="number" id="cfg-bday-lookahead" min="1"
+        <input type="number" id="cfg-bday-lookahead" data-field="birthdays.lookahead_days" min="1"
                value="{{ cfg.birthdays.lookahead_days }}">
       </div>
     </div>
     <div class="field-row">
       <label class="field-label" for="cfg-bday-keyword">Calendar keyword</label>
       <div class="field-input-wrap" style="max-width:200px;">
-        <input type="text" id="cfg-bday-keyword" value="{{ cfg.birthdays.calendar_keyword }}">
+        <input type="text" id="cfg-bday-keyword" data-field="birthdays.calendar_keyword" value="{{ cfg.birthdays.calendar_keyword }}">
       </div>
     </div>
     <div class="field-hint">Used when source is <code>calendar</code> — keyword matched against event titles.</div>
@@ -307,21 +307,21 @@
     <div class="cfg-section-title">Calendar &amp; Event Filters</div>
 
     <div class="check-row" style="padding-left:208px; margin-bottom:.5rem;">
-      <input type="checkbox" id="cfg-excl-allday" {{ "checked" if cfg.filters.exclude_all_day }}>
+      <input type="checkbox" id="cfg-excl-allday" data-field="filters.exclude_all_day" {{ "checked" if cfg.filters.exclude_all_day }}>
       <label for="cfg-excl-allday">Hide all-day events</label>
     </div>
 
     <div class="field-row">
       <label class="field-label" for="cfg-excl-calendars">Exclude calendars</label>
       <div class="field-input-wrap">
-        <textarea id="cfg-excl-calendars" rows="3"
+        <textarea id="cfg-excl-calendars" data-field="filters.exclude_calendars" rows="3"
                   placeholder="One calendar name per line">{{ cfg.filters.exclude_calendars | join('\n') }}</textarea>
       </div>
     </div>
     <div class="field-row">
       <label class="field-label" for="cfg-excl-keywords">Exclude keywords</label>
       <div class="field-input-wrap">
-        <textarea id="cfg-excl-keywords" rows="3"
+        <textarea id="cfg-excl-keywords" data-field="filters.exclude_keywords" rows="3"
                   placeholder="One keyword per line">{{ cfg.filters.exclude_keywords | join('\n') }}</textarea>
       </div>
     </div>
@@ -338,22 +338,22 @@
     </div>
 
     {% set cache_rows = [
-      ("cfg-wtl",  "Weather TTL (min)",             cfg.cache.weather_ttl_minutes),
-      ("cfg-wfi",  "Weather fetch interval (min)",   cfg.cache.weather_fetch_interval),
-      ("cfg-etl",  "Events TTL (min)",               cfg.cache.events_ttl_minutes),
-      ("cfg-efi",  "Events fetch interval (min)",    cfg.cache.events_fetch_interval),
-      ("cfg-btl",  "Birthdays TTL (min)",            cfg.cache.birthdays_ttl_minutes),
-      ("cfg-bfi",  "Birthdays fetch interval (min)", cfg.cache.birthdays_fetch_interval),
-      ("cfg-aqtl", "Air quality TTL (min)",          cfg.cache.air_quality_ttl_minutes),
-      ("cfg-aqfi", "Air quality fetch interval (min)", cfg.cache.air_quality_fetch_interval),
-      ("cfg-mxf",  "Max failures (breaker)",         cfg.cache.max_failures),
-      ("cfg-cool", "Cooldown minutes (breaker)",      cfg.cache.cooldown_minutes),
+      ("cfg-wtl",  "cache.weather_ttl_minutes",        "Weather TTL (min)",               cfg.cache.weather_ttl_minutes),
+      ("cfg-wfi",  "cache.weather_fetch_interval",     "Weather fetch interval (min)",     cfg.cache.weather_fetch_interval),
+      ("cfg-etl",  "cache.events_ttl_minutes",         "Events TTL (min)",                 cfg.cache.events_ttl_minutes),
+      ("cfg-efi",  "cache.events_fetch_interval",      "Events fetch interval (min)",      cfg.cache.events_fetch_interval),
+      ("cfg-btl",  "cache.birthdays_ttl_minutes",      "Birthdays TTL (min)",              cfg.cache.birthdays_ttl_minutes),
+      ("cfg-bfi",  "cache.birthdays_fetch_interval",   "Birthdays fetch interval (min)",   cfg.cache.birthdays_fetch_interval),
+      ("cfg-aqtl", "cache.air_quality_ttl_minutes",    "Air quality TTL (min)",            cfg.cache.air_quality_ttl_minutes),
+      ("cfg-aqfi", "cache.air_quality_fetch_interval", "Air quality fetch interval (min)", cfg.cache.air_quality_fetch_interval),
+      ("cfg-mxf",  "cache.max_failures",               "Max failures (breaker)",           cfg.cache.max_failures),
+      ("cfg-cool", "cache.cooldown_minutes",            "Cooldown minutes (breaker)",       cfg.cache.cooldown_minutes),
     ] %}
-    {% for id, label, val in cache_rows %}
+    {% for id, field, label, val in cache_rows %}
       <div class="field-row">
         <label class="field-label" for="{{ id }}">{{ label }}</label>
         <div class="field-input-wrap" style="max-width:100px;">
-          <input type="number" id="{{ id }}" min="1" value="{{ val }}">
+          <input type="number" id="{{ id }}" data-field="{{ field }}" min="1" value="{{ val }}">
         </div>
       </div>
     {% endfor %}
@@ -361,7 +361,7 @@
     <div class="field-row">
       <label class="field-label" for="cfg-qr">Quote rotation</label>
       <div class="field-input-wrap" style="max-width:160px;">
-        <select id="cfg-qr">
+        <select id="cfg-qr" data-field="cache.quote_refresh">
           {% for opt in ["daily", "twice_daily", "hourly"] %}
             <option value="{{ opt }}" {{ "selected" if cfg.cache.quote_refresh == opt }}>{{ opt }}</option>
           {% endfor %}
@@ -383,14 +383,14 @@
     <div class="field-row">
       <label class="field-label" for="cfg-rt-include">Include only</label>
       <div class="field-input-wrap">
-        <textarea id="cfg-rt-include" rows="3"
+        <textarea id="cfg-rt-include" data-field="random_theme.include" rows="3"
                   placeholder="One theme name per line (empty = all themes)">{{ cfg.random_theme.include | join('\n') }}</textarea>
       </div>
     </div>
     <div class="field-row">
       <label class="field-label" for="cfg-rt-exclude">Exclude</label>
       <div class="field-input-wrap">
-        <textarea id="cfg-rt-exclude" rows="3"
+        <textarea id="cfg-rt-exclude" data-field="random_theme.exclude" rows="3"
                   placeholder="One theme name per line">{{ cfg.random_theme.exclude | join('\n') }}</textarea>
       </div>
     </div>
@@ -507,13 +507,6 @@ function syncThemeGrid(name) {
     el.classList.toggle("selected", el.dataset.theme === name);
   });
 }
-// Override selectTheme to also update dropdown.
-const _orig_select = window.selectTheme;
-window.selectTheme = (name) => {
-  const inp = document.getElementById("cfg-theme");
-  if (inp) inp.value = name;
-  syncThemeGrid(name);
-};
 // Open the full-size preview dialog for a theme thumbnail (double-click).
 function previewTheme(name) {
   const dlg = document.getElementById("theme-preview-dialog");
