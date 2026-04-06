@@ -1,0 +1,17 @@
+# Dashboard Web UI configuration
+# Copy to config/web.yaml and edit before starting the web server.
+
+# Port to listen on (default: 8080)
+port: 8080
+
+# Bind address. Use 0.0.0.0 to accept connections from the LAN (default),
+# or 127.0.0.1 to restrict to localhost only (SSH tunnel access).
+host: "0.0.0.0"
+
+# HTTP Basic Auth credentials.
+# Leave password_hash empty to disable auth (open access — not recommended on a LAN).
+# Generate a hash with:
+#   python -m src.web.auth --set-password
+auth:
+  username: "admin"
+  password_hash: ""

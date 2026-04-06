@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch for web-triggered dashboard refresh
+After=dashboard.timer
+
+[Path]
+# When the web UI touches this file, systemd immediately starts dashboard.service.
+# The service deletes the file via ExecStartPost so it's ready for the next trigger.
+PathExists=__INSTALL_DIR__/state/web_trigger
+Unit=dashboard.service
+
+[Install]
+WantedBy=multi-user.target

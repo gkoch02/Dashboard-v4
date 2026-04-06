@@ -1,5 +1,6 @@
 .PHONY: dry test deploy setup install check previews version lint fmt \
-        pi-install pi-enable pi-status pi-logs configure
+        pi-install pi-enable pi-status pi-logs configure \
+        web-enable web-status web-logs
 
 VENV = venv/bin/python
 
@@ -145,6 +146,31 @@ pi-logs:
 
 configure:
 	@deploy/configure.sh
+
+web-enable:
+	@echo "==> Installing web UI systemd service with current paths..."
+	@INSTALL_DIR="$$(pwd)"; USER_NAME="$$(whoami)"; \
+	sed -e "s|__INSTALL_DIR__|$$INSTALL_DIR|g" \
+	    -e "s|__USER__|$$USER_NAME|g" \
+	    deploy/dashboard-web.service | sudo tee /etc/systemd/system/dashboard-web.service > /dev/null; \
+	sed -e "s|__INSTALL_DIR__|$$INSTALL_DIR|g" \
+	    deploy/dashboard-trigger.path | sudo tee /etc/systemd/system/dashboard-trigger.path > /dev/null; \
+	sudo systemctl daemon-reload; \
+	sudo systemctl enable --now dashboard-web.service dashboard-trigger.path
+	@echo ""
+	@$(MAKE) web-status
+
+web-status:
+	@echo "=== Web UI service ==="
+	@sudo systemctl status dashboard-web.service --no-pager || true
+	@if [ -f output/dashboard-web.log ]; then \
+		echo ""; \
+		echo "=== Recent web log (last 20 lines) ==="; \
+		tail -20 output/dashboard-web.log; \
+	fi
+
+web-logs:
+	tail -f output/dashboard-web.log
 
 setup:
 	python3 -m venv venv
