@@ -107,7 +107,7 @@ def read_cache_ages(state_dir: str, ttls: dict[str, int]) -> dict[str, dict]:
             logger.debug("Could not read cache: %s", exc)
 
     now = datetime.now()
-    result = {}
+    result: dict[str, dict] = {}
     for source in _SOURCES:
         block = raw.get(source)
         if not block or not block.get("fetched_at"):
