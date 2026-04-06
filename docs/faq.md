@@ -15,7 +15,10 @@ Quiet hours are bypassed when using `--dry-run`.
 
 ### How do I manually refresh the display?
 
-Run the dashboard service directly:
+The easiest way is the **Refresh Now** button on the [Web UI](web-ui.md) status page —
+no SSH required.
+
+From the command line, run the dashboard service directly:
 
 ```bash
 sudo systemctl start dashboard.service
