@@ -10,7 +10,13 @@ from __future__ import annotations
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 
-from src.web.config_editor import apply_patch, get_config_for_web
+from src.web.config_editor import (
+    apply_patch,
+    get_config_for_web,
+    list_config_backups,
+    restore_latest_backup,
+)
+from src.web.event_store import append_event
 
 config_bp = Blueprint("config", __name__)
 
@@ -43,6 +49,34 @@ def get_config():
     return jsonify(get_config_for_web(config_path))
 
 
+@config_bp.route("/api/config/backups")
+def get_config_backups():
+    config_path = current_app.config["APP_CONFIG_PATH"]
+    return jsonify({"backups": list_config_backups(config_path)})
+
+
+@config_bp.route("/api/config/restore-latest", methods=["POST"])
+def restore_config_latest():
+    config_path = current_app.config["APP_CONFIG_PATH"]
+    restored, message = restore_latest_backup(config_path)
+    if restored:
+        append_event(current_app.config["STATE_DIR"], "config_restored", message)
+        try:
+            from src.config import load_config
+
+            current_app.config["DASH_CFG"] = load_config(config_path)
+            new_cfg = current_app.config["DASH_CFG"]
+            current_app.config["SOURCE_TTLS"] = {
+                "events": new_cfg.cache.events_ttl_minutes,
+                "weather": new_cfg.cache.weather_ttl_minutes,
+                "birthdays": new_cfg.cache.birthdays_ttl_minutes,
+                "air_quality": new_cfg.cache.air_quality_ttl_minutes,
+            }
+        except Exception:
+            pass
+    return jsonify({"restored": restored, "message": message})
+
+
 @config_bp.route("/api/config", methods=["POST"])
 def save_config():
     config_path = current_app.config["APP_CONFIG_PATH"]
@@ -52,6 +86,12 @@ def save_config():
 
     # Refresh the in-memory config so the status page reflects changes immediately.
     if saved:
+        append_event(
+            current_app.config["STATE_DIR"],
+            "config_saved",
+            "Configuration saved from web UI",
+            fields=sorted(patch.keys()),
+        )
         try:
             from src.config import load_config
 
@@ -66,4 +106,11 @@ def save_config():
         except Exception:
             pass  # Stale in-memory config is harmless until restart.
 
-    return jsonify({"saved": saved, "errors": errors, "warnings": warnings})
+    return jsonify(
+        {
+            "saved": saved,
+            "errors": errors,
+            "warnings": warnings,
+            "backups": list_config_backups(config_path),
+        }
+    )

@@ -52,6 +52,8 @@ main { max-width: 1100px; margin: 0 auto; padding: 1.25rem 1.5rem; }
   gap: 1rem;
 }
 @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+.status-top-grid { align-items: stretch; }
+.compact-card { min-height: 100%; }
 
 /* Cards */
 .card {
@@ -159,6 +161,48 @@ tr:last-child td { border-bottom: none; }
 .badge-bad     { background: #fee2e2; color: #b91c1c; }
 .badge-unknown { background: #f1f5f9; color: #64748b; }
 
+/* Integrations + events + troubleshooting */
+.integration-list,
+.event-list,
+.troubleshoot-list {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+.integration-item,
+.event-item,
+.troubleshoot-item {
+  border-radius: 6px;
+  padding: .45rem .6rem;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+}
+.integration-item,
+.event-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .75rem;
+}
+.event-kind {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Troubleshooting */
+.troubleshoot-list {
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+.troubleshoot-ok { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+.troubleshoot-warn { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+.troubleshoot-bad { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+
 /* Log viewer */
 .log-wrap {
   background: #1a202c;
@@ -188,6 +232,11 @@ tr:last-child td { border-bottom: none; }
   display: none;
 }
 .banner.visible { display: block; }
+.banner.banner-bad {
+  background: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
 
 /* Refresh indicator */
 .refresh-dot {
@@ -206,6 +255,136 @@ tr:last-child td { border-bottom: none; }
 .text-muted { color: var(--text-muted); }
 .no-data { color: var(--text-muted); font-style: italic; font-size: 13px; }
 .row-actions { white-space: nowrap; }
+.hidden-by-mode { display: none; }
+
+/* Health summary */
+.health-card { border-left: 4px solid var(--border); }
+.health-card.health-ok { border-left-color: var(--ok); }
+.health-card.health-warn { border-left-color: var(--warn); }
+.health-card.health-bad { border-left-color: var(--bad); }
+.health-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+.health-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.health-detail {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: .2rem;
+}
+.issue-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+.issue-chip {
+  font-size: 12px;
+  border-radius: 999px;
+  padding: .25rem .6rem;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+}
+.issue-ok { color: #166534; background: #dcfce7; border-color: #bbf7d0; }
+.issue-warn { color: #92400e; background: #fef3c7; border-color: #fde68a; }
+.issue-bad { color: #991b1b; background: #fee2e2; border-color: #fecaca; }
+
+@media (max-width: 820px) {
+  table, thead, tbody, th, td, tr { display: block; }
+  thead { display: none; }
+  tbody tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: .75rem;
+    padding: .5rem;
+    background: var(--surface);
+  }
+  tbody td {
+    border: none;
+    padding: .3rem 0;
+  }
+  tbody td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .row-actions {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-top: .35rem;
+  }
+  .field-label, .cred-label {
+    flex: 0 0 100%;
+  }
+  .field-hint {
+    padding-left: 0;
+  }
+  .check-row {
+    padding-left: 0 !important;
+  }
+  .theme-opt {
+    min-width: 96px;
+  }
+}
+
+/* Save preview dialog */
+.save-preview-dialog {
+  max-width: min(900px, 92vw);
+}
+.save-preview-panel {
+  width: min(900px, 92vw);
+  max-height: 85vh;
+  overflow: auto;
+}
+.save-preview-body {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .75rem;
+  background: #f8fafc;
+}
+.save-preview-meta {
+  font-size: 13px;
+  margin-bottom: .75rem;
+}
+.save-preview-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  margin: 0;
+  padding: 0;
+}
+.save-preview-list li {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  padding: .6rem .7rem;
+}
+.save-preview-field {
+  font-weight: 700;
+  margin-bottom: .35rem;
+}
+.save-preview-values {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  font-size: 12px;
+}
+.save-preview-values code {
+  background: #f1f5f9;
+  padding: .1rem .25rem;
+  border-radius: 4px;
+}
 
 /* Buttons */
 .btn {
@@ -338,6 +517,26 @@ input[readonly], input[disabled] { background: var(--bg); color: var(--text-mute
 
 /* Save result banners */
 #cfg-result { margin-top: .75rem; font-size: 13px; }
+.backup-list {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+}
+.backup-item {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  font-size: 12px;
+  padding: .3rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.backup-item:last-child { border-bottom: none; }
+.change-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 12px;
+}
+.change-list li { margin-bottom: .25rem; }
 .cfg-ok      { color: #15803d; font-weight: 600; margin-bottom: .25rem; }
 .cfg-errors  { color: #b91c1c; background: #fee2e2; border-radius: 4px;
                padding: .5rem .75rem; margin-bottom: .25rem; }
@@ -368,6 +567,21 @@ input[readonly], input[disabled] { background: var(--bg); color: var(--text-mute
 /* Inline field error highlighting */
 .field-error { border-color: var(--bad) !important; }
 .field-inline-err { color: var(--bad); font-size: 11px; margin-top: 2px; }
+
+/* Config mode controls */
+.mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.mode-toggle select { width: auto; min-width: 110px; }
+.cfg-mode-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
 
 /* Theme preview dialog */
 .theme-preview-dialog {

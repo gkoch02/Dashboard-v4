@@ -58,6 +58,7 @@ def create_app(
 
     # --- Load configs ---
     web_cfg = _load_web_config(web_config_path)
+    app.secret_key = web_cfg.get("secret_key") or "dashboard-web-dev-secret"
     dash_cfg = None
     if app_config_path and Path(app_config_path).exists():
         try:
@@ -75,6 +76,9 @@ def create_app(
     app.config["STATE_DIR"] = dash_cfg.state_dir
     app.config["OUTPUT_DIR"] = dash_cfg.output_dir
     app.config["APP_CONFIG_PATH"] = app_config_path or "config/config.yaml"
+    app.config["WEB_AUTH_ENABLED"] = bool(
+        web_cfg.get("auth", {}).get("username") and web_cfg.get("auth", {}).get("password_hash")
+    )
 
     # Derived TTL map for staleness calculations.
     app.config["SOURCE_TTLS"] = {
@@ -83,6 +87,18 @@ def create_app(
         "birthdays": dash_cfg.cache.birthdays_ttl_minutes,
         "air_quality": dash_cfg.cache.air_quality_ttl_minutes,
     }
+
+    # --- CSRF + template globals ---
+    from src.web.csrf import csrf_protect, get_csrf_token
+
+    @app.before_request
+    def _csrf_for_mutations():
+        from flask import request
+
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+            csrf_protect()
+
+    app.jinja_env.globals["csrf_token"] = get_csrf_token
 
     # --- Auth ---
     auth_section = web_cfg.get("auth", {})

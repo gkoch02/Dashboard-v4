@@ -3,8 +3,71 @@
 
 {% block content %}
 
+<div id="auth-banner" class="banner banner-bad">
+  Web UI authentication is disabled — anyone on your local network can access this page.
+</div>
+
 <div id="quiet-banner" class="banner">
   Quiet hours are active — the display refresh timer is paused.
+</div>
+
+<div class="card health-card" id="health-card">
+  <div class="card-title">System Health</div>
+  <div class="health-topline">
+    <div>
+      <div class="health-title" id="overall-title">Loading…</div>
+      <div class="health-detail" id="overall-detail"></div>
+    </div>
+    <span class="badge badge-unknown" id="overall-badge">checking</span>
+  </div>
+  <div id="overall-issues" class="issue-list"></div>
+</div>
+
+<div class="grid-2 status-top-grid">
+  <div class="card compact-card">
+    <div class="card-title">Theme Resolution</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <span class="metric-label">Mode</span>
+        <span class="metric-value" id="theme-mode">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Effective Theme</span>
+        <span class="metric-value" id="theme-effective">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Configured Theme</span>
+        <span class="metric-value" id="theme-configured">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Next Change</span>
+        <span class="metric-value" id="theme-next">—</span>
+      </div>
+    </div>
+    <div class="health-detail" id="theme-detail" style="margin-top:.6rem;"></div>
+  </div>
+
+  <div class="card compact-card">
+    <div class="card-title">Quick Troubleshooting</div>
+    <div class="troubleshoot-list" id="troubleshoot-list">
+      <div class="text-muted">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2 status-top-grid">
+  <div class="card compact-card">
+    <div class="card-title">Integration Readiness</div>
+    <div id="integration-list" class="integration-list">
+      <div class="text-muted">Loading…</div>
+    </div>
+  </div>
+  <div class="card compact-card">
+    <div class="card-title">Recent Events</div>
+    <div id="recent-events" class="event-list">
+      <div class="text-muted">Loading…</div>
+    </div>
+  </div>
 </div>
 
 <!-- Dashboard image -->
@@ -69,7 +132,10 @@
   <div class="card">
     <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
       <span>Data Sources</span>
-      <button class="btn btn-sm" onclick="doTriggerRefresh(this)">↻ Refresh Now</button>
+      <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="doTriggerRefresh(this)">↻ Refresh Now</button>
+        <button class="btn btn-sm btn-primary" onclick="window.location.href='/config'">Open Settings</button>
+      </div>
     </div>
     <table>
       <thead>
@@ -79,11 +145,12 @@
           <th>Cache Age</th>
           <th>Staleness</th>
           <th>API Calls</th>
+          <th>Summary</th>
           <th></th>
         </tr>
       </thead>
       <tbody id="sources-tbody">
-        <tr><td colspan="6" class="no-data">Loading…</td></tr>
+        <tr><td colspan="7" class="no-data">Loading…</td></tr>
       </tbody>
     </table>
     <div id="action-msg" class="action-msg"></div>
