@@ -13,6 +13,7 @@ the wall fast.
 - Daily quote from a bundled library
 - 20 built-in themes with random daily/hourly rotation and a schedule override
 - Graceful degradation: stale-cache fallback, circuit breakers, staleness indicators
+- Optional web UI — status dashboard, config editor, and one-click refresh from any browser on your network
 
 ![Default theme preview](output/theme_default.png)
 
@@ -26,12 +27,14 @@ the wall fast.
 - **Need contacts-based birthdays or incremental sync?** Follow [Google Calendar Setup](docs/setup.md#google-calendar-setup)
   to configure a service account instead.
 - **Upgrading from an older release:** go to [Upgrading from v3](docs/upgrading-from-v3.md).
+- **Want a browser-based status page and config editor?** See [Web UI](docs/web-ui.md) — install in four steps with `make web-enable`.
 - **Local dev / preview only:** jump to [Development](docs/development.md) and run `make setup`
   + `make dry` (no hardware required).
 
 ## Documentation
 
 - [Setup Guide](docs/setup.md) — Google Calendar, ICS feed, birthdays, Raspberry Pi setup, hardware
+- [Web UI](docs/web-ui.md) — browser-based status page, config editor, manual refresh, authentication
 - [Themes](docs/themes.md) — all 20 built-in themes, random rotation, schedule, creating your own
 - [Configuration Reference](docs/configuration.md) — full config.yaml, cache tuning, filtering, circuit breaker
 - [Development](docs/development.md) — Makefile targets, CLI flags, project structure, dependencies
@@ -140,6 +143,29 @@ it degrades gracefully instead of showing a blank screen:
 
 ---
 
+## Web UI
+
+The optional web interface runs on the Pi and is accessible from any browser on your network at `http://<pi-hostname>:8080`.
+
+| Page | What it does |
+|---|---|
+| **Status** (`/`) | Last run time, active theme, live image preview, per-source cache/breaker state, system metrics, log tail |
+| **Config** (`/config`) | Edit `config.yaml` in the browser — changes are validated before saving |
+| **Refresh Now** | Triggers an immediate dashboard run without SSH |
+
+Install in four steps:
+
+```bash
+venv/bin/pip install -r requirements-web.txt   # install Flask + Waitress
+cp config/web.example.yaml config/web.yaml     # create web config
+venv/bin/python -m src.web.auth --set-password # set a login password
+make web-enable                                 # install + start systemd service
+```
+
+See [Web UI](docs/web-ui.md) for full setup details, SSH tunnel access, and security notes.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
@@ -150,6 +176,7 @@ it degrades gracefully instead of showing a blank screen:
 | Weather showing wrong location | Coordinates still set to defaults | Check `weather.latitude` and `weather.longitude` in `config/config.yaml` |
 | `make dry` works but display stays blank | Hardware issue or wrong display model | Verify `display.model` in config matches your Waveshare model |
 | Timer not running | systemd units not installed | Run `make pi-enable` and check `make pi-status` |
+| Web UI not loading | Service not installed or wrong port | Run `make web-enable`, then `make web-status` to check for errors |
 
 For logs, run `make pi-logs` to tail the dashboard log, or check
 `output/dashboard.log` directly. See also the [FAQ](docs/faq.md).
