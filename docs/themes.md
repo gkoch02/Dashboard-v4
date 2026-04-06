@@ -6,11 +6,10 @@
 - [Random rotation](#random-rotation)
 - [Time-of-day theme schedule](#time-of-day-theme-schedule)
 - [Built-in themes](#built-in-themes) — 20 themes plus pseudo-themes
-  - [default](#default), [terminal](#terminal), [minimalist](#minimalist), [old\_fashioned](#old_fashioned), [today](#today), [fantasy](#fantasy)
-  - [moonphase](#moonphase), [moonphase\_invert](#moonphase_invert), [qotd](#qotd), [qotd\_invert](#qotd_invert)
-  - [weather](#weather), [fuzzyclock](#fuzzyclock), [fuzzyclock\_invert](#fuzzyclock_invert)
-  - [air\_quality](#air_quality), [timeline](#timeline), [year\_pulse](#year_pulse), [sunrise](#sunrise), [scorecard](#scorecard), [tides](#tides)
-  - [message](#message), [diags](#diags)
+  - **Standard week-view**: [default](#default), [terminal](#terminal), [minimalist](#minimalist), [old\_fashioned](#old_fashioned), [today](#today), [fantasy](#fantasy)
+  - **Full-screen focused**: [qotd](#qotd), [qotd\_invert](#qotd_invert), [fuzzyclock](#fuzzyclock), [fuzzyclock\_invert](#fuzzyclock_invert), [weather](#weather), [moonphase](#moonphase), [moonphase\_invert](#moonphase_invert)
+  - **Specialized views**: [timeline](#timeline), [year\_pulse](#year_pulse), [sunrise](#sunrise), [air\_quality](#air_quality), [scorecard](#scorecard), [tides](#tides)
+  - **Utility**: [message](#message), [diags](#diags)
 - [Creating your own theme](#creating-your-own-theme)
 - [Typography](#typography)
 
