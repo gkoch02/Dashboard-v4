@@ -15,7 +15,17 @@ from src.web.config_editor import (
     _load_raw_yaml,
     apply_patch,
     get_config_for_web,
+    list_config_backups,
+    restore_latest_backup,
 )
+
+
+def _csrf_headers(client):
+    client.get("/config")
+    with client.session_transaction() as sess:
+        token = sess["csrf_token"]
+    return {"X-CSRF-Token": token}
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -186,6 +196,14 @@ def test_get_config_for_web_title_field(cfg_path):
     assert result["title"] == "Test Dashboard"
 
 
+def test_get_config_for_web_includes_backups(cfg_path):
+    bak = cfg_path.with_suffix(".yaml.bak")
+    bak.write_text("title: Older\n")
+    result = get_config_for_web(str(cfg_path))
+    assert "backups" in result
+    assert result["backups"][0]["name"].startswith("config.yaml.bak")
+
+
 # ---------------------------------------------------------------------------
 # apply_patch — mock validate_config to avoid PIL dependency in test env
 # ---------------------------------------------------------------------------
@@ -247,6 +265,31 @@ def test_apply_patch_does_not_clobber_untouched_fields(tmp_path):
     assert raw["timezone"] == "US/Eastern"
 
 
+def test_apply_patch_rotates_existing_backup(tmp_path):
+    p = tmp_path / "config.yaml"
+    p.write_text("title: Original\n")
+    bak = tmp_path / "config.yaml.bak"
+    bak.write_text("title: Older\n")
+    with patch(_VALIDATE_PATCH, _no_errors):
+        saved, _, _ = apply_patch(str(p), {"title": "Updated"})
+    assert saved
+    backups = list_config_backups(str(p), limit=5)
+    assert any(item["name"] == "config.yaml.bak" for item in backups)
+    assert any(item["name"].startswith("config.yaml.bak.") for item in backups)
+
+
+def test_restore_latest_backup(tmp_path):
+    p = tmp_path / "config.yaml"
+    p.write_text("title: Current\n")
+    bak = tmp_path / "config.yaml.bak"
+    bak.write_text("title: Backup\n")
+    restored, message = restore_latest_backup(str(p))
+    assert restored is True
+    assert "Restored" in message
+    raw = yaml.safe_load(p.read_text())
+    assert raw["title"] == "Backup"
+
+
 # ---------------------------------------------------------------------------
 # /api/config HTTP routes — also mock validate_config
 # ---------------------------------------------------------------------------
@@ -266,6 +309,7 @@ def test_post_api_config_valid_patch(client, app):
             "/api/config",
             data=json.dumps({"title": "WebUpdated"}),
             content_type="application/json",
+            headers=_csrf_headers(client),
         )
     assert resp.status_code == 200
     data = json.loads(resp.data)
@@ -281,6 +325,7 @@ def test_post_api_config_bad_patch_returns_errors(client):
             "/api/config",
             data=json.dumps({"theme": "totally_invalid_theme_9999"}),
             content_type="application/json",
+            headers=_csrf_headers(client),
         )
     assert resp.status_code == 200
     data = json.loads(resp.data)
@@ -294,15 +339,55 @@ def test_post_api_config_empty_patch_saves(client):
             "/api/config",
             data=json.dumps({}),
             content_type="application/json",
+            headers=_csrf_headers(client),
         )
     assert resp.status_code == 200
     data = json.loads(resp.data)
     assert data["saved"] is True
+    assert "backups" in data
+
+
+def test_get_api_config_backups(client, app):
+    config_path = Path(app.config["APP_CONFIG_PATH"])
+    config_path.with_suffix(".yaml.bak").write_text("title: Backup\n")
+    resp = client.get("/api/config/backups")
+    assert resp.status_code == 200
+    data = json.loads(resp.data)
+    assert "backups" in data
+    assert len(data["backups"]) >= 1
+
+
+def test_restore_latest_backup_route(client, app):
+    config_path = Path(app.config["APP_CONFIG_PATH"])
+    config_path.write_text("title: Current\n")
+    config_path.with_suffix(".yaml.bak").write_text("title: Backup\n")
+    resp = client.post("/api/config/restore-latest", headers=_csrf_headers(client))
+    assert resp.status_code == 200
+    data = json.loads(resp.data)
+    assert data["restored"] is True
+    raw = yaml.safe_load(config_path.read_text())
+    assert raw["title"] == "Backup"
 
 
 def test_config_page_returns_html(client):
     resp = client.get("/config")
     assert resp.status_code == 200
-    # Config page uses JS for submission — check for the save button and card structure
-    assert b"saveConfig" in resp.data
+    # Config page uses JS for submission — check for the save flow and card structure
+    assert b"openSavePreview" in resp.data
+    assert b"save-preview-confirm" in resp.data
     assert b"cfg-result" in resp.data
+    assert b"Change Summary" in resp.data
+    assert b"Config Backups" in resp.data
+    assert b"Review changes before save" in resp.data
+    assert b"save-preview-dialog" in resp.data
+    assert b"Basic" in resp.data
+    assert b"Advanced" in resp.data
+
+
+def test_post_config_requires_csrf(client):
+    resp = client.post(
+        "/api/config",
+        data=json.dumps({"title": "Nope"}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 403

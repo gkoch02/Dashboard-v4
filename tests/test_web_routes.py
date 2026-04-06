@@ -64,12 +64,31 @@ def test_api_status_shape(client):
     assert "last_run" in data
     assert "sources" in data
     assert "host" in data
+    assert "overall" in data
+    assert "web_auth_enabled" in data
+    assert "theme_info" in data
+    assert "integrations" in data
+    assert "recent_events" in data
     for source in ("events", "weather", "birthdays", "air_quality"):
         assert source in data["sources"]
         s = data["sources"][source]
         assert "breaker_state" in s
         assert "staleness" in s
         assert "cache_age_minutes" in s
+        assert "summary" in s
+        assert "message" in s["summary"]
+
+
+def test_api_status_reports_theme_resolution(client, app):
+    config_path = Path(app.config["APP_CONFIG_PATH"])
+    config_path.write_text(
+        "theme: random_daily\ntheme_schedule:\n  - time: '06:00'\n    theme: terminal\n"
+    )
+    resp = client.get("/api/status")
+    data = json.loads(resp.data)
+    assert data["theme_info"]["mode"] in ("scheduled", "randomized", "fixed")
+    assert "effective_theme" in data["theme_info"]
+    assert "configured_theme" in data["theme_info"]
 
 
 def test_api_status_reflects_open_breaker(client, app, tmp_path):
@@ -81,6 +100,34 @@ def test_api_status_reflects_open_breaker(client, app, tmp_path):
     resp = client.get("/api/status")
     data = json.loads(resp.data)
     assert data["sources"]["weather"]["breaker_state"] == "open"
+    assert data["sources"]["weather"]["summary"]["severity"] == "bad"
+    assert data["overall"]["status"] in ("needs_attention", "degraded")
+
+
+def test_api_status_returns_recent_events(client, app):
+    state_dir = Path(app.config["STATE_DIR"])
+    (state_dir / "web_events.jsonl").write_text(
+        json.dumps(
+            {
+                "timestamp": "2026-04-06T16:00:00+00:00",
+                "kind": "config_saved",
+                "message": "Configuration saved from web UI",
+                "details": {"fields": ["title"]},
+            }
+        )
+        + "\n"
+    )
+    resp = client.get("/api/status")
+    data = json.loads(resp.data)
+    assert len(data["recent_events"]) == 1
+    assert data["recent_events"][0]["kind"] == "config_saved"
+
+
+def test_api_status_returns_integration_readiness(client):
+    resp = client.get("/api/status")
+    data = json.loads(resp.data)
+    assert isinstance(data["integrations"], list)
+    assert any(item["name"] == "OpenWeather" for item in data["integrations"])
 
 
 # ---------------------------------------------------------------------------
@@ -180,3 +227,9 @@ def test_auth_enforced_when_configured(tmp_path):
     # Correct credentials → 200
     good_creds = base64.b64encode(b"admin:secret").decode()
     assert client.get("/", headers={"Authorization": f"Basic {good_creds}"}).status_code == 200
+
+
+def test_api_status_marks_auth_disabled_when_open_access(client):
+    resp = client.get("/api/status")
+    data = json.loads(resp.data)
+    assert data["web_auth_enabled"] is False

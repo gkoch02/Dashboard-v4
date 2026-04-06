@@ -17,6 +17,7 @@ import logging
 import os
 import tempfile
 import threading
+from datetime import datetime
 from pathlib import Path
 
 import yaml  # type: ignore[import-untyped]
@@ -85,6 +86,51 @@ EDITABLE_FIELD_PATHS: dict[str, tuple] = {
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
+
+def list_config_backups(config_path: str, limit: int = 5) -> list[dict]:
+    """Return available backup files for *config_path*, newest first."""
+    path = Path(config_path)
+    if not path.parent.exists():
+        return []
+
+    backups: list[dict] = []
+    for candidate in sorted(path.parent.glob(f"{path.stem}.yaml.bak*"), reverse=True):
+        try:
+            stat = candidate.stat()
+            backups.append(
+                {
+                    "name": candidate.name,
+                    "size": stat.st_size,
+                    "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(
+                        timespec="seconds"
+                    ),
+                }
+            )
+        except OSError:
+            continue
+        if len(backups) >= limit:
+            break
+    return backups
+
+
+def restore_latest_backup(config_path: str) -> tuple[bool, str]:
+    """Restore the most recent backup over the live config file."""
+    path = Path(config_path)
+    backups = list_config_backups(config_path, limit=1)
+    if not backups:
+        return False, "No backup file found."
+
+    backup_path = path.parent / backups[0]["name"]
+    try:
+        raw = _load_raw_yaml(str(backup_path))
+        errors_obj, _warnings_obj = _validate_raw(raw)
+        if errors_obj:
+            return False, "Latest backup failed validation and was not restored."
+        _write_raw_yaml(config_path, raw, rotate_backup=False)
+        return True, f"Restored {backup_path.name}."
+    except Exception as exc:
+        return False, str(exc)
 
 
 def get_config_for_web(config_path: str) -> dict:
@@ -158,6 +204,7 @@ def get_config_for_web(config_path: str) -> dict:
             "exclude": cfg.random_theme.exclude,
         },
         "theme_schedule": [{"time": e.time, "theme": e.theme} for e in cfg.theme_schedule.entries],
+        "backups": list_config_backups(config_path),
     }
 
 
@@ -207,7 +254,7 @@ def _load_raw_yaml(config_path: str) -> dict:
         return {}
 
 
-def _write_raw_yaml(config_path: str, raw: dict) -> None:
+def _write_raw_yaml(config_path: str, raw: dict, *, rotate_backup: bool = True) -> None:
     """Write *raw* to *config_path* atomically using a temp-file rename.
 
     A backup copy is written to ``<config>.bak`` before overwriting.  Backup
@@ -217,12 +264,15 @@ def _write_raw_yaml(config_path: str, raw: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
 
     # Atomically back up the current file before overwriting.
-    if path.exists():
+    if rotate_backup and path.exists():
         bak = path.with_suffix(".yaml.bak")
         fd_b, tmp_b = tempfile.mkstemp(dir=path.parent, suffix=".bak.tmp")
         try:
             with os.fdopen(fd_b, "wb") as fb:
                 fb.write(path.read_bytes())
+            if bak.exists():
+                timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+                bak.replace(path.with_name(f"{path.stem}.yaml.bak.{timestamp}"))
             os.replace(tmp_b, bak)
         except OSError as exc:
             logger.warning("Could not write config backup to %s: %s", bak, exc)

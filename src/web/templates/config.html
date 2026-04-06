@@ -8,7 +8,7 @@
 
 <div class="card">
 
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:1rem; flex-wrap:wrap;">
     <div>
       <strong style="font-size:15px;">Configuration</strong>
       <span id="dirty-badge" class="dirty-badge" hidden>unsaved changes</span>
@@ -16,13 +16,76 @@
         Editing config/config.yaml — note: saving rewrites the file without preserving comments.
       </div>
     </div>
-    <div style="display:flex; gap:.5rem; align-items:center;">
+    <div style="display:flex; gap:.5rem; align-items:center; flex-wrap:wrap;">
+      <label class="mode-toggle">
+        <span>Mode</span>
+        <select id="cfg-mode" onchange="setConfigMode(this.value)">
+          <option value="basic" selected>Basic</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </label>
       <button class="btn cfg-discard-btn" onclick="discardConfig()" hidden>Discard</button>
-      <button class="btn btn-primary" onclick="saveConfig(this)">Save</button>
+      <button class="btn" onclick="openSavePreview({ refreshAfterSave: true, triggerButton: this })">Save + Refresh</button>
+      <button class="btn btn-primary" onclick="openSavePreview({ refreshAfterSave: false, triggerButton: this })">Save</button>
+    </div>
+  </div>
+
+  <div class="cfg-mode-note" id="cfg-mode-note">
+    Basic mode shows the settings most people actually want. Advanced mode exposes cache tuning and schedule details.
+  </div>
+
+  <div class="card" style="padding:.75rem 1rem; margin-bottom:1rem; background:#f8fafc;">
+    <div class="card-title" style="margin-bottom:.4rem;">Theme Behavior</div>
+    <div class="health-detail" style="margin:0;">
+      Fixed themes stay put. Random modes rotate automatically. Theme schedule wins once an entry's time window begins, so treat it as an override layer rather than a suggestion.
+    </div>
+  </div>
+
+  <div class="grid-2" style="gap:1rem; margin-bottom:1rem;">
+    <div class="card" style="margin-bottom:0;">
+      <div class="card-title">Change Summary</div>
+      <div id="cfg-change-summary" class="health-detail" style="margin:0;">No unsaved changes.</div>
+    </div>
+    <div class="card" style="margin-bottom:0;">
+      <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; gap:.5rem;">
+        <span>Config Backups</span>
+        <button class="btn btn-sm" type="button" onclick="restoreLatestBackup(this)">Restore latest</button>
+      </div>
+      <div id="cfg-backups" class="backup-list">
+        {% if cfg.backups %}
+          {% for backup in cfg.backups %}
+            <div class="backup-item">
+              <strong>{{ backup.name }}</strong>
+              <span class="text-muted">{{ backup.modified_at }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-muted">No backups yet.</div>
+        {% endif %}
+      </div>
     </div>
   </div>
 
   <div id="cfg-result"></div>
+
+  <dialog id="save-preview-dialog" class="theme-preview-dialog save-preview-dialog">
+    <div class="theme-preview-panel save-preview-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:.75rem;">
+        <div>
+          <strong style="font-size:15px;">Review changes before save</strong>
+          <div class="text-muted" style="font-size:12px; margin-top:2px;">The config file will be rewritten and validated before it is committed.</div>
+        </div>
+        <button class="btn btn-xs" type="button" onclick="closeSavePreview()">Close</button>
+      </div>
+      <div id="save-preview-body" class="save-preview-body">
+        <div class="text-muted">No changes to review.</div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem; flex-wrap:wrap;">
+        <button class="btn" type="button" onclick="closeSavePreview()">Cancel</button>
+        <button class="btn btn-primary" id="save-preview-confirm" type="button">Confirm save</button>
+      </div>
+    </div>
+  </dialog>
 
   {# ------------------------------------------------------------------ #}
   {# General                                                             #}
@@ -74,7 +137,7 @@
         </select>
       </div>
     </div>
-    <div class="field-hint">Click to select. Double-click to preview full size.</div>
+    <div class="field-hint">Click to select. Double-click to preview full size. If theme schedule is enabled in Advanced mode, it can override this base theme later in the day.</div>
 
     <div class="theme-grid" style="margin-top:.5rem;">
       {% for t in concrete_themes %}
@@ -93,7 +156,7 @@
   {# Display                                                             #}
   {# ------------------------------------------------------------------ #}
   <div class="cfg-section">
-    <div class="cfg-section-title">Display</div>
+    <div class="cfg-section-title">Display Appearance</div>
 
     <div class="field-row">
       <label class="field-label">Model</label>
@@ -142,7 +205,7 @@
   {# Schedule (quiet hours)                                              #}
   {# ------------------------------------------------------------------ #}
   <div class="cfg-section">
-    <div class="cfg-section-title">Quiet Hours</div>
+    <div class="cfg-section-title">Sleep / Quiet Hours</div>
     <div class="field-hint" style="padding-left:0; margin-bottom:.5rem;">
       Display refresh is paused during this window (useful for overnight).
     </div>
@@ -241,7 +304,7 @@
   {# Event Filters                                                       #}
   {# ------------------------------------------------------------------ #}
   <div class="cfg-section">
-    <div class="cfg-section-title">Event Filters</div>
+    <div class="cfg-section-title">Calendar &amp; Event Filters</div>
 
     <div class="check-row" style="padding-left:208px; margin-bottom:.5rem;">
       <input type="checkbox" id="cfg-excl-allday" {{ "checked" if cfg.filters.exclude_all_day }}>
@@ -267,8 +330,8 @@
   {# ------------------------------------------------------------------ #}
   {# Cache & Intervals                                                   #}
   {# ------------------------------------------------------------------ #}
-  <div class="cfg-section">
-    <div class="cfg-section-title">Cache &amp; Intervals</div>
+  <div class="cfg-section cfg-advanced-only">
+    <div class="cfg-section-title">Advanced: Cache &amp; Intervals</div>
     <div class="field-hint" style="padding-left:0; margin-bottom:.5rem;">
       TTL: how long cached data stays usable after a fetch failure.
       Interval: how often a live fetch is attempted (skip if cache is younger).
@@ -310,8 +373,8 @@
   {# ------------------------------------------------------------------ #}
   {# Random Theme Pool                                                   #}
   {# ------------------------------------------------------------------ #}
-  <div class="cfg-section">
-    <div class="cfg-section-title">Random Theme Pool</div>
+  <div class="cfg-section cfg-advanced-only">
+    <div class="cfg-section-title">Advanced: Random Theme Pool</div>
     <div class="field-hint" style="padding-left:0; margin-bottom:.5rem;">
       Only applies when <code>theme</code> is set to <code>random</code>, <code>random_daily</code>,
       or <code>random_hourly</code>. Leave both lists empty to rotate among all eligible themes.
@@ -336,12 +399,12 @@
   {# ------------------------------------------------------------------ #}
   {# Theme Schedule                                                      #}
   {# ------------------------------------------------------------------ #}
-  <div class="cfg-section">
-    <div class="cfg-section-title">Theme Schedule</div>
+  <div class="cfg-section cfg-advanced-only">
+    <div class="cfg-section-title">Advanced: Theme Schedule</div>
     <div class="field-hint" style="padding-left:0; margin-bottom:.5rem;">
       Switch themes automatically at set times. The active entry is the last one whose time
-      ≤ current local time. Overrides the random theme pool. Ignored when <code>--theme</code>
-      is passed via CLI.
+      ≤ current local time. This override wins over the random theme pool and the base theme.
+      Ignored when <code>--theme</code> is passed via CLI.
     </div>
 
     <table class="sched-table">
@@ -422,9 +485,10 @@
   {# ------------------------------------------------------------------ #}
   {# Save button (bottom)                                                #}
   {# ------------------------------------------------------------------ #}
-  <div style="display:flex; justify-content:flex-end; gap:.5rem; padding-top:.5rem; border-top:1px solid var(--border);">
+  <div style="display:flex; justify-content:flex-end; gap:.5rem; padding-top:.5rem; border-top:1px solid var(--border); flex-wrap:wrap;">
     <button class="btn cfg-discard-btn" onclick="discardConfig()" hidden>Discard</button>
-    <button class="btn btn-primary" onclick="saveConfig(this)">Save</button>
+    <button class="btn" onclick="openSavePreview({ refreshAfterSave: true, triggerButton: this })">Save + Refresh</button>
+    <button class="btn btn-primary" onclick="openSavePreview({ refreshAfterSave: false, triggerButton: this })">Save</button>
   </div>
 
   {# Theme preview dialog (opened on double-click of a thumbnail) #}
@@ -460,9 +524,22 @@ function previewTheme(name) {
   dlg.showModal();
 }
 // Close dialog when clicking the backdrop.
+function setConfigMode(mode) {
+  document.querySelectorAll('.cfg-advanced-only').forEach(el => {
+    el.classList.toggle('hidden-by-mode', mode !== 'advanced');
+  });
+  const note = document.getElementById('cfg-mode-note');
+  if (note) {
+    note.textContent = mode === 'advanced'
+      ? 'Advanced mode is on. You can now change cache timing, random theme pools, and scheduled theme switching.'
+      : 'Basic mode shows the settings most people actually want. Advanced mode exposes cache tuning and schedule details.';
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const dlg = document.getElementById("theme-preview-dialog");
   if (dlg) dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+  setConfigMode('basic');
 });
 </script>
 

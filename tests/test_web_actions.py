@@ -7,6 +7,14 @@ import pytest
 
 from src.web.app import create_app
 
+
+def _csrf_headers(client):
+    client.get("/")
+    with client.session_transaction() as sess:
+        token = sess["csrf_token"]
+    return {"X-CSRF-Token": token}
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -45,7 +53,7 @@ def test_trigger_refresh_creates_file(client, app):
     trigger = state_dir / "web_trigger"
     assert not trigger.exists()
 
-    resp = client.post("/api/trigger-refresh")
+    resp = client.post("/api/trigger-refresh", headers=_csrf_headers(client))
     assert resp.status_code == 200
     data = json.loads(resp.data)
     assert data["ok"] is True
@@ -54,10 +62,15 @@ def test_trigger_refresh_creates_file(client, app):
 
 def test_trigger_refresh_idempotent(client, app):
     """Calling trigger-refresh twice should not fail."""
-    client.post("/api/trigger-refresh")
-    resp = client.post("/api/trigger-refresh")
+    client.post("/api/trigger-refresh", headers=_csrf_headers(client))
+    resp = client.post("/api/trigger-refresh", headers=_csrf_headers(client))
     assert resp.status_code == 200
     assert json.loads(resp.data)["ok"] is True
+
+
+def test_post_actions_require_csrf(client):
+    resp = client.post("/api/trigger-refresh")
+    assert resp.status_code == 403
 
 
 # ---------------------------------------------------------------------------
@@ -78,12 +91,12 @@ def test_reset_breaker_known_source(client, app):
         "/api/reset-breaker",
         data=json.dumps({"source": "weather"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 200
     data = json.loads(resp.data)
     assert data["ok"] is True
 
-    # File should reflect closed state
     raw = json.loads(breaker_path.read_text())
     assert raw["weather"]["state"] == "closed"
     assert raw["weather"]["consecutive_failures"] == 0
@@ -96,6 +109,7 @@ def test_reset_breaker_creates_entry_if_absent(client, app):
         "/api/reset-breaker",
         data=json.dumps({"source": "events"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 200
     assert json.loads(resp.data)["ok"] is True
@@ -110,6 +124,7 @@ def test_reset_breaker_unknown_source_returns_400(client):
         "/api/reset-breaker",
         data=json.dumps({"source": "hacked_source"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 400
     assert json.loads(resp.data)["ok"] is False
@@ -120,6 +135,7 @@ def test_reset_breaker_missing_source_returns_400(client):
         "/api/reset-breaker",
         data=json.dumps({}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 400
 
@@ -137,10 +153,10 @@ def test_reset_breaker_preserves_other_sources(client, app):
         "/api/reset-breaker",
         data=json.dumps({"source": "weather"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
 
     raw = json.loads(breaker_path.read_text())
-    # events must be untouched
     assert raw["events"]["state"] == "closed"
     assert raw["events"]["consecutive_failures"] == 0
 
@@ -167,13 +183,14 @@ def test_clear_cache_single_source(client, app):
         "/api/clear-cache",
         data=json.dumps({"source": "weather"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 200
     assert json.loads(resp.data)["ok"] is True
 
     raw = json.loads(cache_path.read_text())
     assert "weather" not in raw
-    assert "events" in raw  # untouched
+    assert "events" in raw
 
 
 def test_clear_cache_all(client, app):
@@ -193,10 +210,10 @@ def test_clear_cache_all(client, app):
         "/api/clear-cache",
         data=json.dumps({"source": "all"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 200
     raw = json.loads(cache_path.read_text())
-    # Only schema_version key should remain
     assert set(raw.keys()) == {"schema_version"}
 
 
@@ -206,6 +223,7 @@ def test_clear_cache_missing_file_ok(client, app):
         "/api/clear-cache",
         data=json.dumps({"source": "birthdays"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 200
     assert json.loads(resp.data)["ok"] is True
@@ -216,6 +234,7 @@ def test_clear_cache_unknown_source_returns_400(client):
         "/api/clear-cache",
         data=json.dumps({"source": "unknown_xyz"}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 400
     assert json.loads(resp.data)["ok"] is False
@@ -226,5 +245,6 @@ def test_clear_cache_missing_source_returns_400(client):
         "/api/clear-cache",
         data=json.dumps({}),
         content_type="application/json",
+        headers=_csrf_headers(client),
     )
     assert resp.status_code == 400
