@@ -351,3 +351,54 @@ input[readonly], input[disabled] { background: var(--bg); color: var(--text-mute
 .cred-label { flex: 0 0 200px; color: var(--text-muted); }
 .cred-set    { color: #15803d; font-weight: 600; }
 .cred-unset  { color: #b91c1c; }
+
+/* Dirty-state badge (unsaved changes indicator) */
+.dirty-badge {
+  display: inline-block;
+  margin-left: .5rem;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 99px;
+  vertical-align: middle;
+}
+
+/* Inline field error highlighting */
+.field-error { border-color: var(--bad) !important; }
+.field-inline-err { color: var(--bad); font-size: 11px; margin-top: 2px; }
+
+/* Theme preview dialog */
+.theme-preview-dialog {
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,.35);
+  max-width: min(800px, 95vw);
+  width: 100%;
+}
+.theme-preview-dialog::backdrop { background: rgba(0,0,0,.55); }
+.theme-preview-dialog img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+.theme-preview-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0,0,0,.55);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -54,6 +54,8 @@ def _build_status() -> dict:
         "quiet_hours_active": is_quiet_hours_now(
             cfg.schedule.quiet_hours_start, cfg.schedule.quiet_hours_end
         ),
+        "quiet_hours_start": cfg.schedule.quiet_hours_start,
+        "quiet_hours_end": cfg.schedule.quiet_hours_end,
         "host": read_host_metrics(),
         "sources": sources,
     }
