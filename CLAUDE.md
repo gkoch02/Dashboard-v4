@@ -76,10 +76,11 @@ src/
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors, fmt_time,
     │                          #   events_for_day, deg_to_compass)
-    ├── themes/                # themes: default, terminal, minimalist, old_fashioned, today,
-    │                          #   fantasy, moonphase, moonphase_invert, qotd, qotd_invert,
-    │                          #   weather, fuzzyclock, fuzzyclock_invert, diags, air_quality,
-    │                          #   message
+    ├── themes/                # themes (20): default, terminal, minimalist, old_fashioned,
+    │                          #   today, fantasy, moonphase, moonphase_invert, qotd,
+    │                          #   qotd_invert, weather, fuzzyclock, fuzzyclock_invert,
+    │                          #   diags, air_quality, message, timeline, year_pulse,
+    │                          #   sunrise, scorecard, tides
     └── components/            # One file per UI region: header, week_view, weather_panel,
                                #   weather_full, birthday_bar, today_view, info_panel, qotd_panel,
                                #   fuzzyclock_panel, diags_panel, air_quality_panel,

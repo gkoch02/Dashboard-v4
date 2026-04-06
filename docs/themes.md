@@ -5,13 +5,11 @@
 - [Switching themes](#switching-themes)
 - [Random rotation](#random-rotation)
 - [Time-of-day theme schedule](#time-of-day-theme-schedule)
-- [Built-in themes](#built-in-themes)
+- [Built-in themes](#built-in-themes) — 20 themes plus pseudo-themes
   - [default](#default), [terminal](#terminal), [minimalist](#minimalist), [old\_fashioned](#old_fashioned), [today](#today), [fantasy](#fantasy)
-  - [moonphase](#moonphase), [moonphase\_invert](#moonphase_invert)
-  - [qotd](#qotd), [qotd\_invert](#qotd_invert)
+  - [moonphase](#moonphase), [moonphase\_invert](#moonphase_invert), [qotd](#qotd), [qotd\_invert](#qotd_invert)
   - [weather](#weather), [fuzzyclock](#fuzzyclock), [fuzzyclock\_invert](#fuzzyclock_invert)
-  - [air\_quality](#air_quality), [timeline](#timeline), [year\_pulse](#year_pulse)
-  - [sunrise](#sunrise), [scorecard](#scorecard), [tides](#tides)
+  - [air\_quality](#air_quality), [timeline](#timeline), [year\_pulse](#year_pulse), [sunrise](#sunrise), [scorecard](#scorecard), [tides](#tides)
   - [message](#message), [diags](#diags)
 - [Creating your own theme](#creating-your-own-theme)
 - [Typography](#typography)
@@ -23,7 +21,7 @@
 Switch the entire dashboard layout and visual style with one line in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | moonphase | moonphase_invert | qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | diags | air_quality | timeline | year_pulse | sunrise | scorecard | tides | message | random | random_daily | random_hourly
+theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | moonphase | moonphase_invert | qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | air_quality | message | diags | timeline | year_pulse | sunrise | scorecard | tides | random | random_daily | random_hourly
 ```
 
 Or override it from the command line without editing your config:
