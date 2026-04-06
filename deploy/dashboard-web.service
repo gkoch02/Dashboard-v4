@@ -1,0 +1,21 @@
+[Unit]
+Description=Home Dashboard Web UI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# These values are filled in automatically by `make web-enable`.
+# __USER__ and __INSTALL_DIR__ are substituted with the current user and repo path.
+Type=simple
+User=__USER__
+WorkingDirectory=__INSTALL_DIR__
+ExecStart=__INSTALL_DIR__/venv/bin/python -m src.web \
+    --config config/web.yaml \
+    --app-config config/config.yaml
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:__INSTALL_DIR__/output/dashboard-web.log
+StandardError=append:__INSTALL_DIR__/output/dashboard-web.log
+
+[Install]
+WantedBy=multi-user.target

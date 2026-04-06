@@ -25,6 +25,10 @@ pi = [
     "gpiozero",
     "lgpio",
 ]
+web = [
+    "flask>=3.0",
+    "waitress>=3.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

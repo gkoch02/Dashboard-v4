@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Status{% endblock %}
+
+{% block content %}
+
+<div id="quiet-banner" class="banner">
+  Quiet hours are active — the display refresh timer is paused.
+</div>
+
+<!-- Dashboard image -->
+<div class="card">
+  <div class="card-title">Live Display</div>
+  <div class="dash-image-wrap">
+    <img id="dash-img" src="{{ url_for('image.latest') }}" alt="Dashboard render"
+         onerror="this.style.display='none'">
+  </div>
+  <div class="image-meta">
+    <span>Last updated: <strong id="last-run-img">—</strong></span>
+    <span class="text-muted">Refreshes every 60 s</span>
+  </div>
+</div>
+
+<div class="grid-2">
+
+  <!-- Host metrics -->
+  <div class="card">
+    <div class="card-title">Host</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <span class="metric-label">Hostname</span>
+        <span class="metric-value" id="host-hostname">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">IP Address</span>
+        <span class="metric-value" id="host-ip">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Uptime</span>
+        <span class="metric-value" id="host-uptime">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">CPU Temp</span>
+        <span class="metric-value" id="host-temp">—</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Load (1m)</span>
+        <span class="metric-value" id="host-load">—</span>
+      </div>
+    </div>
+
+    <div style="margin-top: .75rem;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+        <span class="text-muted" style="font-size:12px;">RAM</span>
+        <span id="host-ram" style="font-size:12px;">—</span>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill" id="ram-bar" style="width:0%"></div></div>
+    </div>
+
+    <div style="margin-top: .5rem;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+        <span class="text-muted" style="font-size:12px;">Disk</span>
+        <span id="host-disk" style="font-size:12px;">—</span>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill" id="disk-bar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Data sources -->
+  <div class="card">
+    <div class="card-title">Data Sources</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Source</th>
+          <th>Breaker</th>
+          <th>Cache Age</th>
+          <th>Staleness</th>
+          <th>API Calls</th>
+        </tr>
+      </thead>
+      <tbody id="sources-tbody">
+        <tr><td colspan="5" class="no-data">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- .grid-2 -->
+
+<!-- Log tail -->
+<div class="card">
+  <div class="card-title" style="display:flex; justify-content:space-between;">
+    <span>Recent Log</span>
+    <span class="text-muted" style="font-size:11px; font-weight:normal; text-transform:none; letter-spacing:0;">
+      last 100 lines · refreshes every 60 s
+    </span>
+  </div>
+  <div class="log-wrap">
+    <pre id="log-output">Loading…</pre>
+  </div>
+</div>
+
+<script>
+  // Mirror the "last updated" text in the image meta bar as well.
+  document.addEventListener("DOMContentLoaded", () => {
+    const orig = document.getElementById("last-run");
+    const mirror = document.getElementById("last-run-img");
+    if (orig && mirror) {
+      new MutationObserver(() => { mirror.textContent = orig.textContent; })
+        .observe(orig, { childList: true, subtree: true, characterData: true });
+    }
+  });
+</script>
+
+{% endblock %}
