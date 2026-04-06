@@ -5,6 +5,10 @@ const STATUS_INTERVAL_MS  = 30_000;  // poll /api/status every 30 s
 const IMAGE_INTERVAL_MS   = 60_000;  // refresh dashboard image every 60 s
 const LOG_INTERVAL_MS     = 60_000;  // refresh log tail every 60 s
 
+// Module-level state
+let _configDirty = false;  // true when config form has unsaved changes
+let _statusCache = {};     // latest /api/status response
+
 // --------------------------------------------------------------------------
 // Utilities
 // --------------------------------------------------------------------------
@@ -78,17 +82,50 @@ function show_action_msg(msg, ok = true) {
 }
 
 // --------------------------------------------------------------------------
+// Dirty-state tracking (config page)
+// --------------------------------------------------------------------------
+
+function setDirty(dirty) {
+  _configDirty = dirty;
+  const badge = $("dirty-badge");
+  if (badge) badge.hidden = !dirty;
+  // Toggle all discard buttons (top + bottom)
+  document.querySelectorAll(".cfg-discard-btn").forEach(el => { el.hidden = !dirty; });
+  if (!dirty) {
+    // Clear any inline field-error highlights
+    document.querySelectorAll("[data-field].field-error").forEach(el => {
+      el.classList.remove("field-error");
+    });
+    document.querySelectorAll(".field-inline-err").forEach(el => el.remove());
+  }
+}
+
+// --------------------------------------------------------------------------
 // Status update
 // --------------------------------------------------------------------------
 
 function applyStatus(data) {
+  _statusCache = data;
+
   // Last run
   set_text("last-run", fmt_seconds(data.seconds_since_run));
   set_text("current-theme", data.current_theme || "—");
 
-  // Quiet hours banner
+  // Quiet hours banner (status page)
   const banner = $("quiet-banner");
   if (banner) banner.classList.toggle("visible", !!data.quiet_hours_active);
+
+  // Quiet hours context hint (config page)
+  const qhHint = $("qh-status-hint");
+  if (qhHint) {
+    const active = data.quiet_hours_active;
+    const s = data.quiet_hours_start ?? "?";
+    const e = data.quiet_hours_end   ?? "?";
+    qhHint.textContent = active
+      ? `Currently active — display refresh paused until ${e}:00`
+      : `Currently inactive — window is ${s}:00 – ${e}:00`;
+    qhHint.style.color = active ? "var(--warn)" : "var(--text-muted)";
+  }
 
   // Host metrics
   const h = data.host || {};
@@ -180,11 +217,22 @@ async function refreshLogs() {
 // --------------------------------------------------------------------------
 
 async function doTriggerRefresh(btn) {
+  if (_statusCache.quiet_hours_active) {
+    const s = _statusCache.quiet_hours_start ?? "?";
+    const e = _statusCache.quiet_hours_end   ?? "?";
+    if (!confirm(
+      `Quiet hours are active (${s}:00 – ${e}:00).\n` +
+      `The dashboard will exit immediately when triggered. Proceed anyway?`
+    )) return;
+  }
   if (btn) btn.disabled = true;
   try {
     const resp = await fetch("/api/trigger-refresh", { method: "POST" });
     const data = await resp.json();
-    show_action_msg(data.ok ? "Refresh triggered — display will update shortly." : `Error: ${data.error}`, data.ok);
+    show_action_msg(
+      data.ok ? "Refresh triggered — display will update shortly." : `Error: ${data.error}`,
+      data.ok
+    );
   } catch (_) {
     show_action_msg("Request failed.", false);
   } finally {
@@ -193,6 +241,9 @@ async function doTriggerRefresh(btn) {
 }
 
 async function doResetBreaker(source, btn) {
+  if (!confirm(
+    `Reset circuit breaker for "${source}"?\nThis clears failure state and re-enables fetching.`
+  )) return;
   if (btn) btn.disabled = true;
   try {
     const resp = await fetch("/api/reset-breaker", {
@@ -211,6 +262,9 @@ async function doResetBreaker(source, btn) {
 }
 
 async function doClearCache(source, btn) {
+  if (!confirm(
+    `Clear cached data for "${source}"?\nThe next refresh will re-fetch live data.`
+  )) return;
   if (btn) btn.disabled = true;
   try {
     const resp = await fetch("/api/clear-cache", {
@@ -272,9 +326,9 @@ function collectConfigPatch() {
   if ($("cfg-units")) patch["weather.units"]     = v("cfg-units");
 
   // Birthdays
-  if ($("cfg-bday-source"))   patch["birthdays.source"]          = v("cfg-bday-source");
-  if ($("cfg-bday-lookahead")) patch["birthdays.lookahead_days"] = n("cfg-bday-lookahead");
-  if ($("cfg-bday-keyword"))  patch["birthdays.calendar_keyword"] = v("cfg-bday-keyword");
+  if ($("cfg-bday-source"))    patch["birthdays.source"]           = v("cfg-bday-source");
+  if ($("cfg-bday-lookahead")) patch["birthdays.lookahead_days"]   = n("cfg-bday-lookahead");
+  if ($("cfg-bday-keyword"))   patch["birthdays.calendar_keyword"] = v("cfg-bday-keyword");
 
   // Filters
   patch["filters.exclude_calendars"] = textarea_to_list("cfg-excl-calendars");
@@ -316,13 +370,120 @@ function collectConfigPatch() {
   return patch;
 }
 
+// Populate all config form fields from a GET /api/config response object.
+function populateConfigForm(data) {
+  const set_val = (id, val) => { const el = $(id); if (el && val != null) el.value = val; };
+  const set_chk = (id, val) => { const el = $(id); if (el) el.checked = !!val; };
+  const set_ta  = (id, arr) => { const el = $(id); if (el) el.value = (arr || []).join("\n"); };
+
+  set_val("cfg-title",    data.title);
+  set_val("cfg-timezone", data.timezone);
+  set_val("cfg-loglevel", data.log_level);
+
+  const d = data.display || {};
+  set_chk("cfg-show-weather",    d.show_weather);
+  set_chk("cfg-show-birthdays",  d.show_birthdays);
+  set_chk("cfg-show-info",       d.show_info_panel);
+  set_val("cfg-week-days",       d.week_days);
+  set_chk("cfg-partial-refresh", d.enable_partial_refresh);
+  set_val("cfg-max-partials",    d.max_partials_before_full);
+
+  const s = data.schedule || {};
+  set_val("cfg-qh-start", s.quiet_hours_start);
+  set_val("cfg-qh-end",   s.quiet_hours_end);
+
+  const w = data.weather || {};
+  set_val("cfg-lat",   w.latitude);
+  set_val("cfg-lon",   w.longitude);
+  set_val("cfg-units", w.units);
+
+  const bday = data.birthdays || {};
+  set_val("cfg-bday-source",    bday.source);
+  set_val("cfg-bday-lookahead", bday.lookahead_days);
+  set_val("cfg-bday-keyword",   bday.calendar_keyword);
+
+  const flt = data.filters || {};
+  set_chk("cfg-excl-allday",    flt.exclude_all_day);
+  set_ta("cfg-excl-calendars",  flt.exclude_calendars);
+  set_ta("cfg-excl-keywords",   flt.exclude_keywords);
+
+  const c = data.cache || {};
+  set_val("cfg-wtl",  c.weather_ttl_minutes);
+  set_val("cfg-wfi",  c.weather_fetch_interval);
+  set_val("cfg-etl",  c.events_ttl_minutes);
+  set_val("cfg-efi",  c.events_fetch_interval);
+  set_val("cfg-btl",  c.birthdays_ttl_minutes);
+  set_val("cfg-bfi",  c.birthdays_fetch_interval);
+  set_val("cfg-aqtl", c.air_quality_ttl_minutes);
+  set_val("cfg-aqfi", c.air_quality_fetch_interval);
+  set_val("cfg-mxf",  c.max_failures);
+  set_val("cfg-cool", c.cooldown_minutes);
+  set_val("cfg-qr",   c.quote_refresh);
+
+  const rt = data.random_theme || {};
+  set_ta("cfg-rt-include", rt.include);
+  set_ta("cfg-rt-exclude", rt.exclude);
+
+  // Rebuild schedule table rows
+  const tbody = $("sched-tbody");
+  if (tbody) {
+    tbody.innerHTML = "";
+    (data.theme_schedule || []).forEach(e => addScheduleRow(e.time, e.theme));
+  }
+
+  // Sync theme dropdown and grid
+  if (data.theme) {
+    const inp = $("cfg-theme");
+    if (inp) inp.value = data.theme;
+    if (typeof syncThemeGrid === "function") syncThemeGrid(data.theme);
+  }
+}
+
+// Discard unsaved config changes by reloading form from the server.
+async function discardConfig() {
+  if (_configDirty && !confirm("Discard all unsaved changes?")) return;
+  try {
+    const resp = await fetch("/api/config");
+    if (!resp.ok) throw new Error("fetch failed");
+    const data = await resp.json();
+    populateConfigForm(data);
+    setDirty(false);
+    const result_el = $("cfg-result");
+    if (result_el) {
+      result_el.innerHTML = '<span class="text-muted">Reverted to last saved values.</span>';
+      setTimeout(() => { if (result_el) result_el.innerHTML = ""; }, 3000);
+    }
+  } catch (_) {
+    const result_el = $("cfg-result");
+    if (result_el) result_el.innerHTML =
+      '<div class="cfg-errors">Could not load saved config — check network.</div>';
+  }
+}
+
 // Submit config form
 async function saveConfig(btn) {
   if (btn) btn.disabled = true;
   const patch = collectConfigPatch();
 
+  // Client-side: check for duplicate times in theme schedule before sending.
+  const times = (patch.theme_schedule || []).map(e => e.time);
+  const dupes = times.filter((t, i) => times.indexOf(t) !== i);
+  if (dupes.length) {
+    const result_el = $("cfg-result");
+    if (result_el) result_el.innerHTML =
+      `<div class="cfg-errors">✗ Duplicate schedule times: ${[...new Set(dupes)].join(", ")}</div>`;
+    if (btn) btn.disabled = false;
+    return;
+  }
+
   const result_el = $("cfg-result");
   if (result_el) result_el.innerHTML = '<span class="text-muted">Saving…</span>';
+
+  // Clear previous inline error highlights
+  document.querySelectorAll("[data-field].field-error").forEach(el => {
+    el.classList.remove("field-error");
+  });
+  document.querySelectorAll(".field-inline-err").forEach(el => el.remove());
 
   try {
     const resp = await fetch("/api/config", {
@@ -334,12 +495,25 @@ async function saveConfig(btn) {
 
     if (result_el) {
       if (data.saved) {
+        setDirty(false);
         const warn_html = data.warnings.length
           ? `<div class="cfg-warnings">${data.warnings.map(w =>
               `<div>⚠ [${w.field}] ${w.message}${w.hint ? ` — ${w.hint}` : ""}</div>`
             ).join("")}</div>` : "";
-        result_el.innerHTML = `<div class="cfg-ok">✓ Saved${warn_html ? " (with warnings)" : ""}</div>${warn_html}`;
+        result_el.innerHTML =
+          `<div class="cfg-ok">✓ Saved${warn_html ? " (with warnings)" : ""}</div>${warn_html}`;
       } else {
+        // Highlight individual fields that have errors
+        data.errors.forEach(e => {
+          const el = document.querySelector(`[data-field="${e.field}"]`);
+          if (el) {
+            el.classList.add("field-error");
+            const msg = document.createElement("div");
+            msg.className = "field-inline-err";
+            msg.textContent = e.message + (e.hint ? ` — ${e.hint}` : "");
+            el.closest(".field-input-wrap")?.appendChild(msg);
+          }
+        });
         const err_html = data.errors.map(e =>
           `<div>✗ [${e.field}] ${e.message}${e.hint ? ` — ${e.hint}` : ""}</div>`
         ).join("");
@@ -351,7 +525,8 @@ async function saveConfig(btn) {
       }
     }
   } catch (_) {
-    if (result_el) result_el.innerHTML = '<div class="cfg-errors">Request failed — check network.</div>';
+    if (result_el) result_el.innerHTML =
+      '<div class="cfg-errors">Request failed — check network.</div>';
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -395,4 +570,18 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(refreshStatus, STATUS_INTERVAL_MS);
   setInterval(refreshImage,  IMAGE_INTERVAL_MS);
   setInterval(refreshLogs,   LOG_INTERVAL_MS);
+
+  // Dirty tracking: attach delegated listeners on the config form card.
+  if ($("cfg-result") !== null) {
+    const card = document.querySelector(".card");
+    if (card) {
+      card.addEventListener("input",  () => setDirty(true));
+      card.addEventListener("change", () => setDirty(true));
+    }
+  }
+
+  // Warn before leaving the page with unsaved config changes.
+  window.addEventListener("beforeunload", e => {
+    if (_configDirty) { e.preventDefault(); e.returnValue = ""; }
+  });
 });

@@ -208,9 +208,29 @@ def _load_raw_yaml(config_path: str) -> dict:
 
 
 def _write_raw_yaml(config_path: str, raw: dict) -> None:
-    """Write *raw* to *config_path* atomically using a temp-file rename."""
+    """Write *raw* to *config_path* atomically using a temp-file rename.
+
+    A backup copy is written to ``<config>.bak`` before overwriting.  Backup
+    failure is non-fatal — a warning is logged and the save proceeds normally.
+    """
     path = Path(config_path)
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Atomically back up the current file before overwriting.
+    if path.exists():
+        bak = path.with_suffix(".yaml.bak")
+        fd_b, tmp_b = tempfile.mkstemp(dir=path.parent, suffix=".bak.tmp")
+        try:
+            with os.fdopen(fd_b, "wb") as fb:
+                fb.write(path.read_bytes())
+            os.replace(tmp_b, bak)
+        except OSError as exc:
+            logger.warning("Could not write config backup to %s: %s", bak, exc)
+            try:
+                os.unlink(tmp_b)
+            except OSError:
+                pass
+
     fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
     try:
         with os.fdopen(fd, "w") as f:
