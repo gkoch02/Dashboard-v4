@@ -76,7 +76,12 @@ function bar_class(pct) {
 
 function set_text(id, value) {
   const el = $(id);
-  if (el) el.textContent = value;
+  if (el && el.textContent !== String(value ?? "")) el.textContent = value;
+}
+
+// Only update innerHTML if it has actually changed — avoids unnecessary layout thrash
+function set_html(el, html) {
+  if (el && el.innerHTML !== html) el.innerHTML = html;
 }
 
 function set_image_state(hasImage) {
@@ -287,13 +292,12 @@ function applyStatus(data) {
       );
     }
     if (issues) {
-      if ((data.overall.issues || []).length) {
-        issues.innerHTML = data.overall.issues.map(issue =>
-          `<div class="issue-chip issue-${issue.severity || 'warn'}">${issue.kind}: ${issue.message}</div>`
-        ).join("");
-      } else {
-        issues.innerHTML = '<div class="issue-chip issue-ok">No immediate issues.</div>';
-      }
+      const issueHtml = (data.overall.issues || []).length
+        ? data.overall.issues.map(issue =>
+            `<div class="issue-chip issue-${issue.severity || 'warn'}">${issue.kind}: ${issue.message}</div>`
+          ).join("")
+        : '<div class="issue-chip issue-ok">No immediate issues.</div>';
+      set_html(issues, issueHtml);
     }
   }
 
@@ -322,27 +326,27 @@ function applyStatus(data) {
   const integrations = $("integration-list");
   if (integrations) {
     const rows = data.integrations || [];
-    integrations.innerHTML = rows.length
+    set_html(integrations, rows.length
       ? rows.map(item => {
           const [cls, label] = integrationBadge(item.status);
           return `<div class="integration-item"><div><strong>${esc_html(item.name)}</strong><div class="text-muted" style="font-size:11px; margin-top:2px;">${esc_html(item.detail || "")}</div></div><span class="issue-chip ${cls}">${esc_html(label)}</span></div>`;
         }).join("")
-      : '<div class="text-muted">No integration data.</div>';
+      : '<div class="text-muted">No integration data.</div>');
   }
 
   const events = $("recent-events");
   if (events) {
     const rows = data.recent_events || [];
-    events.innerHTML = rows.length
+    set_html(events, rows.length
       ? rows.map(item => `<div class="event-item"><div><strong>${esc_html(item.message || item.kind || "event")}</strong><div class="text-muted" style="font-size:11px; margin-top:2px;">${esc_html(formatEventTime(item.timestamp))}</div></div><span class="event-kind">${esc_html(item.kind || "event")}</span></div>`).join("")
-      : '<div class="text-muted">No recent events yet.</div>';
+      : '<div class="text-muted">No recent events yet.</div>');
   }
 
   const troubleshoot = $("troubleshoot-list");
   if (troubleshoot) {
-    troubleshoot.innerHTML = buildTroubleshootingItems(data).map(item =>
+    set_html(troubleshoot, buildTroubleshootingItems(data).map(item =>
       `<div class="troubleshoot-item troubleshoot-${item.severity}">${esc_html(item.text)}</div>`
-    ).join("");
+    ).join(""));
   }
 
   // Host metrics
@@ -381,7 +385,7 @@ function applyStatus(data) {
   // Sources table — includes Reset/Clear buttons for P2
   const tbody = $("sources-tbody");
   if (tbody && data.sources) {
-    tbody.innerHTML = Object.entries(data.sources).map(([name, s]) => `
+    set_html(tbody, Object.entries(data.sources).map(([name, s]) => `
       <tr>
         <td data-label="Source"><strong>${esc_html(name)}</strong></td>
         <td data-label="Breaker">${breaker_badge(s.breaker_state)}${s.consecutive_failures > 0
@@ -400,7 +404,7 @@ function applyStatus(data) {
             ? `<button class="btn btn-xs" onclick="doClearCache('${name}',this)">clear</button>` : ""}
         </td>
       </tr>
-    `).join("");
+    `).join(""));
   }
 }
 
@@ -425,9 +429,13 @@ async function refreshStatus() {
 function refreshImage() {
   const img = $("dash-img");
   if (!img) return;
-  img.onload = () => set_image_state(true);
-  img.onerror = () => set_image_state(false);
-  img.src = "/image/latest?t=" + Date.now();
+  // Pre-load into a hidden Image object; only swap src once fully loaded to
+  // avoid the brief blank flash that occurs when setting src directly.
+  const newSrc = "/image/latest?t=" + Date.now();
+  const tmp = new Image();
+  tmp.onload = () => { img.src = newSrc; set_image_state(true); };
+  tmp.onerror = () => set_image_state(false);
+  tmp.src = newSrc;
 }
 
 // --------------------------------------------------------------------------
@@ -440,7 +448,14 @@ async function refreshLogs() {
     if (!resp.ok) return;
     const data = await resp.json();
     const pre = $("log-output");
-    if (pre) pre.textContent = data.lines.join("\n");
+    const wrap = pre?.closest(".log-wrap");
+    if (!pre) return;
+    const newText = data.lines.join("\n");
+    if (pre.textContent === newText) return;  // no change — skip DOM write
+    // Preserve scroll: if the user is near the bottom, stay there after update
+    const atBottom = wrap && (wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight < 60);
+    pre.textContent = newText;
+    if (wrap && atBottom) wrap.scrollTop = wrap.scrollHeight;
   } catch (_) {}
 }
 
