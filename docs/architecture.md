@@ -82,7 +82,7 @@ CLI (main.py)
 ### Rendering
 - **`render/canvas.py`** — Top-level render: create canvas, dispatch to components
 - **`render/theme.py`** — Theme registry, `load_theme()`, `ThemeLayout`, `ThemeStyle`
-- **`render/themes/`** — One file per theme (14 themes), each exports a factory function
+- **`render/themes/`** — One file per theme (20 built-in themes), each exports a factory function
 - **`render/components/`** — One file per UI region: `draw_*(draw, data, region, style)`
 - **`render/random_theme.py`** — Daily/hourly random theme selection with persistence
 - **`render/fonts.py`** — Font loader with `@lru_cache`
