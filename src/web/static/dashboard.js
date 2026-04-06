@@ -901,6 +901,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Dirty tracking: attach delegated listeners on the config form card.
   if ($("cfg-result") !== null) {
+    // Fetch the saved config to initialise _lastLoadedConfig so that
+    // getCurrentChangeList() can diff form values against the baseline.
+    // The form is already populated server-side, so we don't re-render it.
+    fetch("/api/config")
+      .then(r => r.json())
+      .then(data => { _lastLoadedConfig = data; updateChangeSummary(); })
+      .catch(() => {});
+
     const card = document.querySelector(".card");
     if (card) {
       card.addEventListener("input",  () => setDirty(true));
