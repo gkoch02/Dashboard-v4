@@ -858,7 +858,10 @@ async function restoreLatestBackup(btn) {
 // Theme grid — clicking a thumbnail updates the hidden input and highlights.
 function selectTheme(name) {
   const inp = $("cfg-theme");
-  if (inp) inp.value = name;
+  if (inp) {
+    inp.value = name;
+    setDirty(true);
+  }
   document.querySelectorAll(".theme-opt").forEach(el => {
     el.classList.toggle("selected", el.dataset.theme === name);
   });
