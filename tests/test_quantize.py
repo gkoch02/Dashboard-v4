@@ -1,11 +1,11 @@
 """Tests for src.render.quantize — quantize_for_display() and helpers."""
+
 from __future__ import annotations
 
 import pytest
 from PIL import Image
 
 from src.render.quantize import _VALID_MODES, quantize_for_display
-
 
 # ---------------------------------------------------------------------------
 # Helpers
