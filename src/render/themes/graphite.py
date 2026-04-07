@@ -58,14 +58,14 @@ from src.render.theme import ComponentRegion, Theme, ThemeLayout, ThemeStyle
 _GREY_DATE_CELL = 155
 
 # Bottom panel backgrounds — three distinct, clearly-separable tones.
-_GREY_WEATHER = 160   # darkest (~37 % density)
+_GREY_WEATHER = 160  # darkest (~37 % density)
 _GREY_BIRTHDAY = 175  # mid     (~31 % density)
-_GREY_INFO = 190      # lightest (~25 % density)
+_GREY_INFO = 190  # lightest (~25 % density)
 
 # Overlay border values.
-_BORDER_DARK = 80     # darker row of the two-tone horizontal shadow
-_BORDER_LIGHT = 150   # lighter row — fades toward panel background
-_BORDER_VSEP = 115    # vertical panel separator grey
+_BORDER_DARK = 80  # darker row of the two-tone horizontal shadow
+_BORDER_LIGHT = 150  # lighter row — fades toward panel background
+_BORDER_VSEP = 115  # vertical panel separator grey
 
 
 # ---------------------------------------------------------------------------
@@ -133,7 +133,7 @@ def _graphite_overlay(draw, layout, style) -> None:
     """Repaint structural dividers with graduated grey values."""
     W = layout.canvas_w
     H = layout.canvas_h
-    by = layout.weather.y   # top of bottom bar (360 in default layout)
+    by = layout.weather.y  # top of bottom bar (360 in default layout)
 
     # ------------------------------------------------------------------
     # Horizontal divider above the bottom bar — two-tone shadow.
@@ -144,8 +144,8 @@ def _graphite_overlay(draw, layout, style) -> None:
     # ------------------------------------------------------------------
     # Vertical separators between the three bottom panels.
     # ------------------------------------------------------------------
-    sep_wx = layout.birthdays.x       # weather | birthdays  (x=300)
-    sep_bx = layout.info.x - 1       # birthdays | info     (x=549)
+    sep_wx = layout.birthdays.x  # weather | birthdays  (x=300)
+    sep_bx = layout.info.x - 1  # birthdays | info     (x=549)
 
     for sx in (sep_wx, sep_bx):
         draw.line([(sx, by + 2), (sx, H - 1)], fill=_BORDER_VSEP)
@@ -170,9 +170,7 @@ def graphite_theme() -> Theme:
             header=ComponentRegion(0, L.HEADER_Y, L.WIDTH, L.HEADER_H),
             week_view=ComponentRegion(L.WEEK_X, L.WEEK_Y, L.WEEK_W, L.WEEK_H),
             weather=ComponentRegion(L.WEATHER_X, L.WEATHER_Y, L.WEATHER_W, L.WEATHER_H),
-            birthdays=ComponentRegion(
-                L.BIRTHDAY_X, L.BIRTHDAY_Y, L.BIRTHDAY_W, L.BIRTHDAY_H
-            ),
+            birthdays=ComponentRegion(L.BIRTHDAY_X, L.BIRTHDAY_Y, L.BIRTHDAY_W, L.BIRTHDAY_H),
             info=ComponentRegion(L.INFO_X, L.INFO_Y, L.INFO_W, L.INFO_H),
             draw_order=["header", "week_view", "weather", "birthdays", "info"],
             background_fn=_graphite_background,
