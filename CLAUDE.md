@@ -85,7 +85,7 @@ src/
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors, fmt_time,
     │                          #   events_for_day, deg_to_compass)
-    ├── themes/                # themes (21): standard week-view (default, terminal,
+    ├── themes/                # themes (22): standard week-view (default, terminal,
     │                          #   minimalist, old_fashioned, today, fantasy); full-screen
     │                          #   focused (qotd, qotd_invert, fuzzyclock, fuzzyclock_invert,
     │                          #   weather, moonphase, moonphase_invert); specialized views
@@ -100,6 +100,8 @@ src/
     ├── __main__.py            # Entry point: python -m src.web [--config web.yaml] [--port 8080]
     ├── app.py                 # Flask application factory (create_app); registers all blueprints
     ├── auth.py                # HTTP Basic Auth middleware; scrypt password hashing
+    ├── csrf.py                # CSRF protection: session-bound token via X-CSRF-Token header
+    ├── event_store.py         # Append-only JSONL event stream (state/web_events.jsonl) for status history
     ├── state_reader.py        # Pure read functions: last_success, breakers, cache ages, quota, host
     ├── config_editor.py       # Safe config read/write: EDITABLE_FIELD_PATHS allowlist, apply_patch()
     ├── routes/
@@ -147,7 +149,7 @@ Fetchers, caching, circuit breaking, and staleness are all per-source (calendar,
 ### Theme system
 Three-layer design: **ComponentRegion** (bounding box) → **ThemeLayout** (canvas + regions + draw order + `canvas_mode`) → **ThemeStyle** (colors, fonts, spacing). Components receive region + style and draw only within bounds. Themes are frozen dataclasses.
 
-`ThemeLayout.canvas_mode` is `"1"` (1-bit, default — all 21 built-in themes) or `"L"` (8-bit greyscale, opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle` (`bg=1` is near-black in L mode, not white). For Waveshare, the final L→`"1"` conversion is handled by `quantize_for_display()` in `render/quantize.py` and is controlled by `display.quantization_mode` (`threshold` / `floyd_steinberg` / `ordered`). For Inky, the final image is mapped to the limited Spectra 6 palette instead of being quantized to 1-bit.
+`ThemeLayout.canvas_mode` is `"1"` (1-bit, default — all 22 built-in themes) or `"L"` (8-bit greyscale, opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle` (`bg=1` is near-black in L mode, not white). For Waveshare, the final L→`"1"` conversion is handled by `quantize_for_display()` in `render/quantize.py` and is controlled by `display.quantization_mode` (`threshold` / `floyd_steinberg` / `ordered`). For Inky, the final image is mapped to the limited Spectra 6 palette instead of being quantized to 1-bit.
 
 Two rotation cadences are available: `theme: random_daily` (alias: `random`) picks once per day after midnight and persists to `state/random_theme_state.json`; `theme: random_hourly` picks once per hour and persists to `state/random_theme_hourly_state.json`. Both use the same `random_theme.include` / `random_theme.exclude` lists. The concrete theme name is resolved in `services/theme.py` before `load_theme()` is called — `load_theme()` itself never receives a pseudo-theme name.
 
