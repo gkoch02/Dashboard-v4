@@ -147,6 +147,8 @@ class ThemeStyle:
     accent_warn: int | None = None
     accent_alert: int | None = None
     accent_good: int | None = None
+    accent_primary: int | None = None
+    accent_secondary: int | None = None
 
     # Which regions use inverted color (fg fill + bg text)
     invert_header: bool = True
@@ -220,6 +222,14 @@ class ThemeStyle:
             "regular": self.font_regular,
         }.get(self.label_font_weight, self.font_bold)
         return fn(self.label_font_size)  # type: ignore[misc]
+
+    def primary_accent_fill(self) -> int:
+        """Return the general-purpose primary accent fill for the current backend."""
+        return self.fg if self.accent_primary is None else self.accent_primary
+
+    def secondary_accent_fill(self) -> int:
+        """Return the softer secondary accent fill for the current backend."""
+        return self.fg if self.accent_secondary is None else self.accent_secondary
 
 
 @dataclass

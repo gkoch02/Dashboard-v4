@@ -98,7 +98,12 @@ def _draw_tile(
     # Label — ALL CAPS below hero
     label_y = y + hero_area_h
     lw = text_width(draw, label, label_font)
-    draw.text((x + (w - lw) // 2, label_y), label, font=label_font, fill=fg)
+    draw.text(
+        (x + (w - lw) // 2, label_y),
+        label,
+        font=label_font,
+        fill=style.primary_accent_fill(),
+    )
 
     # Context — smaller, below label
     ctx_y = label_y + text_height(label_font) + 3

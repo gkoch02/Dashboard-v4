@@ -36,6 +36,8 @@ the wall fast.
 - [Setup Guide](docs/setup.md) — Google Calendar, ICS feed, birthdays, Raspberry Pi setup, hardware
 - [Web UI](docs/web-ui.md) — browser-based status page, config editor, manual refresh, authentication
 - [Themes](docs/themes.md) — all 20 built-in themes, random rotation, schedule, creating your own
+- [Color Themes](docs/color-themes.md) — customer-facing gallery of the current theme preview images
+- [Color Theme Previews](docs/color-theme-previews.md) — generate standard and Inky-color preview PNGs
 - [Configuration Reference](docs/configuration.md) — full config.yaml, cache tuning, filtering, circuit breaker
 - [Development](docs/development.md) — Makefile targets, CLI flags, project structure, dependencies
 - [Architecture](docs/architecture.md) — data flow, module layers, key design decisions

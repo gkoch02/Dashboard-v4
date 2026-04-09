@@ -179,7 +179,9 @@ def draw_timeline(
             x = timeline_x
             while x <= timeline_x + timeline_w:
                 draw.line(
-                    [(x, ny), (min(x + 3, timeline_x + timeline_w), ny)], fill=style.fg, width=2
+                    [(x, ny), (min(x + 3, timeline_x + timeline_w), ny)],
+                    fill=style.primary_accent_fill(),
+                    width=2,
                 )
                 x += 7
 

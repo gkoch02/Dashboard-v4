@@ -56,7 +56,11 @@ def draw_today(
     events_w = total_w - date_panel_w
 
     # --- Left date panel (inverted) ---
-    filled_rect(draw, (x0, y0, x0 + date_panel_w - 1, y0 + total_h - 1), fill=style.fg)
+    filled_rect(
+        draw,
+        (x0, y0, x0 + date_panel_w - 1, y0 + total_h - 1),
+        fill=style.primary_accent_fill(),
+    )
 
     day_name = today.strftime("%A").upper()
     month_text = today.strftime("%B").upper()
@@ -94,7 +98,7 @@ def draw_today(
     draw.text((num_x, num_y), date_num, font=num_font, fill=style.bg)
 
     # Separator between date panel and events
-    vline(draw, events_x, y0, y0 + total_h - 1, fill=style.fg)
+    vline(draw, events_x, y0, y0 + total_h - 1, fill=style.primary_accent_fill())
 
     # --- Right events panel ---
     today_events = _events_for_today(events, today)

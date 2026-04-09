@@ -14,7 +14,7 @@ from src.data.models import (
     DayForecast,
     WeatherData,
 )
-from src.render.canvas import render_dashboard
+from src.render.canvas import _resolve_style, render_dashboard
 from src.render.theme import Theme, ThemeLayout, ThemeStyle
 
 
@@ -175,6 +175,16 @@ class TestRenderDashboard:
             (44, 160, 96),
         }
         assert colors <= allowed
+
+    def test_inky_theme_gets_theme_specific_key_accents(self):
+        cfg = DisplayConfig(provider="inky", model="impression_7_3_2025", width=800, height=480)
+        style = _resolve_style(
+            Theme(name="fuzzyclock", layout=ThemeLayout(), style=ThemeStyle()),
+            render_mode="P",
+            config=cfg,
+        )
+        assert style.accent_primary == 4
+        assert style.accent_secondary == 3
 
 
 class TestGreyscaleCanvas:

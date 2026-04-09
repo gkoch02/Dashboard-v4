@@ -88,7 +88,12 @@ def draw_message(
             px = region.x + region.w - h_pad // 4 - ink_w
             py = int(text_block_bottom - ink_h * 2 // 3)
 
-        draw.text((px - bb[0], py - bb[1]), glyph, font=mark_font, fill=style.fg)
+        draw.text(
+            (px - bb[0], py - bb[1]),
+            glyph,
+            font=mark_font,
+            fill=style.primary_accent_fill(),
+        )
 
     # ---- Message lines (centered horizontally) ----
     y = text_block_top

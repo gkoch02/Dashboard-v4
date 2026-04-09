@@ -104,7 +104,12 @@ def draw_sunrise(
     title_font = font_title(14)
     date_str = now.strftime("%A, %b %-d")
     time_str = now.strftime("%-I:%M%p").lower().replace("am", "a").replace("pm", "p")
-    draw.text((x0 + _PAD, header_y + 8), "Home Dashboard", font=title_font, fill=bg)
+    draw.text(
+        (x0 + _PAD, header_y + 8),
+        "Home Dashboard",
+        font=title_font,
+        fill=style.primary_accent_fill(),
+    )
 
     right_text = f"{date_str}  {time_str}"
     if weather:
@@ -172,7 +177,12 @@ def draw_sunrise(
 
         gb = draw.textbbox((0, 0), glyph, font=glyph_font)
         gw, gh = gb[2] - gb[0], gb[3] - gb[1]
-        draw.text((glyph_x - gw // 2, glyph_y - gh // 2), glyph, font=glyph_font, fill=fg)
+        draw.text(
+            (glyph_x - gw // 2, glyph_y - gh // 2),
+            glyph,
+            font=glyph_font,
+            fill=style.primary_accent_fill(),
+        )
 
     # Horizon line (dashed)
     dashed_hline(draw, horizon_y, x0 + _PAD, x0 + w - _PAD, on=4, off=4, fill=fg)
@@ -213,8 +223,13 @@ def draw_sunrise(
 
     # Column labels
     label_font = font_label(11)
-    draw.text((x0 + _PAD, sched_y + 4), "DAYLIGHT", font=label_font, fill=fg)
-    draw.text((x0 + half_w + _PAD, sched_y + 4), "TONIGHT", font=label_font, fill=fg)
+    draw.text((x0 + _PAD, sched_y + 4), "DAYLIGHT", font=label_font, fill=style.primary_accent_fill())
+    draw.text(
+        (x0 + half_w + _PAD, sched_y + 4),
+        "TONIGHT",
+        font=label_font,
+        fill=style.secondary_accent_fill(),
+    )
 
     label_h = text_height(label_font) + 8
     row_font = font_body(12)

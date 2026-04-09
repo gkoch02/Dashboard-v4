@@ -35,8 +35,10 @@ def draw_header(
     if style.invert_header:
         filled_rect(draw, (x, y, x + w - 1, y + h - 1), fill=style.fg)
         text_fill = style.bg
+        title_fill = style.primary_accent_fill()
     else:
         text_fill = style.fg
+        title_fill = style.primary_accent_fill()
         # Draw a bottom border line for visual separation when there's no filled bar
         if style.show_borders:
             hline(draw, y + h - 1, x, x + w - 1, fill=style.fg)
@@ -46,7 +48,7 @@ def draw_header(
     title_font = _title_fn(20)
     th = text_height(title_font)
     title_y = y + (h - th) // 2
-    draw.text((x + pad, title_y), title, font=title_font, fill=text_fill)
+    draw.text((x + pad, title_y), title, font=title_font, fill=title_fill)
 
     # Last updated (right) — "Updated  Mar 15 · 9:43p"
     label_font = style.font_regular(11)

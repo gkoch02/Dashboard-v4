@@ -44,6 +44,32 @@ _INKY_BLUE = 3
 _INKY_YELLOW = 4
 _INKY_GREEN = 5
 
+_INKY_THEME_KEY_COLORS: dict[str, tuple[int, int]] = {
+    "default": (_INKY_BLUE, _INKY_RED),
+    "terminal": (_INKY_GREEN, _INKY_YELLOW),
+    "minimalist": (_INKY_BLUE, _INKY_RED),
+    "old_fashioned": (_INKY_RED, _INKY_YELLOW),
+    "today": (_INKY_BLUE, _INKY_RED),
+    "fantasy": (_INKY_RED, _INKY_YELLOW),
+    "qotd": (_INKY_BLUE, _INKY_RED),
+    "qotd_invert": (_INKY_YELLOW, _INKY_RED),
+    "weather": (_INKY_BLUE, _INKY_YELLOW),
+    "fuzzyclock": (_INKY_YELLOW, _INKY_BLUE),
+    "fuzzyclock_invert": (_INKY_YELLOW, _INKY_BLUE),
+    "diags": (_INKY_GREEN, _INKY_BLUE),
+    "air_quality": (_INKY_BLUE, _INKY_GREEN),
+    "moonphase": (_INKY_BLUE, _INKY_YELLOW),
+    "moonphase_invert": (_INKY_YELLOW, _INKY_BLUE),
+    "message": (_INKY_RED, _INKY_BLUE),
+    "timeline": (_INKY_BLUE, _INKY_RED),
+    "year_pulse": (_INKY_GREEN, _INKY_BLUE),
+    "sunrise": (_INKY_YELLOW, _INKY_RED),
+    "scorecard": (_INKY_RED, _INKY_BLUE),
+    "tides": (_INKY_BLUE, _INKY_YELLOW),
+    "photo": (_INKY_BLUE, _INKY_RED),
+    "graphite": (_INKY_BLUE, _INKY_RED),
+}
+
 
 def _resolve_render_mode(layout_mode: str, config: DisplayConfig) -> str:
     spec = get_display_spec(config.provider, config.model)
@@ -65,8 +91,15 @@ def _resolve_style(theme: Theme, render_mode: str, config: DisplayConfig):
             accent_warn=style.fg if style.accent_warn is None else style.accent_warn,
             accent_alert=style.fg if style.accent_alert is None else style.accent_alert,
             accent_good=style.fg if style.accent_good is None else style.accent_good,
+            accent_primary=style.fg if style.accent_primary is None else style.accent_primary,
+            accent_secondary=(
+                style.fg if style.accent_secondary is None else style.accent_secondary
+            ),
         )
     if render_mode == "P":
+        primary, secondary = _INKY_THEME_KEY_COLORS.get(
+            theme.name, (_INKY_BLUE, _INKY_RED)
+        )
         return replace(
             style,
             fg=_INKY_BLACK if style.fg == 0 else _INKY_WHITE,
@@ -75,6 +108,10 @@ def _resolve_style(theme: Theme, render_mode: str, config: DisplayConfig):
             accent_warn=_INKY_YELLOW if style.accent_warn is None else style.accent_warn,
             accent_alert=_INKY_RED if style.accent_alert is None else style.accent_alert,
             accent_good=_INKY_GREEN if style.accent_good is None else style.accent_good,
+            accent_primary=primary if style.accent_primary is None else style.accent_primary,
+            accent_secondary=(
+                secondary if style.accent_secondary is None else style.accent_secondary
+            ),
         )
     return replace(
         style,
@@ -82,6 +119,8 @@ def _resolve_style(theme: Theme, render_mode: str, config: DisplayConfig):
         accent_warn=style.fg if style.accent_warn is None else style.accent_warn,
         accent_alert=style.fg if style.accent_alert is None else style.accent_alert,
         accent_good=style.fg if style.accent_good is None else style.accent_good,
+        accent_primary=style.fg if style.accent_primary is None else style.accent_primary,
+        accent_secondary=style.fg if style.accent_secondary is None else style.accent_secondary,
     )
 
 

@@ -73,7 +73,12 @@ def draw_weather(
         if text_width(draw, candidate, label_font) <= max_label_w:
             weather_label = candidate
 
-    draw.text((x0 + pad, y0 + pad), weather_label, font=label_font, fill=style.fg)
+    draw.text(
+        (x0 + pad, y0 + pad),
+        weather_label,
+        font=label_font,
+        fill=style.primary_accent_fill(),
+    )
 
     if today is not None:
         moon_glyph = moon_phase_glyph(today)
@@ -85,7 +90,7 @@ def draw_weather(
         moon_glyph_w = moon_bbox[2] - moon_bbox[0]
         moon_y = label_mid_y - (moon_bbox[3] - moon_bbox[1]) // 2 - moon_bbox[1]
         moon_x = x0 + w - pad - moon_glyph_w - moon_bbox[0] - 2  # 2px inside right separator
-        draw.text((moon_x, moon_y), moon_glyph, font=moon_font, fill=style.fg)
+        draw.text((moon_x, moon_y), moon_glyph, font=moon_font, fill=style.secondary_accent_fill())
 
     if weather is None:
         msg_font = style.font_regular(13)
@@ -124,7 +129,13 @@ def draw_weather(
     # Weather icon (left side)
     icon_x = x0 + icon_x_offset
     icon_y = y0 + content_y_offset
-    draw_weather_icon(draw, (icon_x, icon_y), weather.current_icon, size=40, fill=style.fg)
+    draw_weather_icon(
+        draw,
+        (icon_x, icon_y),
+        weather.current_icon,
+        size=40,
+        fill=style.primary_accent_fill(),
+    )
 
     # Temperature (big) — right of icon
     temp_font = style.font_bold(36)

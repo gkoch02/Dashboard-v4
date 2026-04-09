@@ -11,6 +11,8 @@
   - **Specialized views**: [timeline](#timeline), [year\_pulse](#year_pulse), [sunrise](#sunrise), [air\_quality](#air_quality), [scorecard](#scorecard), [tides](#tides)
   - **Utility**: [message](#message), [diags](#diags)
 - [Creating your own theme](#creating-your-own-theme)
+- [Color Themes](color-themes.md)
+- [Color Theme Previews](color-theme-previews.md)
 - [Typography](#typography)
 
 ---
@@ -34,6 +36,10 @@ including `random_daily` and `random_hourly` (which trigger the rotation logic a
 
 Themes control component positions, proportions, fonts, and visual style -- not just
 colors. Each theme can hide sections, rearrange panels, or use entirely different fonts.
+
+To generate gallery-style PNGs for every theme, including the Inky Spectra 6 color path, see
+[Color Theme Previews](color-theme-previews.md). For a customer-facing gallery of the current
+preview images, see [Color Themes](color-themes.md).
 
 ---
 

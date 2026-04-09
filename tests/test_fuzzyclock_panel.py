@@ -4,7 +4,7 @@ from datetime import datetime
 
 from PIL import Image, ImageDraw
 
-from src.render.components.fuzzyclock_panel import draw_fuzzyclock, fuzzy_time
+from src.render.components.fuzzyclock_panel import _phrase_segments, draw_fuzzyclock, fuzzy_time
 from src.render.theme import ComponentRegion, ThemeStyle
 
 # ---------------------------------------------------------------------------
@@ -188,3 +188,20 @@ class TestDrawFuzzyclock:
         # height=60 means threshold = 60 - 2*24 = 12px, far smaller than any rendered block
         region = ComponentRegion(0, 0, 800, 60)
         draw_fuzzyclock(draw, _dt(7, 30), region=region)  # must not raise
+
+
+class TestPhraseSegments:
+    def test_half_past_phrase_highlights_operatives(self):
+        style = ThemeStyle(fg=0, bg=1, accent_primary=4, accent_secondary=3)
+        assert _phrase_segments("half past twelve", style) == [
+            ("half", 4),
+            (" past ", 0),
+            ("twelve", 3),
+        ]
+
+    def test_oclock_phrase_highlights_hour_only(self):
+        style = ThemeStyle(fg=0, bg=1, accent_primary=4)
+        assert _phrase_segments("seven o'clock", style) == [
+            ("seven", 4),
+            (" o'clock", 0),
+        ]

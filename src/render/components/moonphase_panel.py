@@ -106,7 +106,7 @@ def _draw_date_line(
     suffix = _ordinal_suffix(day_num)
     text = f"{day_name}, {month} {day_num}{suffix}, {today.year}"
     tw = text_width(draw, text, font)
-    draw.text((cx - tw // 2, y), text, font=font, fill=style.fg)
+    draw.text((cx - tw // 2, y), text, font=font, fill=style.secondary_accent_fill())
     return y + text_height(font) + 6
 
 
@@ -122,7 +122,7 @@ def _draw_phase_name(
     name = moon_phase_name(today).upper()
     text = f"~ {name} ~"
     tw = text_width(draw, text, font)
-    draw.text((cx - tw // 2, y), text, font=font, fill=style.fg)
+    draw.text((cx - tw // 2, y), text, font=font, fill=style.primary_accent_fill())
     return y + text_height(font) + 10
 
 
@@ -146,7 +146,7 @@ def _draw_moon_row(
     hero_x = cx - hero_w // 2 - hbbox[0]
     hero_y = y_top + (row_h - hero_h) // 2 - hbbox[1] - 8
 
-    draw.text((hero_x, hero_y), hero_glyph, font=hero_font, fill=style.fg)
+    draw.text((hero_x, hero_y), hero_glyph, font=hero_font, fill=style.primary_accent_fill())
 
     # Flanking moons: offsets from center, sizes, and day deltas
     flanks = [

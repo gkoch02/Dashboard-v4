@@ -57,6 +57,8 @@ _PHRASES = {
     55: "five to {next}",
 }
 
+_CONNECTOR_WORDS = {"past", "to"}
+
 
 def fuzzy_time(dt: datetime) -> str:
     """Return a human-readable fuzzy time phrase for *dt*.
@@ -88,6 +90,45 @@ def fuzzy_time(dt: datetime) -> str:
     hour_name = _HOURS[h]
     next_hour = _HOURS[(h + 1) % 12]
     return _PHRASES[bucket].format(hour=hour_name, next=next_hour)
+
+
+def _phrase_segments(phrase: str, style: ThemeStyle) -> list[tuple[str, int]]:
+    """Split a fuzzy time phrase into semantic segments for accent rendering."""
+    if phrase in {"midnight", "noon"}:
+        return [(phrase, style.primary_accent_fill())]
+    if phrase.endswith(" o'clock"):
+        return [
+            (phrase[: -len(" o'clock")], style.primary_accent_fill()),
+            (" o'clock", style.fg),
+        ]
+
+    words = phrase.split()
+    pivot_idx = next((i for i, word in enumerate(words) if word in _CONNECTOR_WORDS), -1)
+    if pivot_idx <= 0 or pivot_idx >= len(words) - 1:
+        return [(phrase, style.fg)]
+
+    leading = " ".join(words[:pivot_idx])
+    connector = words[pivot_idx]
+    trailing = " ".join(words[pivot_idx + 1 :])
+    return [
+        (leading, style.primary_accent_fill()),
+        (f" {connector} ", style.fg),
+        (trailing, style.secondary_accent_fill()),
+    ]
+
+
+def _draw_segmented_text(
+    draw: ImageDraw.ImageDraw,
+    x: int,
+    y: int,
+    segments: list[tuple[str, int]],
+    font,
+) -> None:
+    """Draw horizontally adjacent text segments with independent fills."""
+    cursor_x = x
+    for text, fill in segments:
+        draw.text((cursor_x, y), text, font=font, fill=fill)
+        cursor_x += int(font.getlength(text))
 
 
 # ---------------------------------------------------------------------------
@@ -157,13 +198,13 @@ def draw_fuzzyclock(
     # Vertical centering
     block_top = region.y + (region.h - block_h) // 2
 
-    # Phrase — centred horizontally
-    phrase_w = int(phrase_font.getlength(phrase))
+    phrase_segments = _phrase_segments(phrase, style)
+    phrase_w = sum(int(phrase_font.getlength(text)) for text, _fill in phrase_segments)
     phrase_x = region.x + (region.w - phrase_w) // 2
-    draw.text((phrase_x, block_top), phrase, font=phrase_font, fill=style.fg)
+    _draw_segmented_text(draw, phrase_x, block_top, phrase_segments, phrase_font)
 
     # Date line — centred horizontally, below phrase
     date_w = int(date_font.getlength(date_line))
     date_x = region.x + (region.w - date_w) // 2
     date_y = block_top + phrase_h + gap
-    draw.text((date_x, date_y), date_line, font=date_font, fill=style.fg)
+    draw.text((date_x, date_y), date_line, font=date_font, fill=style.secondary_accent_fill())
