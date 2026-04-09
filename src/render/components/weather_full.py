@@ -123,7 +123,7 @@ def _draw_hero(draw, weather, x0, y0, W, H, style):
     glyph_h = glyph_bbox[3] - glyph_bbox[1]
     icon_x = cx - glyph_w // 2 - glyph_bbox[0]
     icon_y = y0 + 8 - glyph_bbox[1]
-    draw.text((icon_x, icon_y), glyph, font=icon_font, fill=fg)
+    draw.text((icon_x, icon_y), glyph, font=icon_font, fill=style.primary_accent_fill())
 
     # Hero temperature
     temp_str = f"{weather.current_temp:.0f}°"

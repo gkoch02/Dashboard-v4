@@ -218,16 +218,36 @@ def draw_week(
             num_ink_h = num_bb[3] - num_bb[1]
             ty_num = y0 + (header_h - num_ink_h) // 2 - num_bb[1]
             ty_abbr = ty_num + num_bb[3] - abbr_bb[3]
-            draw.text((cx + PAD, ty_abbr), day_abbr, font=fnt, fill=style.fg)
+            draw.text((cx + PAD, ty_abbr), day_abbr, font=fnt, fill=style.primary_accent_fill())
             abbr_w = text_width(draw, day_abbr + " ", fnt)
-            draw.text((cx + PAD + abbr_w, ty_num), day_num, font=fnt, fill=style.fg)
+            draw.text(
+                (cx + PAD + abbr_w, ty_num),
+                day_num,
+                font=fnt,
+                fill=style.primary_accent_fill(),
+            )
             if style.show_borders:
                 # Thick 2px underline beneath the day label
-                hline(draw, y0 + header_h - 3, cx + PAD, cx + col_w - PAD - 1, fill=style.fg)
-                hline(draw, y0 + header_h - 2, cx + PAD, cx + col_w - PAD - 1, fill=style.fg)
+                hline(
+                    draw,
+                    y0 + header_h - 3,
+                    cx + PAD,
+                    cx + col_w - PAD - 1,
+                    fill=style.primary_accent_fill(),
+                )
+                hline(
+                    draw,
+                    y0 + header_h - 2,
+                    cx + PAD,
+                    cx + col_w - PAD - 1,
+                    fill=style.primary_accent_fill(),
+                )
             else:
                 # Subtle 1px border around the column header cell
-                draw.rectangle((cx, y0, cx + col_w - 1, y0 + header_h - 1), outline=style.fg)
+                draw.rectangle(
+                    (cx, y0, cx + col_w - 1, y0 + header_h - 1),
+                    outline=style.primary_accent_fill(),
+                )
         elif is_weekend:
             # Weekend: lighter styling — regular weight instead of semibold
             wknd_abbr_font = _col_hdr_fn(14)
@@ -237,9 +257,19 @@ def draw_week(
             num_ink_h = num_bb[3] - num_bb[1]
             ty_num = y0 + (header_h - num_ink_h) // 2 - num_bb[1]
             ty_abbr = ty_num + num_bb[3] - abbr_bb[3]
-            draw.text((cx + PAD, ty_abbr), day_abbr, font=wknd_abbr_font, fill=style.fg)
+            draw.text(
+                (cx + PAD, ty_abbr),
+                day_abbr,
+                font=wknd_abbr_font,
+                fill=style.secondary_accent_fill(),
+            )
             abbr_w = text_width(draw, day_abbr + " ", wknd_abbr_font)
-            draw.text((cx + PAD + abbr_w, ty_num), day_num, font=wknd_num_font, fill=style.fg)
+            draw.text(
+                (cx + PAD + abbr_w, ty_num),
+                day_num,
+                font=wknd_num_font,
+                fill=style.secondary_accent_fill(),
+            )
         else:
             # Weekday (not today)
             num_bb = draw.textbbox((0, 0), day_num, font=day_num_font)

@@ -142,7 +142,6 @@ def _draw_aqi_hero(
     style: ThemeStyle,
 ) -> None:
     """Left: large AQI number + category label.  Right: 6-zone scale bar."""
-    fg = style.fg
     accent = _aqi_accent(style, aq.aqi)
 
     split = int(W * 0.28)  # left column width
@@ -155,7 +154,7 @@ def _draw_aqi_hero(
     # "AIR QUALITY" section label — plain bold text
     label_text = "AIR QUALITY"
     label_font = style.font_bold(22)
-    draw.text((lx, ly), label_text, font=label_font, fill=fg)
+    draw.text((lx, ly), label_text, font=label_font, fill=style.primary_accent_fill())
     label_bottom = ly + text_height(label_font) + 8
 
     # Large AQI number

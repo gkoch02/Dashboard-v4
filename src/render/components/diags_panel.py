@@ -123,7 +123,7 @@ def _draw_header(draw, rx, ry, w, data: DashboardData, style: ThemeStyle) -> Non
     fg = style.fg
     title_font = style.font_bold(_LABEL_SIZE + 3)
     title_y = ry + (_HEADER_H - text_height(title_font)) // 2
-    draw.text((rx + 10, title_y), "DIAGNOSTICS", font=title_font, fill=fg)
+    draw.text((rx + 10, title_y), "DIAGNOSTICS", font=title_font, fill=style.primary_accent_fill())
 
     now = data.fetched_at
     ts_font = style.font_regular(_DATA_SIZE - 1)
@@ -149,14 +149,13 @@ def _label(
 ) -> int:
     """Draw section label with optional right-aligned source attribution.
     Returns y advanced past the label row."""
-    fg = style.fg
     lf = style.font_bold(_LABEL_SIZE)
-    draw.text((x, y), text, font=lf, fill=fg)
+    draw.text((x, y), text, font=lf, fill=style.primary_accent_fill())
     if source:
         sf = style.font_regular(_SRC_SIZE)
         sw = text_width(draw, source, sf)
         sy = y + (text_height(lf) - text_height(sf)) // 2
-        draw.text((x + w - sw, sy), source, font=sf, fill=fg)
+        draw.text((x + w - sw, sy), source, font=sf, fill=style.secondary_accent_fill())
     return y + text_height(lf) + _LABEL_PAD
 
 

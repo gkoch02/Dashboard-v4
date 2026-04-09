@@ -139,7 +139,7 @@ def draw_info(
     # Section label
     label_font = style.label_font()
     info_label = style.component_labels.get("info", "QUOTE OF THE DAY")
-    draw.text((x0 + pad, y0 + pad), info_label, font=label_font, fill=style.fg)
+    draw.text((x0 + pad, y0 + pad), info_label, font=label_font, fill=style.primary_accent_fill())
 
     quote = _quote_for_today(today, refresh=quote_refresh)
 
@@ -174,4 +174,9 @@ def draw_info(
     author_font = _author_fn(12)
     attr_y = y + used_h + 6
     if attr_y + 16 < y0 + h:
-        draw.text((x0 + pad, attr_y), f"— {quote['author']}", font=author_font, fill=style.fg)
+        draw.text(
+            (x0 + pad, attr_y),
+            f"— {quote['author']}",
+            font=author_font,
+            fill=style.secondary_accent_fill(),
+        )

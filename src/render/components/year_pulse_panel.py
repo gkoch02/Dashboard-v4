@@ -81,7 +81,7 @@ def draw_year_pulse(
     wk_h = wk_bb[3] - wk_bb[1]
     wk_x = x0 + w - PAD - wk_w - wk_bb[0]
     wk_y = y0 + PAD + (year_h - wk_h) // 2 - wk_bb[1]
-    draw.text((wk_x, wk_y), week_str, font=week_label_font, fill=style.fg)
+    draw.text((wk_x, wk_y), week_str, font=week_label_font, fill=style.secondary_accent_fill())
 
     # Progress bar, sitting below the year number
     bar_top = y0 + PAD + year_h + 10
@@ -95,7 +95,9 @@ def draw_year_pulse(
     # Filled portion
     if filled_w > 0:
         filled_rect(
-            draw, (bar_x0, bar_top, bar_x0 + filled_w - 1, bar_top + BAR_H - 1), fill=style.fg
+            draw,
+            (bar_x0, bar_top, bar_x0 + filled_w - 1, bar_top + BAR_H - 1),
+            fill=style.primary_accent_fill(),
         )
 
     # Bar label below: "Day X of Y · Z% complete"
@@ -107,7 +109,7 @@ def draw_year_pulse(
         (bar_x0 - bl_bb[0], bar_top + BAR_H + 5 - bl_bb[1]),
         bar_label,
         font=bar_label_font,
-        fill=style.fg,
+        fill=style.primary_accent_fill(),
     )
 
     stats_bottom = bar_top + BAR_H + 5 + bl_h + PAD
@@ -149,12 +151,19 @@ def draw_year_pulse(
 
         # "→" arrow
         arrow_str = "\u2192"
-        draw.text((x0 + PAD, list_top), arrow_str, font=arrow_font, fill=style.fg)
+        draw.text(
+            (x0 + PAD, list_top), arrow_str, font=arrow_font, fill=style.secondary_accent_fill()
+        )
         arrow_w = text_width(draw, arrow_str, arrow_font)
 
         # Day count (bold)
         days_str = f"{days_until}d" if days_until > 0 else "today"
-        draw.text((x0 + PAD + arrow_w + 6, list_top), days_str, font=days_font, fill=style.fg)
+        draw.text(
+            (x0 + PAD + arrow_w + 6, list_top),
+            days_str,
+            font=days_font,
+            fill=style.primary_accent_fill(),
+        )
         days_w = text_width(draw, days_str, days_font)
 
         # Event / birthday name

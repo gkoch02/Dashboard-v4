@@ -138,7 +138,12 @@ def draw_qotd(
             px = region.x + region.w - h_pad // 4 - ink_w
             py = text_block_bottom - ink_h * 2 // 3
 
-        draw.text((px - bb[0], py - bb[1]), glyph, font=mark_font, fill=style.fg)
+        draw.text(
+            (px - bb[0], py - bb[1]),
+            glyph,
+            font=mark_font,
+            fill=style.primary_accent_fill(),
+        )
 
     # ---- Quote body lines (centered horizontally) ----
     y = text_block_top
@@ -152,7 +157,7 @@ def draw_qotd(
     y += attr_gap - line_gap
     aw = int(best_attr_font.getlength(author))  # type: ignore[union-attr]
     ax = region.x + (region.w - aw) // 2
-    draw.text((ax, y), author, font=best_attr_font, fill=style.fg)
+    draw.text((ax, y), author, font=best_attr_font, fill=style.secondary_accent_fill())
 
 
 # ---------------------------------------------------------------------------
@@ -217,7 +222,13 @@ def draw_qotd_weather(
     # ---- Zone 1: icon + temperature ----
     icon_size = 40
     icon_y = center_y - icon_size // 2
-    draw_weather_icon(draw, (Z1_X, icon_y), weather.current_icon, size=icon_size, fill=style.fg)
+    draw_weather_icon(
+        draw,
+        (Z1_X, icon_y),
+        weather.current_icon,
+        size=icon_size,
+        fill=style.primary_accent_fill(),
+    )
     icon_right = Z1_X + _icon_width(draw, weather.current_icon, icon_size)
 
     temp_font = jakarta_bold(34)
@@ -300,4 +311,4 @@ def draw_qotd_weather(
         moon_bbox = draw.textbbox((0, 0), moon_glyph, font=moon_font)
         moon_x = x0 + w - PAD - (moon_bbox[2] - moon_bbox[0]) - moon_bbox[0]
         moon_y = center_y - (moon_bbox[3] - moon_bbox[1]) // 2 - moon_bbox[1]
-        draw.text((moon_x, moon_y), moon_glyph, font=moon_font, fill=style.fg)
+        draw.text((moon_x, moon_y), moon_glyph, font=moon_font, fill=style.secondary_accent_fill())

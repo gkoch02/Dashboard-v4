@@ -6,6 +6,7 @@
 - [Makefile targets](#makefile-targets)
 - [CLI flags](#cli-flags)
 - [Offline development](#offline-development)
+- [Color preview workflow](#color-preview-workflow)
 - [Linting](#linting)
 - [Project structure](#project-structure)
 - [Dependencies](#dependencies)
@@ -77,6 +78,16 @@ venv/bin/python -m src.main --dry-run --dummy
 ```
 
 No API keys, credentials, or hardware needed. Renders to `output/latest.png`.
+
+---
+
+## Color preview workflow
+
+For standard theme batches and Inky-color preview batches, see
+[Color Theme Previews](color-theme-previews.md).
+
+Use this when you need the final Spectra 6 palette output rather than the normal
+black-and-white dry-run images.
 
 ---
 

@@ -50,7 +50,12 @@ def draw_birthdays(
     # Section label
     label_font = style.label_font()
     birthdays_label = style.component_labels.get("birthdays", "BIRTHDAYS")
-    draw.text((x0 + pad, y0 + pad), birthdays_label, font=label_font, fill=style.fg)
+    draw.text(
+        (x0 + pad, y0 + pad),
+        birthdays_label,
+        font=label_font,
+        fill=style.primary_accent_fill(),
+    )
 
     if not birthdays:
         empty_font = style.font_regular(12)
@@ -104,7 +109,10 @@ def draw_birthdays(
             # Invert the entire row for today birthdays — most urgent, deserves strongest signal
             row_rect = (x0 + pad - 1, y - 1, x0 + w - pad - 1, y + line_h - 2)
             filled_rect(draw, row_rect, fill=style.fg)
-            draw.ellipse((x0 + pad, y + 5, x0 + pad + 5, y + 10), fill=style.bg)
+            draw.ellipse(
+                (x0 + pad, y + 5, x0 + pad + 5, y + 10),
+                fill=style.primary_accent_fill(),
+            )
             draw_text_truncated(
                 draw,
                 (x0 + pad + 12, y),
@@ -114,7 +122,10 @@ def draw_birthdays(
                 fill=style.bg,
             )
         else:
-            draw.ellipse((x0 + pad, y + 5, x0 + pad + 5, y + 10), fill=style.fg)
+            draw.ellipse(
+                (x0 + pad, y + 5, x0 + pad + 5, y + 10),
+                fill=style.secondary_accent_fill(),
+            )
             draw_text_truncated(
                 draw,
                 (x0 + pad + 12, y),
