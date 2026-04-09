@@ -173,11 +173,7 @@ class TestLoadConfig:
 
     def test_inky_model_auto_derives_dimensions(self, tmp_path):
         p = tmp_path / "config.yaml"
-        p.write_text(
-            yaml.dump(
-                {"display": {"provider": "inky", "model": "impression_7_3_2025"}}
-            )
-        )
+        p.write_text(yaml.dump({"display": {"provider": "inky", "model": "impression_7_3_2025"}}))
         cfg = load_config(str(p))
         assert cfg.display.provider == "inky"
         assert cfg.display.model == "impression_7_3_2025"

@@ -259,7 +259,10 @@ def draw_staleness_glyph(draw: ImageDraw.ImageDraw, region, style) -> None:
     glyph_w, glyph_h = 12, 14
     gx = region.x + region.w - glyph_w - 3
     gy = region.y + region.h - glyph_h - 3
-    fill = style.accent_alert if getattr(style, "accent_alert", None) is not None else style.fg
+    fill = style.fg
+    accent_alert = getattr(style, "accent_alert", None)
+    if isinstance(accent_alert, (int, tuple)):
+        fill = accent_alert
     filled_rect(draw, (gx, gy, gx + glyph_w - 1, gy + glyph_h - 1), fill=fill)
     warn_font = _fonts.bold(9)
     bbox = draw.textbbox((0, 0), "!", font=warn_font)

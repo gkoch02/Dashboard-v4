@@ -136,7 +136,9 @@ class TestPublishHardware:
 
         with (
             patch("src.services.output.image_changed", return_value=True),
-            patch("src.services.output.build_display_driver", return_value=mock_display) as mock_cls,
+            patch(
+                "src.services.output.build_display_driver", return_value=mock_display
+            ) as mock_cls,
         ):
             svc.publish(image, dry_run=False, force_full=False, now=_now(), theme_name="default")
 
@@ -214,7 +216,9 @@ class TestPublishHardware:
 
         with (
             patch("src.services.output.image_changed", return_value=True),
-            patch("src.services.output.build_display_driver", return_value=mock_display) as mock_cls,
+            patch(
+                "src.services.output.build_display_driver", return_value=mock_display
+            ) as mock_cls,
         ):
             svc.publish(image, dry_run=False, force_full=False, now=_now(), theme_name="default")
 
@@ -267,7 +271,9 @@ class TestPublishHardware:
 
         with (
             patch("src.services.output.image_changed", return_value=True),
-            patch("src.services.output.build_display_driver", return_value=MagicMock()) as mock_build,
+            patch(
+                "src.services.output.build_display_driver", return_value=MagicMock()
+            ) as mock_build,
         ):
             svc.publish(
                 image,
@@ -293,7 +299,9 @@ class TestPublishHardware:
 
         with (
             patch("src.services.output.image_changed", return_value=False),
-            patch("src.services.output.build_display_driver", return_value=MagicMock()) as mock_build,
+            patch(
+                "src.services.output.build_display_driver", return_value=MagicMock()
+            ) as mock_build,
         ):
             svc.publish(
                 image,

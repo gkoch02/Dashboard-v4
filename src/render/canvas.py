@@ -335,7 +335,9 @@ def render_dashboard(
 
     if needs_resize:
         if target_is_color:
-            image = image.convert("RGB").resize((config.width, config.height), Image.Resampling.LANCZOS)
+            image = image.convert("RGB").resize(
+                (config.width, config.height), Image.Resampling.LANCZOS
+            )
         else:
             l_image = image if layout.canvas_mode == "L" else image.convert("L")
             image = l_image.resize((config.width, config.height), Image.Resampling.LANCZOS)

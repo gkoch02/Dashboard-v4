@@ -568,8 +568,7 @@ def validate_config(
                     f"for provider '{cfg.display.provider}'"
                 ),
                 hint=(
-                    "Supported models: "
-                    f"{', '.join(supported_display_models(cfg.display.provider))}"
+                    f"Supported models: {', '.join(supported_display_models(cfg.display.provider))}"
                 ),
             )
         )

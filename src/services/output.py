@@ -86,7 +86,9 @@ class OutputService:
             state_dir=self.cfg.state_dir,
             force_full=force_full,
         ):
-            logger.info("Inky refresh throttled — skipping hardware update for theme '%s'", theme_name)
+            logger.info(
+                "Inky refresh throttled — skipping hardware update for theme '%s'", theme_name
+            )
             return
 
         if not image_changed(image, self.cfg.output_dir) and not force_full:
