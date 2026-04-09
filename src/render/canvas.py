@@ -97,9 +97,7 @@ def _resolve_style(theme: Theme, render_mode: str, config: DisplayConfig):
             ),
         )
     if render_mode == "P":
-        primary, secondary = _INKY_THEME_KEY_COLORS.get(
-            theme.name, (_INKY_BLUE, _INKY_RED)
-        )
+        primary, secondary = _INKY_THEME_KEY_COLORS.get(theme.name, (_INKY_BLUE, _INKY_RED))
         return replace(
             style,
             fg=_INKY_BLACK if style.fg == 0 else _INKY_WHITE,

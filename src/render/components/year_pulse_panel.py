@@ -95,9 +95,9 @@ def draw_year_pulse(
     # Filled portion
     if filled_w > 0:
         filled_rect(
-        draw,
-        (bar_x0, bar_top, bar_x0 + filled_w - 1, bar_top + BAR_H - 1),
-        fill=style.primary_accent_fill(),
+            draw,
+            (bar_x0, bar_top, bar_x0 + filled_w - 1, bar_top + BAR_H - 1),
+            fill=style.primary_accent_fill(),
         )
 
     # Bar label below: "Day X of Y · Z% complete"
@@ -151,7 +151,9 @@ def draw_year_pulse(
 
         # "→" arrow
         arrow_str = "\u2192"
-        draw.text((x0 + PAD, list_top), arrow_str, font=arrow_font, fill=style.secondary_accent_fill())
+        draw.text(
+            (x0 + PAD, list_top), arrow_str, font=arrow_font, fill=style.secondary_accent_fill()
+        )
         arrow_w = text_width(draw, arrow_str, arrow_font)
 
         # Day count (bold)

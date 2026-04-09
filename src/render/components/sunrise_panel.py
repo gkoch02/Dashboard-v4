@@ -223,7 +223,9 @@ def draw_sunrise(
 
     # Column labels
     label_font = font_label(11)
-    draw.text((x0 + _PAD, sched_y + 4), "DAYLIGHT", font=label_font, fill=style.primary_accent_fill())
+    draw.text(
+        (x0 + _PAD, sched_y + 4), "DAYLIGHT", font=label_font, fill=style.primary_accent_fill()
+    )
     draw.text(
         (x0 + half_w + _PAD, sched_y + 4),
         "TONIGHT",
