@@ -272,7 +272,7 @@ The timer fires every 5 minutes. The app handles scheduling internally:
 |---|---|
 | `quiet_hours_start` to `quiet_hours_end` | Process exits immediately -- no fetch, render, or display write |
 | First run after quiet hours end | Forces a full eInk refresh |
-| All other active hours | eInk refreshed only when image content changes (hash check); API calls gated by per-source fetch intervals |
+| All other active hours | Waveshare refreshes only when image content changes; Inky also applies a one-refresh-per-hour cap except for `fuzzyclock` themes; API calls remain gated by per-source fetch intervals |
 
 Configure quiet hours:
 
@@ -311,7 +311,9 @@ dependencies, then `make pi-enable` to start the timer.
 
 Set both `display.provider` and `display.model` in `config.yaml`. Width and height are
 derived automatically from the selected backend/model. The dashboard renders at 800x480 base
-resolution and scales to the display's native resolution when needed.
+resolution and scales to the display's native resolution when needed. Inky Impression panels
+do not support partial refresh; non-fuzzyclock themes are therefore throttled to one hardware
+update per hour unless `--force-full-refresh` is used.
 
 ---
 

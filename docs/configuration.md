@@ -18,16 +18,17 @@ All fields are optional. Missing fields use defaults shown below.
 
 ```yaml
 display:
-  model: "epd7in5_V2"             # Waveshare model name
+  provider: "waveshare"           # "waveshare" | "inky"
+  model: "epd7in5_V2"             # provider-specific model name
   # width: 800                    # override auto-derived width
   # height: 480                   # override auto-derived height
-  enable_partial_refresh: false    # use partial eInk refresh (faster, lower quality)
+  enable_partial_refresh: false    # Waveshare only; ignored/not supported on Inky
   max_partials_before_full: 6     # partial refreshes before forcing a full one
   week_days: 7                    # number of days in the week view
   show_weather: true
   show_birthdays: true
   show_info_panel: true
-  # quantization_mode: "threshold" # threshold | floyd_steinberg | ordered
+  # quantization_mode: "threshold" # Waveshare 1-bit path: threshold | floyd_steinberg | ordered
 
 google:
   service_account_path: "credentials/service_account.json"
@@ -105,7 +106,7 @@ logging:
 ## Quantization mode
 
 The `display.quantization_mode` field controls how the greyscale rendering canvas is
-converted to the 1-bit output required by the eInk display.  All built-in themes render
+converted to the 1-bit output required by Waveshare displays. All built-in themes render
 in strict black/white so the choice only affects output when:
 
 - A display model with a non-default resolution is configured (the LANCZOS resize produces
@@ -123,6 +124,32 @@ in strict black/white so the choice only affects output when:
 display:
   quantization_mode: "threshold"   # threshold | floyd_steinberg | ordered
 ```
+
+For `display.provider: inky`, the final output is mapped to the Inky Impression's
+limited color palette instead of being quantized to 1-bit.
+
+---
+
+## Display providers and models
+
+```yaml
+display:
+  provider: "waveshare"
+  model: "epd7in5_V2"
+```
+
+Supported providers:
+
+- `waveshare` — Waveshare e-Paper HATs via the `waveshare_epd` Python package
+- `inky` — Pimoroni Inky Impression panels via the `inky` Python package
+
+Supported models:
+
+- `waveshare`: `epd7in5`, `epd7in5_V2`, `epd7in5_V3`, `epd7in5b_V2`, `epd7in5_HD`, `epd9in7`, `epd13in3k`
+- `inky`: `impression_7_3_2025`
+
+Width and height are derived automatically from the selected provider/model unless
+overridden explicitly.
 
 ---
 
@@ -182,6 +209,16 @@ The dashboard computes a SHA-256 hash of each rendered image and compares it to 
 previous render. When nothing has changed (common overnight or on quiet days), the eInk
 refresh is skipped entirely. This extends display lifespan and saves power.
 `--force-full-refresh` bypasses this check.
+
+When `display.provider: inky` is selected, there is an additional time-based limit because
+the Inky Impression panel does not support partial refresh:
+
+- Non-fuzzyclock themes are limited to one hardware update per hour.
+- `fuzzyclock` and `fuzzyclock_invert` bypass that hourly limit and can refresh at the
+  normal timer cadence.
+- `--force-full-refresh` bypasses the hourly limit.
+
+The Inky throttle state is persisted in `state/inky_refresh_state.json`.
 
 ---
 
