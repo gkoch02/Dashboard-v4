@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Python eInk dashboard for Raspberry Pi. Displays a weekly calendar (Google Calendar), weather (OpenWeatherMap), upcoming birthdays, and a daily quote. Renders to a Waveshare eInk display or PNG preview. Includes an optional Flask web UI for status monitoring and config editing.
+Python eInk dashboard for Raspberry Pi. Displays a weekly calendar (Google Calendar), weather (OpenWeatherMap), upcoming birthdays, and a daily quote. Renders to a supported eInk display (Waveshare or Pimoroni Inky Impression) or PNG preview. Includes an optional Flask web UI for status monitoring and config editing.
 
 ## Quick Commands
 
@@ -15,7 +15,8 @@ make check          # Validate config/config.yaml
 make version        # Print current version (e.g. main.py 4.3.1)
 make deploy         # Rsync to Pi (configurable: PI_USER, PI_HOST, PI_DIR)
 make install        # Install systemd timer on remote Pi (via ssh/scp)
-make pi-install     # Full Pi setup: apt deps, venv, Waveshare library (run ON Pi)
+make pi-install     # Full Pi setup: apt deps, venv, Inky + Waveshare drivers (run ON Pi)
+make install-display-drivers  # Reinstall/verify hardware driver libraries in the venv
 make pi-enable      # Install systemd units and enable timer (run ON Pi)
 make pi-status      # Show timer status and recent logs (run ON Pi)
 make pi-logs        # Tail output/dashboard.log (run ON Pi)
@@ -50,7 +51,8 @@ src/
 ├── services/
 │   ├── run_policy.py          # resolve_tz, should_skip_refresh, should_force_full_refresh
 │   ├── theme.py               # resolve_theme_name (schedule → random → concrete), resolve_theme
-│   └── output.py              # OutputService — publish image to display or PNG; write last_success.txt
+│   └── output.py              # OutputService — publish image to display or PNG; write last_success.txt;
+│                              #   Inky hourly throttle for non-fuzzyclock themes
 ├── _version.py                # Single source of truth: __version__ = "4.3.1"
 ├── config.py                  # YAML → typed dataclasses; validate_config()
 ├── dummy_data.py              # Realistic dummy data for --dummy / dev previews
@@ -58,7 +60,8 @@ src/
 ├── data/models.py             # Pure dataclasses: CalendarEvent, WeatherData, AirQualityData,
 │                              #   Birthday, HostData, DashboardData, StalenessLevel
 ├── display/
-│   ├── driver.py              # DisplayDriver ABC → DryRunDisplay, WaveshareDisplay; image_changed()
+│   ├── driver.py              # DisplayDriver ABC → DryRunDisplay, WaveshareDisplay, InkyDisplay;
+│   │                          #   provider/model specs + image_changed()
 │   └── refresh_tracker.py     # Partial vs full refresh state machine
 ├── fetchers/
 │   ├── calendar.py            # Dispatcher: routes to Google API or ICS; birthday extraction
@@ -73,7 +76,8 @@ src/
 └── render/
     ├── canvas.py              # Top-level render orchestrator (dispatches to components by theme)
     ├── theme.py               # Theme system (ComponentRegion, ThemeLayout, ThemeStyle); AVAILABLE_THEMES
-    ├── quantize.py            # quantize_for_display() — converts L→"1" via threshold / floyd_steinberg / ordered
+    ├── quantize.py            # quantize_for_display() for Waveshare 1-bit output +
+    │                          #   quantize_to_palette() for Inky palette mapping
     ├── random_theme.py        # Daily/hourly random theme selection + persistence
     ├── layout.py              # Default layout constants
     ├── fonts.py               # Font loader (@lru_cache)
@@ -129,7 +133,7 @@ output/                        # Generated PNGs + logs + health marker (git-igno
 credentials/                   # Google service account JSON (git-ignored)
 pyproject.toml                 # Project metadata, dependencies, tool config (ruff, pytest, mypy)
 requirements.txt               # Core Python dependencies (kept for Pi deployment compat)
-requirements-pi.txt            # Raspberry Pi-specific deps (gpiozero, lgpio, Waveshare EPD)
+requirements-pi.txt            # Raspberry Pi-specific deps (gpiozero, lgpio, inky; Waveshare lib installed by Makefile)
 ```
 
 ## Architecture Patterns
@@ -140,7 +144,7 @@ Fetchers, caching, circuit breaking, and staleness are all per-source (calendar,
 ### Theme system
 Three-layer design: **ComponentRegion** (bounding box) → **ThemeLayout** (canvas + regions + draw order + `canvas_mode`) → **ThemeStyle** (colors, fonts, spacing). Components receive region + style and draw only within bounds. Themes are frozen dataclasses.
 
-`ThemeLayout.canvas_mode` is `"1"` (1-bit, default — all 20 built-in themes) or `"L"` (8-bit greyscale, opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle` (`bg=1` is near-black in L mode, not white). The final L→`"1"` conversion is handled by `quantize_for_display()` in `render/quantize.py` and is controlled by `display.quantization_mode` in config (`threshold` / `floyd_steinberg` / `ordered`). All existing themes and display drivers are unchanged — `render_dashboard()` always returns a mode `"1"` image.
+`ThemeLayout.canvas_mode` is `"1"` (1-bit, default — all 20 built-in themes) or `"L"` (8-bit greyscale, opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle` (`bg=1` is near-black in L mode, not white). For Waveshare, the final L→`"1"` conversion is handled by `quantize_for_display()` in `render/quantize.py` and is controlled by `display.quantization_mode` (`threshold` / `floyd_steinberg` / `ordered`). For Inky, the final image is mapped to the limited Spectra 6 palette instead of being quantized to 1-bit.
 
 Two rotation cadences are available: `theme: random_daily` (alias: `random`) picks once per day after midnight and persists to `state/random_theme_state.json`; `theme: random_hourly` picks once per hour and persists to `state/random_theme_hourly_state.json`. Both use the same `random_theme.include` / `random_theme.exclude` lists. The concrete theme name is resolved in `services/theme.py` before `load_theme()` is called — `load_theme()` itself never receives a pseudo-theme name.
 
@@ -149,14 +153,14 @@ Two rotation cadences are available: `theme: random_daily` (alias: `random`) pic
 ### Data flow
 `main.py` (thin): parse args → load config → validate config → `DashboardApp.run()`.
 
-`DashboardApp.run()`: resolve timezone → check quiet hours → check morning startup (auto-force-full-refresh) → load data (dummy or `DataPipeline.fetch()`) → filter events → resolve theme name → load theme → render → `OutputService.publish()` → write `last_success.txt`.
+`DashboardApp.run()`: resolve timezone → check quiet hours → check morning startup (auto-force-full-refresh) → load data (dummy or `DataPipeline.fetch()`) → filter events → resolve theme name → load theme → render → `OutputService.publish(now=..., theme_name=...)` → write `last_success.txt`.
 
 `DataPipeline.fetch()`: check cache freshness per source → check circuit breaker → launch concurrent fetches via `ThreadPoolExecutor` → resolve results (cache fallback on failure) → fetch host data synchronously → return `DashboardData`.
 
 ### Rendering
 Components are pure functions: `draw_*(draw, data, region, style) -> None`. No global state. Same input produces the same PNG.
 
-`render_dashboard()` creates the canvas in `layout.canvas_mode` (`"1"` for all built-in themes). After drawing and any optional overlay, a resize via LANCZOS is applied if display dimensions differ from canvas dimensions. Quantization (`quantize_for_display()`) fires whenever a resize occurred **or** the canvas is `"L"`, converting the greyscale image to final 1-bit output. The quantization algorithm is read from `config.display.quantization_mode` (default `"threshold"`). The SHA-256 image hash used for refresh suppression is always computed on the final 1-bit image.
+`render_dashboard()` creates the canvas in a mode derived from theme + display provider. After drawing and any optional overlay, a resize via LANCZOS is applied if display dimensions differ from canvas dimensions. Waveshare output is quantized to final 1-bit output via `quantize_for_display()`. Inky output is mapped to the limited Spectra 6 RGB palette via `quantize_to_palette()`. The SHA-256 image hash used for refresh suppression is computed on the final backend-ready image bytes.
 
 ## Key Conventions
 
@@ -226,7 +230,8 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 
 | Field | Default | Effect |
 |---|---|---|
-| `fg` / `bg` | `0` / `1` | 1-bit color values: 0 = BLACK, 1 = WHITE. For `canvas_mode="L"` themes use `fg=0, bg=255` instead. |
+| `fg` / `bg` | `0` / `1` | Base foreground/background values. For `canvas_mode="L"` themes use `fg=0, bg=255` instead. Inky remaps these to palette entries internally. |
+| `accent_info` / `accent_warn` / `accent_alert` / `accent_good` | `None` | Optional semantic accent roles. Waveshare falls back to monochrome-safe values; Inky maps these to palette colors for low-risk status emphasis. |
 | `invert_header` | `True` | Fill header bar with `fg`, draw text in `bg` |
 | `invert_today_col` | `True` | Fill today column with `fg`, draw text in `bg` |
 | `invert_allday_bars` | `True` | Filled (vs outlined) all-day event bars |
@@ -261,10 +266,12 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - Quiet hours (default 23:00–06:00): app exits immediately during this window (dry-run bypasses this)
 - Morning startup: first run within 30 minutes after `quiet_hours_end` automatically forces a full refresh, regardless of `--force-full-refresh`
 - eInk partial refreshes degrade quality; full refresh forced after `max_partials_before_full` partials
+- Inky Impression panels do not support partial refresh. For `display.provider: inky`, non-fuzzyclock themes are limited to one hardware refresh per hour; `fuzzyclock` and `fuzzyclock_invert` bypass that limit; `--force-full-refresh` also bypasses it
 - Default canvas: 800×480; scaled via LANCZOS to match display resolution
 - LANCZOS resize produces greyscale pixels; those are quantized to 1-bit by `quantize_for_display()`. The default `threshold` mode differs from the previous hard `.convert("1")` which used Floyd-Steinberg by Pillow default — set `display.quantization_mode: "floyd_steinberg"` to restore the old resize behavior if needed
 - `canvas_mode = "L"` themes must use `bg=255` (not `bg=1`) in `ThemeStyle`; `bg=1` is near-black in L mode. All 20 built-in themes use `canvas_mode="1"` (default) and are unaffected
 - Image hash comparison (`last_image_hash.txt`) skips eInk writes when content unchanged
+- Inky throttle state persists in `state/inky_refresh_state.json`
 - Health marker written to `output/last_success.txt` on every successful run (ISO timestamp)
 - Daily random theme state persists in `state/random_theme_state.json`; delete it to force a new pick mid-day
 - Hourly random theme state persists in `state/random_theme_hourly_state.json`; delete it to force a new pick mid-hour
@@ -287,7 +294,7 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - `air_quality` theme uses `draw_air_quality_full()` in `air_quality_panel.py`, which receives the full `DashboardData` object (same pattern as `diags_panel`); the component dispatches via the `air_quality_full` region on `ThemeLayout`
 - `retry_fetch()` in `data_pipeline.py` retries only likely transient failures and does not retry likely permanent config/data errors (`RuntimeError`, `ValueError`, `TypeError`, `KeyError`)
 - `gpiozero` pin factory is set to `lgpio` for Pi hardware runtime (required for modern Pi OS)
-- Supported Waveshare display models: `epd7in5` (640×384), `epd7in5_V2` (800×480, default), `epd7in5_V3` (800×480), `epd7in5b_V2` (800×480), `epd7in5_HD` (880×528), `epd9in7` (1200×825), `epd13in3k` (1600×1200). Model is set via `display.model` in config; canvas renders at 800×480 and scales to the target resolution via LANCZOS.
+- Supported display providers/models: `waveshare` → `epd7in5` (640×384), `epd7in5_V2` (800×480, default), `epd7in5_V3` (800×480), `epd7in5b_V2` (800×480), `epd7in5_HD` (880×528), `epd9in7` (1200×825), `epd13in3k` (1600×1200); `inky` → `impression_7_3_2025` (800×480). Set via `display.provider` + `display.model`; canvas renders at 800×480 and scales when needed.
 - **ICS feed**: when `google.ical_url` is set, `fetch_events()` dispatches to `_fetch_from_ical()` instead of the Google API path — `service_account_path` is ignored for event fetching; the Google API path (including incremental sync) is completely bypassed
 - ICS feeds have no sync token mechanism — the full feed is always re-downloaded and re-parsed on every calendar fetch; at the default 2-hour `events_fetch_interval` this is negligible
 - `_fetch_from_ical()` uses `requests.get(..., timeout=30)` and the `icalendar` library; HTTP errors or parse errors are caught, logged as warnings, and return `[]` (graceful degradation)

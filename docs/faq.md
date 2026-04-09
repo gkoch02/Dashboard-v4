@@ -33,6 +33,10 @@ venv/bin/python -m src.main --config config/config.yaml
 
 Add `--force-full-refresh` to force a full eInk refresh and bypass fetch intervals.
 
+If you use `display.provider: inky`, normal non-fuzzyclock themes are also limited to
+one hardware update per hour because the Inky Impression does not support partial refresh.
+`fuzzyclock` and `fuzzyclock_invert` bypass that hourly limit.
+
 ### How long is stale data kept?
 
 Data progresses through four staleness levels based on age relative to the
@@ -123,6 +127,10 @@ venv/bin/python -m src.main --config config/config.yaml --force-full-refresh
 Or wait for the automatic full refresh that happens after
 `max_partials_before_full` partial refreshes (default: 6).
 
+That partial-refresh setting applies to Waveshare only. Inky Impression panels always do
+full refreshes, and the dashboard instead limits non-fuzzyclock hardware writes to once
+per hour.
+
 ## Display
 
 ### The display shows ghosting or artifacts
@@ -132,7 +140,13 @@ automatically performs a full refresh after a configurable number of partial
 refreshes (`display.max_partials_before_full`, default 6). You can also force
 one with `--force-full-refresh`.
 
-### Which Waveshare displays are supported?
+For `display.provider: inky`, the panel does not support partial refresh at all.
+The dashboard therefore treats Inky differently: non-fuzzyclock themes are
+limited to one hardware update per hour, while `fuzzyclock` and
+`fuzzyclock_invert` continue updating normally.
 
-See `display.model` options in the [Configuration Reference](configuration.md)
+### Which displays are supported?
+
+See `display.provider` and `display.model` options in the
+[Configuration Reference](configuration.md)
 or the [Setup Guide](setup.md#supported-displays).
