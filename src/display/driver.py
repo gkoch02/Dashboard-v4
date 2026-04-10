@@ -28,6 +28,13 @@ INKY_MODELS: dict[str, tuple[int, int]] = {
     "impression_7_3_2025": (800, 480),
 }
 
+# Maps Inky model name → (module_path, class_name, init_kwargs).
+# Direct instantiation is used instead of inky.auto.auto() because some hardware
+# revisions (e.g. impression_7_3_2025) do not expose EEPROM data for auto-detection.
+INKY_MODEL_INIT: dict[str, tuple[str, str, dict]] = {
+    "impression_7_3_2025": ("inky.inky_uc8159", "Inky", {"resolution": (800, 480)}),
+}
+
 _HASH_FILENAME = "last_image_hash.txt"
 
 
@@ -238,9 +245,10 @@ class InkyDisplay(DisplayDriver):
 
     def _get_device(self):
         if self._device is None:
-            module = importlib.import_module("inky.auto")
-            auto = getattr(module, "auto")
-            self._device = auto(ask_user=False, verbose=False)
+            module_path, class_name, kwargs = INKY_MODEL_INIT[self.model]
+            mod = importlib.import_module(module_path)
+            cls = getattr(mod, class_name)
+            self._device = cls(**kwargs)
         return self._device
 
     def show(self, image: Image.Image, force_full: bool = False) -> None:

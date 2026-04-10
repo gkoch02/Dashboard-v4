@@ -6,6 +6,7 @@ import pytest
 from PIL import Image
 
 from src.display.driver import (
+    INKY_MODEL_INIT,
     INKY_MODELS,
     WAVESHARE_MODELS,
     DryRunDisplay,
@@ -126,6 +127,16 @@ class TestInkyModels:
         assert spec is not None
         assert spec.render_mode == "RGB"
         assert spec.supports_partial_refresh is False
+
+    def test_all_models_have_init_entry(self):
+        for model in INKY_MODELS:
+            assert model in INKY_MODEL_INIT, f"INKY_MODEL_INIT missing entry for '{model}'"
+
+    def test_2025_model_init_uses_uc8159(self):
+        module_path, class_name, kwargs = INKY_MODEL_INIT["impression_7_3_2025"]
+        assert module_path == "inky.inky_uc8159"
+        assert class_name == "Inky"
+        assert kwargs.get("resolution") == (800, 480)
 
 
 class TestWaveshareDisplayInit:
@@ -285,13 +296,16 @@ class TestInkyDisplayHardware:
         device.show = MagicMock()
         return device
 
-    def test_get_device_imports_inky_auto(self):
+    def test_get_device_uses_direct_init(self):
         device = self._make_mock_device()
+        mock_cls = MagicMock(return_value=device)
         mod = MagicMock()
-        mod.auto.return_value = device
+        mod.Inky = mock_cls
         d = InkyDisplay(model="impression_7_3_2025")
-        with patch("importlib.import_module", return_value=mod):
+        with patch("importlib.import_module", return_value=mod) as mock_import:
             result = d._get_device()
+        mock_import.assert_called_once_with("inky.inky_uc8159")
+        mock_cls.assert_called_once_with(resolution=(800, 480))
         assert result is device
 
     def test_show_converts_to_rgb(self):
