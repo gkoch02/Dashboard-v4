@@ -51,7 +51,7 @@ _INKY_THEME_KEY_COLORS: dict[str, tuple[int, int]] = {
     "old_fashioned": (_INKY_RED, _INKY_YELLOW),
     "today": (_INKY_BLUE, _INKY_RED),
     "fantasy": (_INKY_RED, _INKY_YELLOW),
-    "qotd": (_INKY_BLUE, _INKY_RED),
+    "qotd": (_INKY_RED, _INKY_BLUE),
     "qotd_invert": (_INKY_YELLOW, _INKY_RED),
     "weather": (_INKY_BLUE, _INKY_YELLOW),
     "fuzzyclock": (_INKY_YELLOW, _INKY_BLUE),
