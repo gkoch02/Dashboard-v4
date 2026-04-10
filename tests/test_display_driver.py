@@ -132,11 +132,11 @@ class TestInkyModels:
         for model in INKY_MODELS:
             assert model in INKY_MODEL_INIT, f"INKY_MODEL_INIT missing entry for '{model}'"
 
-    def test_2025_model_init_uses_uc8159(self):
+    def test_2025_model_init_uses_inky_impressions_7(self):
         module_path, class_name, kwargs = INKY_MODEL_INIT["impression_7_3_2025"]
-        assert module_path == "inky.inky_uc8159"
-        assert class_name == "Inky"
-        assert kwargs.get("resolution") == (800, 480)
+        assert module_path == "inky"
+        assert class_name == "Inky_Impressions_7"
+        assert kwargs == {}
 
 
 class TestWaveshareDisplayInit:
@@ -300,12 +300,12 @@ class TestInkyDisplayHardware:
         device = self._make_mock_device()
         mock_cls = MagicMock(return_value=device)
         mod = MagicMock()
-        mod.Inky = mock_cls
+        mod.Inky_Impressions_7 = mock_cls
         d = InkyDisplay(model="impression_7_3_2025")
         with patch("importlib.import_module", return_value=mod) as mock_import:
             result = d._get_device()
-        mock_import.assert_called_once_with("inky.inky_uc8159")
-        mock_cls.assert_called_once_with(resolution=(800, 480))
+        mock_import.assert_called_once_with("inky")
+        mock_cls.assert_called_once_with()
         assert result is device
 
     def test_show_converts_to_rgb(self):

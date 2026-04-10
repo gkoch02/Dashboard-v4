@@ -32,7 +32,7 @@ INKY_MODELS: dict[str, tuple[int, int]] = {
 # Direct instantiation is used instead of inky.auto.auto() because some hardware
 # revisions (e.g. impression_7_3_2025) do not expose EEPROM data for auto-detection.
 INKY_MODEL_INIT: dict[str, tuple[str, str, dict]] = {
-    "impression_7_3_2025": ("inky.inky_uc8159", "Inky", {"resolution": (800, 480)}),
+    "impression_7_3_2025": ("inky", "Inky_Impressions_7", {}),
 }
 
 _HASH_FILENAME = "last_image_hash.txt"
