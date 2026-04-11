@@ -60,22 +60,42 @@ def _draw_photo_background(
     try:
         if image.mode == "RGB":
             # Inky Spectra 6 color path: resize then quantize to 6-color palette
-            # using Bayer ordered dithering against the blended reference palette.
-            # The blended palette (50/50 SATURATED + DESATURATED) gives each hue a
-            # vibrant enough reference that nearest-color matching works correctly —
-            # without it, many mid-tone blues/greens/reds map to white because the
-            # physical SATURATED colors are too dark/muted.
-            # Bayer ordered dithering is used (not Floyd-Steinberg) because the
-            # fully-vectorised numpy implementation is required for acceptable
-            # performance on Pi 3B hardware.
+            # using the blended reference palette (50/50 SATURATED + DESATURATED),
+            # which mirrors InkyE673._palette_blend(saturation=0.5) and gives each
+            # hue a vibrant enough reference for correct nearest-color decisions.
+            #
+            # Dithering: try PIL's native Floyd-Steinberg first (C implementation,
+            # fast on Pi) since FS produces more organic results than Bayer for
+            # photos.  PIL's quantize(palette=...) can scramble palette indices in
+            # some Pillow 10+ builds; a colour-set sanity check detects this and
+            # falls back to the fully-vectorised Bayer path.
             from PIL import Image as _Image
 
-            from src.render.quantize import blend_inky_palette, quantize_to_palette_ordered
+            from src.render.quantize import (
+                blend_inky_palette,
+                build_palette_image,
+                quantize_to_palette_ordered,
+            )
 
             img = _Image.open(path).convert("RGB")
             img = img.resize((layout.canvas_w, layout.canvas_h), _Image.Resampling.LANCZOS)
             blended = blend_inky_palette(0.5)
-            img = quantize_to_palette_ordered(img, blended)
+            blended_set = set(map(tuple, blended))
+
+            # Attempt fast PIL Floyd-Steinberg.
+            palette_img = build_palette_image(blended)
+            fs_result = img.quantize(
+                palette=palette_img, dither=_Image.Dither.FLOYDSTEINBERG
+            ).convert("RGB")
+
+            if set(fs_result.getdata()) <= blended_set:
+                # PIL produced correct colours — use the FS result.
+                img = fs_result
+            else:
+                # Palette indices were scrambled; fall back to vectorised Bayer.
+                logger.debug("photo theme: PIL quantize palette check failed, using Bayer fallback")
+                img = quantize_to_palette_ordered(img, blended)
+
             image.paste(img)
         else:
             from src.render.primitives import load_and_dither_image
