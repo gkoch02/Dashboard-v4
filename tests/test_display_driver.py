@@ -294,6 +294,11 @@ class TestInkyDisplayHardware:
         device = MagicMock()
         device.set_image = MagicMock()
         device.show = MagicMock()
+        # SATURATED_PALETTE is accessed by show() to build the quantization palette.
+        device.SATURATED_PALETTE = [
+            [0, 0, 0], [217, 242, 255], [3, 124, 76], [27, 46, 198],
+            [245, 80, 34], [255, 255, 68], [239, 121, 44], [255, 255, 255],
+        ]
         return device
 
     def test_get_device_uses_direct_init(self):
@@ -308,15 +313,19 @@ class TestInkyDisplayHardware:
         mock_cls.assert_called_once_with()
         assert result is device
 
-    def test_show_converts_to_rgb(self):
+    def test_show_passes_p_mode_image_to_set_image(self):
+        # show() pre-quantizes via Pillow's .quantize() and passes a P-mode image
+        # to device.set_image(), bypassing the deprecated image.im.convert() path
+        # in inky_ac073tc1a.py which produces wrong palette indices with Pillow 10+.
         device = self._make_mock_device()
         d = InkyDisplay(model="impression_7_3_2025")
-        image = Image.new("1", (800, 480), 1)
+        image = Image.new("RGB", (800, 480), (27, 46, 198))
         with patch.object(d, "_get_device", return_value=device):
             d.show(image)
         shown = device.set_image.call_args.args[0]
-        assert shown.mode == "RGB"
-        assert device.set_image.call_args.kwargs.get("saturation") == 1.0
+        assert shown.mode == "P"
+        # No saturation kwarg — we handle quantization ourselves
+        assert "saturation" not in (device.set_image.call_args.kwargs or {})
         device.show.assert_called_once()
 
     def test_clear_displays_blank_rgb_image(self):

@@ -254,7 +254,20 @@ class InkyDisplay(DisplayDriver):
     def show(self, image: Image.Image, force_full: bool = False) -> None:
         del force_full  # Inky does not expose partial/full refresh control here.
         device = self._get_device()
-        device.set_image(image.convert("RGB"), saturation=1.0)
+        # inky_ac073tc1a.py's set_image() uses the deprecated image.im.convert("P", ...)
+        # internal Pillow API which assigns wrong palette indices with Pillow 10+.
+        # The fix: pre-quantize using Pillow's stable .quantize() API, then pass the
+        # already-P-mode result to set_image() — it checks `if not image.mode == "P":`
+        # and skips the broken conversion, going straight to `self.buf = numpy.array(image, ...)`.
+        palette_flat: list[int] = []
+        for entry in device.SATURATED_PALETTE:
+            palette_flat.extend(entry)
+        palette_flat += [0, 0, 0] * (256 - len(device.SATURATED_PALETTE))
+        palette_image = Image.new("P", (1, 1))
+        palette_image.putpalette(palette_flat)
+        # dither=0 (no dithering): solid fills map at distance 0 to their exact ink.
+        quantized = image.convert("RGB").quantize(palette=palette_image, dither=0)
+        device.set_image(quantized)
         device.show()
 
     def clear(self) -> None:
