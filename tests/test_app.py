@@ -179,7 +179,13 @@ class TestLoadData:
         fake_data = MagicMock()
 
         with patch("src.app.generate_dummy_data", return_value=fake_data) as mock_gen:
-            result = app._load_data(now, force_full=False, theme_name="default", event_window_start=None, event_window_days=7)
+            result = app._load_data(
+                now,
+                force_full=False,
+                theme_name="default",
+                event_window_start=None,
+                event_window_days=7,
+            )
 
         mock_gen.assert_called_once()
         assert result is fake_data
@@ -189,7 +195,13 @@ class TestLoadData:
         now = datetime(2025, 6, 1, 10, 0)
 
         with patch("src.app.generate_dummy_data", return_value=MagicMock()) as mock_gen:
-            app._load_data(now, force_full=False, theme_name="default", event_window_start=None, event_window_days=7)
+            app._load_data(
+                now,
+                force_full=False,
+                theme_name="default",
+                event_window_start=None,
+                event_window_days=7,
+            )
 
         call_kwargs = mock_gen.call_args
         assert call_kwargs.kwargs.get("tz") == app.tz
@@ -203,7 +215,13 @@ class TestLoadData:
         mock_pipeline.fetch.return_value = fake_data
 
         with patch("src.app.DataPipeline", return_value=mock_pipeline) as mock_cls:
-            result = app._load_data(now, force_full=True, theme_name="default", event_window_start=None, event_window_days=7)
+            result = app._load_data(
+                now,
+                force_full=True,
+                theme_name="default",
+                event_window_start=None,
+                event_window_days=7,
+            )
 
         mock_cls.assert_called_once()
         mock_pipeline.fetch.assert_called_once()
@@ -216,7 +234,13 @@ class TestLoadData:
         mock_pipeline.fetch.return_value = MagicMock()
 
         with patch("src.app.DataPipeline", return_value=mock_pipeline) as mock_cls:
-            app._load_data(now, force_full=True, theme_name="default", event_window_start=None, event_window_days=7)
+            app._load_data(
+                now,
+                force_full=True,
+                theme_name="default",
+                event_window_start=None,
+                event_window_days=7,
+            )
 
         init_kwargs = mock_cls.call_args.kwargs
         assert init_kwargs.get("force_refresh") is True

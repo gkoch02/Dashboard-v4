@@ -21,6 +21,7 @@ LEGEND_STEPS = 4
 FIRST_WEEKDAY = 6  # Sunday
 WEEKDAY_NAMES = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
+
 def draw_monthly(
     draw: ImageDraw.ImageDraw,
     data: DashboardData,
@@ -48,12 +49,16 @@ def draw_monthly(
 
     title_text = today.strftime("%B %Y").upper()
     title_bb = draw.textbbox((0, 0), title_text, font=title_font)
-    draw.text((x0 + PAD - title_bb[0], y0 + PAD - title_bb[1]), title_text, font=title_font, fill=style.fg)
+    draw.text(
+        (x0 + PAD - title_bb[0], y0 + PAD - title_bb[1]), title_text, font=title_font, fill=style.fg
+    )
 
     meta_text = _month_meta_text(today, max_density)
     meta_bb = draw.textbbox((0, 0), meta_text, font=meta_font)
     meta_y = y0 + PAD + (title_bb[3] - title_bb[1]) + 2
-    draw.text((x0 + PAD - meta_bb[0], meta_y - meta_bb[1]), meta_text, font=meta_font, fill=style.fg)
+    draw.text(
+        (x0 + PAD - meta_bb[0], meta_y - meta_bb[1]), meta_text, font=meta_font, fill=style.fg
+    )
 
     _draw_legend(draw, x0 + w - PAD - 180, y0 + PAD + 8, style, max_density)
 
@@ -79,10 +84,14 @@ def draw_monthly(
         fill = _heat_fill(level, style)
         outline = _outline_fill(day, today, style)
 
-        draw.rounded_rectangle(rect, radius=6, fill=style.bg, outline=outline, width=2 if day == today else 1)
+        draw.rounded_rectangle(
+            rect, radius=6, fill=style.bg, outline=outline, width=2 if day == today else 1
+        )
         if isinstance(style.fg, tuple):
             draw.rounded_rectangle(rect, radius=6, fill=fill, outline=None)
-            draw.rounded_rectangle(rect, radius=6, fill=None, outline=outline, width=2 if day == today else 1)
+            draw.rounded_rectangle(
+                rect, radius=6, fill=None, outline=outline, width=2 if day == today else 1
+            )
 
         day_fill = _text_fill_for_cell(fill, style)
         if day == today:
@@ -118,6 +127,7 @@ def draw_monthly(
             )
         elif day == today:
             draw.text((cx + 8, count_y), "today", font=count_font, fill=style.fg)
+
 
 def _month_grid_dates(today: date) -> list[date | None]:
     """Return a six-row Sunday-first grid, blanking cells outside the month."""
@@ -175,7 +185,9 @@ def _heat_fill(level: int, style: ThemeStyle) -> int | tuple[int, int, int]:
     return style.bg
 
 
-def _text_fill_for_cell(fill: int | tuple[int, int, int], style: ThemeStyle) -> int | tuple[int, int, int]:
+def _text_fill_for_cell(
+    fill: int | tuple[int, int, int], style: ThemeStyle
+) -> int | tuple[int, int, int]:
     if isinstance(fill, tuple):
         luminance = 0.299 * fill[0] + 0.587 * fill[1] + 0.114 * fill[2]
         return style.bg if luminance < 150 and isinstance(style.bg, tuple) else style.fg
@@ -202,7 +214,9 @@ def _month_meta_text(today: date, max_density: int) -> str:
     return f"Busiest day this month: {max_density} {suffix}."
 
 
-def _draw_legend(draw: ImageDraw.ImageDraw, x: int, y: int, style: ThemeStyle, max_density: int) -> None:
+def _draw_legend(
+    draw: ImageDraw.ImageDraw, x: int, y: int, style: ThemeStyle, max_density: int
+) -> None:
     label_font = style.font_regular(11)
     swatch = 14
     gap = 4
@@ -217,7 +231,9 @@ def _draw_legend(draw: ImageDraw.ImageDraw, x: int, y: int, style: ThemeStyle, m
                 outline=_outline_fill(date(2000, 1, 1), date(2000, 1, 1), style),
             )
         else:
-            draw.rounded_rectangle((sx, y - 1, sx + swatch, y + swatch - 1), radius=3, outline=style.fg)
+            draw.rounded_rectangle(
+                (sx, y - 1, sx + swatch, y + swatch - 1), radius=3, outline=style.fg
+            )
             for n in range(level):
                 bx = sx + 2 + n * 3
                 draw.rectangle((bx, y + 2, bx + 1, y + swatch - 4), fill=style.fg)
@@ -225,6 +241,7 @@ def _draw_legend(draw: ImageDraw.ImageDraw, x: int, y: int, style: ThemeStyle, m
     draw.text((sx + 6, y), "MORE", font=label_font, fill=_quiet_fill(style))
     if max_density > 0:
         draw.text((x, y + 16), f"scale to {max_density}+", font=label_font, fill=_quiet_fill(style))
+
 
 def _draw_monochrome_density_indicator(
     draw: ImageDraw.ImageDraw,

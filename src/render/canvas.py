@@ -205,11 +205,7 @@ def render_dashboard(
 
     layout = theme.layout
     render_mode = _resolve_render_mode(layout.canvas_mode, config)
-    if (
-        config.provider == "inky"
-        and layout.canvas_mode == "L"
-        and layout.prefer_color_on_inky
-    ):
+    if config.provider == "inky" and layout.canvas_mode == "L" and layout.prefer_color_on_inky:
         render_mode = "RGB"
     style = _resolve_style(theme, render_mode, config)
 

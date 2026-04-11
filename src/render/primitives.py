@@ -46,7 +46,7 @@ def draw_text_truncated(
     text: str,
     font: ImageFont.FreeTypeFont,
     max_width: int,
-    fill: int = BLACK,
+    fill: int | tuple[int, int, int] = BLACK,
 ) -> int:
     """Draw text, truncating with ellipsis if needed. Returns actual width drawn."""
     bbox = draw.textbbox((0, 0), text, font=font)
@@ -86,7 +86,7 @@ def draw_text_wrapped(
     max_width: int,
     max_lines: int = 3,
     line_spacing: int = 2,
-    fill: int = BLACK,
+    fill: int | tuple[int, int, int] = BLACK,
 ) -> int:
     """Draw wrapped text. Returns total height used."""
     words = text.split()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import shutil
 from calendar import Calendar
@@ -147,9 +149,7 @@ class DashboardApp:
         )
         return pipeline.fetch()
 
-    def _event_window_for_theme(
-        self, theme_name: str, now: datetime
-    ) -> tuple[_date | None, int]:
+    def _event_window_for_theme(self, theme_name: str, now: datetime) -> tuple[_date | None, int]:
         if theme_name != "monthly":
             return None, 7
         today = now.date()

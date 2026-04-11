@@ -931,7 +931,9 @@ class TestFetchEventsIntegration:
     @patch("src.fetchers.calendar_google._build_service")
     def test_fetch_events_window_change_forces_full_sync(self, mock_build):
         monday = date(2026, 4, 6)
-        event_start = datetime.combine(monday + timedelta(days=1), datetime.min.time().replace(hour=9))
+        event_start = datetime.combine(
+            monday + timedelta(days=1), datetime.min.time().replace(hour=9)
+        )
         event_end_iso = (event_start + timedelta(hours=1)).replace(tzinfo=timezone.utc).isoformat()
         mock_service = MagicMock()
         mock_build.return_value = mock_service

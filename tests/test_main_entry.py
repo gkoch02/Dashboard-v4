@@ -347,7 +347,16 @@ class TestMainLiveDataPath:
         captured = {}
         real_init = __import__("src.data_pipeline", fromlist=["DataPipeline"]).DataPipeline.__init__
 
-        def spying_init(self, cfg, cache_dir, tz=None, force_refresh=False, ignore_breakers=False):
+        def spying_init(
+            self,
+            cfg,
+            cache_dir,
+            tz=None,
+            force_refresh=False,
+            ignore_breakers=False,
+            event_window_start=None,
+            event_window_days=7,
+        ):
             captured["ignore_breakers"] = ignore_breakers
             real_init(
                 self,
@@ -356,6 +365,8 @@ class TestMainLiveDataPath:
                 tz=tz,
                 force_refresh=force_refresh,
                 ignore_breakers=ignore_breakers,
+                event_window_start=event_window_start,
+                event_window_days=event_window_days,
             )
 
         from src.dummy_data import generate_dummy_data

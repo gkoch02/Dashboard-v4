@@ -82,6 +82,7 @@ module = [
     "src.render.components.info_panel",
     "src.render.components.message_panel",
     "src.render.components.moonphase_panel",
+    "src.render.components.monthly_panel",
     "src.render.components.qotd_panel",
     "src.render.components.scorecard_panel",
     "src.render.components.sunrise_panel",
