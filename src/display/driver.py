@@ -253,27 +253,30 @@ class InkyDisplay(DisplayDriver):
 
     def show(self, image: Image.Image, force_full: bool = False) -> None:
         del force_full  # Inky does not expose partial/full refresh control here.
+        import numpy as np
+
         device = self._get_device()
         # inky_ac073tc1a.py's set_image() uses the deprecated image.im.convert("P", ...)
         # internal Pillow API which assigns wrong palette indices with Pillow 10+.
-        # The fix: pre-quantize using Pillow's stable .quantize() API, then pass the
-        # already-P-mode result to set_image() — it checks `if not image.mode == "P":`
-        # and skips the broken conversion, going straight to `self.buf = numpy.array(image, ...)`.
-        palette_flat: list[int] = []
-        for entry in device.SATURATED_PALETTE:
-            palette_flat.extend(entry)
-        palette_flat += [0, 0, 0] * (256 - len(device.SATURATED_PALETTE))
-        palette_image = Image.new("P", (1, 1))
-        palette_image.putpalette(palette_flat)
-        # dither=0 (no dithering): solid fills map at distance 0 to their exact ink.
-        quantized = image.convert("RGB").quantize(palette=palette_image, dither=0)
-        device.set_image(quantized)
+        # Pillow's .quantize(palette=...) also calls this broken path internally.
+        # Bypass set_image() entirely: compute nearest SATURATED_PALETTE index per pixel
+        # via numpy (always available via inky's own dependency) and write the flattened
+        # index array directly to device.buf — the same layout set_image() would produce —
+        # so device.show() packs and transmits the correct ink indices to the hardware.
+        rgb = np.array(image.convert("RGB"), dtype=np.int32)           # (H, W, 3)
+        palette = np.array(device.SATURATED_PALETTE, dtype=np.int32)   # (N, 3)
+        diff = rgb[:, :, np.newaxis, :] - palette[np.newaxis, np.newaxis, :, :]
+        device.buf = np.argmin(np.sum(diff**2, axis=3), axis=2).astype(np.uint8).flatten()
         device.show()
 
     def clear(self) -> None:
+        import numpy as np
+
         device = self._get_device()
-        blank = Image.new("RGB", (self.native_width, self.native_height), (255, 255, 255))
-        device.set_image(blank)
+        # White ink is always palette index 1 in Inky Spectra 6 displays.
+        # Write directly to device.buf (same 1-D layout as show()) rather than calling
+        # set_image(), which would hit the broken image.im.convert() path.
+        device.buf = np.ones(self.native_height * self.native_width, dtype=np.uint8)
         device.show()
 
 
