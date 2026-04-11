@@ -79,7 +79,7 @@ def _draw_photo_background(
 
             img = _Image.open(path).convert("RGB")
             img = img.resize((layout.canvas_w, layout.canvas_h), _Image.Resampling.LANCZOS)
-            blended = blend_inky_palette(0.5)
+            blended = blend_inky_palette(0.35)
             blended_set = set(map(tuple, blended))
 
             # Attempt fast PIL Floyd-Steinberg.
