@@ -5,7 +5,7 @@ to verify thread pool coordination, cache fallback, and circuit breaker
 interaction work together correctly.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -163,6 +163,49 @@ class TestDataPipelineE2E:
         # But data should still be present from cache
         assert len(data.events) == 1
         assert data.weather is not None
+
+    def test_events_refetch_when_requested_window_changes(self, tmp_path):
+        """A recent events cache should not be reused across window changes."""
+        pipeline1 = _make_pipeline(
+            tmp_path,
+            force_refresh=True,
+            event_window_start=date(2026, 4, 6),
+            event_window_days=7,
+        )
+        weekly_events = _make_events()
+
+        with (
+            patch("src.data_pipeline.fetch_events", return_value=weekly_events),
+            patch("src.data_pipeline.fetch_weather", return_value=_make_weather()),
+            patch("src.data_pipeline.fetch_birthdays", return_value=_make_birthdays()),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
+            pipeline1.fetch()
+
+        monthly_events = [
+            CalendarEvent(
+                summary="Monthly",
+                start=datetime(2026, 4, 20, 10, 0),
+                end=datetime(2026, 4, 20, 11, 0),
+            )
+        ]
+        pipeline2 = _make_pipeline(
+            tmp_path,
+            force_refresh=False,
+            event_window_start=date(2026, 3, 29),
+            event_window_days=35,
+        )
+
+        with (
+            patch("src.data_pipeline.fetch_events", return_value=monthly_events) as mock_events,
+            patch("src.data_pipeline.fetch_weather", MagicMock()),
+            patch("src.data_pipeline.fetch_birthdays", MagicMock()),
+            patch("src.data_pipeline.fetch_host_data", return_value=None),
+        ):
+            data = pipeline2.fetch()
+
+        mock_events.assert_called_once()
+        assert [event.summary for event in data.events] == ["Monthly"]
 
 
 class TestRetryFetch:

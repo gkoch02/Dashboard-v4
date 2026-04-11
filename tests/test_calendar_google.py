@@ -23,6 +23,7 @@ from src.fetchers.calendar_google import (
     _parse_event,
     _save_sync_state,
     _ser_sync_event,
+    _today,
     clear_service_caches,
     fetch_google_events,
 )
@@ -576,7 +577,17 @@ class TestFetchGoogleEvents:
 
     def test_incremental_sync_used_when_token_present(self, tmp_path):
         # Seed a sync state with an existing token
-        existing_state = {"primary": {"sync_token": "existing_tok", "events": []}}
+        today = _today(None)
+        window_start = today - timedelta(days=today.weekday())
+        window_end = window_start + timedelta(days=7)
+        existing_state = {
+            "primary": {
+                "sync_token": "existing_tok",
+                "events": [],
+                "window_start": window_start.isoformat(),
+                "window_end": window_end.isoformat(),
+            }
+        }
         from src.fetchers.calendar_google import _SYNC_STATE_FILENAME
 
         (tmp_path / _SYNC_STATE_FILENAME).write_text(json.dumps(existing_state))

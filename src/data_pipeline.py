@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from concurrent.futures import Future, ThreadPoolExecutor
-from datetime import datetime
+from datetime import date, datetime
 
 from src.data.models import (
     AirQualityData,
@@ -13,7 +13,12 @@ from src.data.models import (
     StalenessLevel,
     WeatherData,
 )
-from src.fetchers.cache import check_staleness, load_cached_source, save_source
+from src.fetchers.cache import (
+    check_staleness,
+    load_cached_source,
+    load_cached_source_with_metadata,
+    save_source,
+)
 from src.fetchers.calendar import fetch_birthdays, fetch_events
 from src.fetchers.circuit_breaker import CircuitBreaker
 from src.fetchers.host import fetch_host_data
@@ -109,12 +114,16 @@ class DataPipeline:
         tz=None,
         force_refresh: bool = False,
         ignore_breakers: bool = False,
+        event_window_start: date | None = None,
+        event_window_days: int = 7,
     ):
         self.cfg = cfg
         self.cache_dir = cache_dir
         self.tz = tz
         self.force_refresh = force_refresh
         self.ignore_breakers = ignore_breakers
+        self.event_window_start = event_window_start
+        self.event_window_days = event_window_days
         self.fetched_at = datetime.now(tz) if tz is not None else datetime.now()
 
         cache_cfg = cfg.cache
@@ -240,10 +249,32 @@ class DataPipeline:
     def _cache_is_recent(self, source: str) -> tuple:
         if self.force_refresh:
             return None, False
-        cached = load_cached_source(source, self.cache_dir)
-        if cached is None:
-            return None, False
-        data, cached_at = cached
+        if source == "events":
+            cached_events = load_cached_source_with_metadata(source, self.cache_dir)
+            if cached_events is None:
+                return None, False
+            data, cached_at, metadata = cached_events
+            requested_start = (
+                self.event_window_start.isoformat() if self.event_window_start is not None else None
+            )
+            requested_days = self.event_window_days
+            if (
+                metadata.get("window_start") != requested_start
+                or metadata.get("window_days") != requested_days
+            ):
+                logger.info(
+                    "events cache window mismatch; cached=(%s, %s) requested=(%s, %s), refetching",
+                    metadata.get("window_start"),
+                    metadata.get("window_days"),
+                    requested_start,
+                    requested_days,
+                )
+                return None, False
+        else:
+            cached = load_cached_source(source, self.cache_dir)
+            if cached is None:
+                return None, False
+            data, cached_at = cached
         age_minutes = (self.fetched_at - cached_at).total_seconds() / 60
         interval = self.interval_map[source]
         if age_minutes < interval:
@@ -291,7 +322,13 @@ class DataPipeline:
                 futures["events"] = pool.submit(
                     retry_fetch,
                     "Calendar",
-                    lambda: fetch_events(self.cfg.google, tz=self.tz, cache_dir=self.cache_dir),
+                    lambda: fetch_events(
+                        self.cfg.google,
+                        days=self.event_window_days,
+                        start_date=self.event_window_start,
+                        tz=self.tz,
+                        cache_dir=self.cache_dir,
+                    ),
                 )
             if not weather_skip:
                 futures["weather"] = pool.submit(
@@ -326,7 +363,17 @@ class DataPipeline:
             return current
         try:
             data = future.result(timeout=120)
-            save_source(source, data, self.fetched_at, self.cache_dir)
+            metadata = None
+            if source == "events":
+                metadata = {
+                    "window_start": (
+                        self.event_window_start.isoformat()
+                        if self.event_window_start is not None
+                        else None
+                    ),
+                    "window_days": self.event_window_days,
+                }
+            save_source(source, data, self.fetched_at, self.cache_dir, metadata=metadata)
             self.source_staleness[source] = StalenessLevel.FRESH
             self.breaker.record_success(source)
             self.quota.record_call(source)
