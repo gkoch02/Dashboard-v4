@@ -157,15 +157,15 @@ def _resolve_style(theme: Theme, render_mode: str, config: DisplayConfig):
             accent_alert=_resolve_inky_explicit_color(style.accent_alert, pal[_INKY_RED]),
             accent_good=_resolve_inky_explicit_color(style.accent_good, pal[_INKY_GREEN]),
             accent_primary=_resolve_inky_explicit_color(style.accent_primary, pal[primary]),
-            accent_secondary=(
-                _resolve_inky_explicit_color(style.accent_secondary, pal[secondary])
-            ),
+            accent_secondary=(_resolve_inky_explicit_color(style.accent_secondary, pal[secondary])),
         )
     return replace(
         style,
         accent_info=_resolve_mono_explicit_color(style.accent_info, style.fg, allow_grayscale=True),
         accent_warn=_resolve_mono_explicit_color(style.accent_warn, style.fg, allow_grayscale=True),
-        accent_alert=_resolve_mono_explicit_color(style.accent_alert, style.fg, allow_grayscale=True),
+        accent_alert=_resolve_mono_explicit_color(
+            style.accent_alert, style.fg, allow_grayscale=True
+        ),
         accent_good=_resolve_mono_explicit_color(style.accent_good, style.fg, allow_grayscale=True),
         accent_primary=_resolve_mono_explicit_color(
             style.accent_primary, style.fg, allow_grayscale=True
