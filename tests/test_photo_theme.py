@@ -165,7 +165,7 @@ class TestDrawPhotoBackground:
     def test_rgb_canvas_pixels_are_palette_colors(self, grey_png: Path):
         """All pixels on the RGB canvas should be one of the 6 blended Inky palette colors.
 
-        The photo theme now uses blend_inky_palette(0.35) as the quantization reference
+        The photo theme now uses blend_inky_palette(0.25) as the quantization reference
         (matching Pimoroni's InkyE673._palette_blend(saturation=0.5) approach) rather than
         the raw SATURATED palette, so we check against the blended colors.
         """
@@ -175,7 +175,7 @@ class TestDrawPhotoBackground:
         layout = self._make_layout()
         style = self._make_style(path=str(grey_png))
         _draw_photo_background(canvas, layout, style)
-        palette_set = set(blend_inky_palette(0.35))
+        palette_set = set(blend_inky_palette(0.25))
         pixels = set(canvas.getdata())
         assert pixels <= palette_set
 
@@ -261,7 +261,7 @@ class TestPhotoThemeRendering:
     def test_renders_inky_rgb_with_color_photo(self, gradient_png: Path):
         """Photo theme on an Inky RGB display should produce an RGB image with palette colors.
 
-        Pixels must be from blend_inky_palette(0.35) — the quantization reference used by
+        Pixels must be from blend_inky_palette(0.25) — the quantization reference used by
         the photo theme (matching Pimoroni's InkyE673._palette_blend(saturation=0.5)).
         InkyDisplay.show() maps these back to the correct hardware indices via Euclidean
         nearest-color against device.SATURATED_PALETTE.
@@ -274,7 +274,7 @@ class TestPhotoThemeRendering:
         cfg = DisplayConfig(provider="inky", model="impression_7_3_2025")
         img = render_dashboard(data, cfg, title="Test", theme=theme)
         assert img.mode == "RGB"
-        palette_set = set(blend_inky_palette(0.35))
+        palette_set = set(blend_inky_palette(0.25))
         # All pixels in the photo region (above the header bar) must be blended palette colors
         pixels = set(img.crop((0, 0, img.width, img.height - 50)).getdata())
         assert pixels <= palette_set

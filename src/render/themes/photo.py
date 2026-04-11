@@ -78,7 +78,7 @@ def _draw_photo_background(
 
             img = _Image.open(path).convert("RGB")
             img = img.resize((layout.canvas_w, layout.canvas_h), _Image.Resampling.LANCZOS)
-            blended = blend_inky_palette(0.35)
+            blended = blend_inky_palette(0.25)
             blended_set = set(map(tuple, blended))
 
             # Attempt fast PIL Floyd-Steinberg.
@@ -115,6 +115,7 @@ def photo_theme() -> Theme:
     layout = ThemeLayout(
         canvas_w=800,
         canvas_h=480,
+        header=None,
         draw_order=[],
         background_fn=_draw_photo_background,
     )
