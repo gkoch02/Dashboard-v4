@@ -223,7 +223,13 @@ class TestFetchIntervals:
         cfg = Config()
         recent_ts = datetime.now() - timedelta(minutes=5)
         with tempfile.TemporaryDirectory() as tmpdir:
-            save_source("events", [], recent_ts, tmpdir)
+            save_source(
+                "events",
+                [],
+                recent_ts,
+                tmpdir,
+                metadata={"window_start": None, "window_days": 7},
+            )
             with (
                 patch("src.data_pipeline.fetch_events") as mock_events,
                 patch("src.data_pipeline.fetch_weather", return_value=_make_weather()),

@@ -137,11 +137,69 @@ def load_cached_source(
         return None
 
 
+def load_cached_source_with_metadata(
+    source: str, cache_dir: str
+) -> tuple[list | WeatherData | AirQualityData | None, datetime, dict] | None:
+    """Load a single cached source plus its raw metadata block.
+
+    For v2 cache files, returns ``(data, fetched_at, metadata)`` where
+    *metadata* contains any extra fields stored alongside the source data.
+    For legacy v1 cache files, returns an empty metadata dict.
+    """
+    path = Path(cache_dir) / _CACHE_FILENAME
+    if not path.exists():
+        return None
+    try:
+        with _cache_lock:
+            with open(path) as f:
+                raw = json.load(f)
+    except Exception as exc:
+        logger.warning("Cache read failed (%s): %s", path, exc)
+        return None
+
+    if raw.get("schema_version") == _SCHEMA_VERSION:
+        block = raw.get(source)
+        if not block:
+            return None
+        try:
+            fetched_at = datetime.fromisoformat(block["fetched_at"])
+            if source == "events":
+                data: list | WeatherData | AirQualityData | None = [
+                    _deser_event(e) for e in block.get("data", [])
+                ]
+            elif source == "weather":
+                data = _deser_weather(block["data"]) if block.get("data") else None
+            elif source == "birthdays":
+                data = [_deser_birthday(b) for b in block.get("data", [])]
+            elif source == "air_quality":
+                data = _deser_air_quality(block["data"]) if block.get("data") else None
+            else:
+                return None
+            metadata = {k: v for k, v in block.items() if k not in {"fetched_at", "data"}}
+            return data, fetched_at, metadata
+        except Exception as exc:
+            logger.warning("Cache source %r decode failed: %s", source, exc)
+            return None
+
+    try:
+        legacy = _deserialise_v1(raw)
+    except Exception:
+        return None
+    if source == "events":
+        return legacy.events, legacy.fetched_at, {}
+    if source == "weather":
+        return legacy.weather, legacy.fetched_at, {}
+    if source == "birthdays":
+        return legacy.birthdays, legacy.fetched_at, {}
+    return None
+
+
 def save_source(
     source: str,
     data: list | WeatherData | AirQualityData | None,
     fetched_at: datetime,
     cache_dir: str,
+    metadata: dict | None = None,
 ) -> None:
     """Update a single source's data in the cache file (v2 format).
 
@@ -176,7 +234,10 @@ def save_source(
                 pass  # start fresh
 
         raw["schema_version"] = _SCHEMA_VERSION
-        raw[source] = {"fetched_at": fetched_at.isoformat(), "data": serialized}
+        block = {"fetched_at": fetched_at.isoformat(), "data": serialized}
+        if metadata:
+            block.update(metadata)
+        raw[source] = block
 
         try:
             _atomic_write_json(path, raw)

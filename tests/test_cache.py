@@ -20,6 +20,7 @@ from src.fetchers.cache import (
     check_staleness,
     load_cached,
     load_cached_source,
+    load_cached_source_with_metadata,
     save_cache,
     save_source,
 )
@@ -120,6 +121,24 @@ class TestCacheRoundtrip:
         assert w.sunrise == datetime(2024, 3, 15, 6, 45)
         assert w.sunset == datetime(2024, 3, 15, 18, 30)
         assert w.forecast[0].precip_chance == 0.65
+
+    def test_events_source_metadata_round_trip(self):
+        data = _make_data()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            save_source(
+                "events",
+                data.events,
+                data.fetched_at,
+                tmpdir,
+                metadata={"window_start": "2024-03-10", "window_days": 35},
+            )
+            result = load_cached_source_with_metadata("events", tmpdir)
+
+        assert result is not None
+        events, fetched_at, metadata = result
+        assert fetched_at == data.fetched_at
+        assert len(events) == 1
+        assert metadata == {"window_start": "2024-03-10", "window_days": 35}
 
     def test_weather_none_optional_fields_round_trip(self):
         """Fields that were None before this fix should still deserialise as None."""
