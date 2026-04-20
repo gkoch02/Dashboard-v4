@@ -18,7 +18,6 @@ from src.web.routes.status import (
     _source_summary,
 )
 
-
 # ---------------------------------------------------------------------------
 # _source_summary — each staleness / breaker combination
 # ---------------------------------------------------------------------------
@@ -29,9 +28,21 @@ from src.web.routes.status import (
     [
         ({"breaker_state": "open", "staleness": "fresh"}, "bad", "needs_attention"),
         ({"breaker_state": "closed", "staleness": "expired"}, "bad", "degraded"),
-        ({"breaker_state": "closed", "staleness": "stale", "cache_age_minutes": 90.0}, "warn", "degraded"),
-        ({"breaker_state": "closed", "staleness": "stale"}, "warn", "degraded"),  # no age → fallback
-        ({"breaker_state": "closed", "staleness": "aging", "cache_age_minutes": 30.0}, "warn", "ok"),
+        (
+            {"breaker_state": "closed", "staleness": "stale", "cache_age_minutes": 90.0},
+            "warn",
+            "degraded",
+        ),
+        (
+            {"breaker_state": "closed", "staleness": "stale"},
+            "warn",
+            "degraded",
+        ),  # no age → fallback
+        (
+            {"breaker_state": "closed", "staleness": "aging", "cache_age_minutes": 30.0},
+            "warn",
+            "ok",
+        ),
         ({"breaker_state": "closed", "staleness": "aging"}, "warn", "ok"),
         ({"breaker_state": "closed", "staleness": "unknown"}, "warn", "unknown"),
         ({"breaker_state": "closed", "staleness": "fresh", "cache_age_minutes": 5.0}, "ok", "ok"),
@@ -45,7 +56,9 @@ def test_source_summary_matrix(source_state, expected_severity, expected_status)
 
 
 def test_source_summary_stale_uses_age_in_detail():
-    s = _source_summary("events", {"breaker_state": "closed", "staleness": "stale", "cache_age_minutes": 90.0})
+    s = _source_summary(
+        "events", {"breaker_state": "closed", "staleness": "stale", "cache_age_minutes": 90.0}
+    )
     assert "90" in s["detail"]
 
 
@@ -145,9 +158,7 @@ def test_overall_health_warn_source_does_not_replace_bad_status():
 
 def test_overall_health_caps_issues_at_four():
     # Matches the issues[:4] slice in src/web/routes/status.py — update both together.
-    sources = {
-        f"src_{i}": _bad_source() for i in range(6)
-    }
+    sources = {f"src_{i}": _bad_source() for i in range(6)}
     result = _overall_health(30, False, sources)
     assert len(result["issues"]) == 4
 

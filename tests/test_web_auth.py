@@ -132,9 +132,7 @@ def test_middleware_passes_with_correct_credentials():
 
 def test_cli_set_password_prints_hash(capsys):
     argv = ["src.web.auth", "--set-password"]
-    with patch.object(sys, "argv", argv), patch(
-        "getpass.getpass", side_effect=["hello", "hello"]
-    ):
+    with patch.object(sys, "argv", argv), patch("getpass.getpass", side_effect=["hello", "hello"]):
         runpy.run_module("src.web.auth", run_name="__main__")
     out = capsys.readouterr().out.strip().splitlines()[-1]
     assert out.startswith("scrypt:")
@@ -145,8 +143,9 @@ def test_cli_set_password_prints_hash(capsys):
 
 def test_cli_set_password_mismatch_exits_1(capsys):
     argv = ["src.web.auth", "--set-password"]
-    with patch.object(sys, "argv", argv), patch(
-        "getpass.getpass", side_effect=["hello", "goodbye"]
+    with (
+        patch.object(sys, "argv", argv),
+        patch("getpass.getpass", side_effect=["hello", "goodbye"]),
     ):
         with pytest.raises(SystemExit) as exc_info:
             runpy.run_module("src.web.auth", run_name="__main__")
