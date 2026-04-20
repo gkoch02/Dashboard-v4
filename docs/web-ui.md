@@ -267,6 +267,33 @@ make web-logs           # tail -f output/dashboard-web.log
 make web-status         # systemd status + recent log tail
 ```
 
+### Event store (`state/web_events.jsonl`)
+
+`state/web_events.jsonl` is an append-only audit log written by `src/web/event_store.py`.
+It records every UI-initiated action — manual refresh requests, config saves, breaker
+resets, cache clears, and config restores — one JSON object per line.
+
+```json
+{"timestamp": "2026-04-20T15:32:11+00:00", "kind": "config_saved",
+ "message": "Saved 3 changes from /config", "details": {"fields": ["theme", "title"]}}
+```
+
+A few operator notes:
+
+- **Retention is unbounded.** The file only grows. Rotate or truncate it manually if it
+  becomes unwieldy. `state/` is on the same disk as the rest of the project, so a runaway
+  log can fill the SD card on small Pi installs.
+- **It is sensitive but not user-attributed.** The file logs *what* changed (e.g.
+  "saved theme: minimalist") and the field set involved, but it does **not** record
+  the authenticated username — basic-auth gates access at the request boundary and
+  is not threaded into `append_event`. Don't rely on this log for per-user
+  accountability in shared deployments. Treat it with the same care as `web.yaml`:
+  do not commit it, do not paste it into bug reports without redaction.
+- **It is best-effort.** Write failures are logged at DEBUG level and silently swallowed
+  so a missing/unwritable `state/` directory never breaks the UI.
+- **It is read-truncated.** The status page's "Recent Events" card only loads the most
+  recent ~20 entries; the full file is preserved untouched.
+
 ---
 
 ## Running without systemd
@@ -299,3 +326,4 @@ venv/bin/python -m src.web --port 9000
 - **The Refresh Now button triggers a dashboard run.** It cannot execute arbitrary commands.
 - **No HTTPS.** Traffic is unencrypted. For remote access outside your LAN, use an SSH tunnel or a reverse proxy with TLS (for example nginx + Let's Encrypt).
 - **`config/web.yaml` contains your password hash and possibly your session secret.** The file is git-ignored. Do not commit it.
+- **`state/web_events.jsonl` is an unbounded audit log.** It records every UI action and grows forever; rotate it manually if it gets large. Treat it as sensitive — see [Event store](#event-store-stateweb_eventsjsonl).

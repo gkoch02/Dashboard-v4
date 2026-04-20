@@ -186,6 +186,86 @@ class TestFetchFromIcalEdgeCases:
         assert events == []
 
     @patch("src.fetchers.calendar_ical.requests.get")
+    def test_multiple_feeds_are_merged_and_sorted(self, mock_get):
+        """Events from multiple ICS URLs should be merged and sorted by start time."""
+        today = date.today()
+        monday = today - timedelta(days=today.weekday())
+        early_day = monday + timedelta(days=1)
+        late_day = monday + timedelta(days=3)
+
+        feed_a = _make_ical_response(
+            "BEGIN:VEVENT\r\n"
+            f"DTSTART:{late_day.strftime('%Y%m%d')}T140000Z\r\n"
+            f"DTEND:{late_day.strftime('%Y%m%d')}T150000Z\r\n"
+            "SUMMARY:Late From Feed A\r\nUID:a-late\r\n"
+            "END:VEVENT\r\n",
+            cal_name="Feed A",
+        )
+        feed_b = _make_ical_response(
+            "BEGIN:VEVENT\r\n"
+            f"DTSTART:{early_day.strftime('%Y%m%d')}T100000Z\r\n"
+            f"DTEND:{early_day.strftime('%Y%m%d')}T110000Z\r\n"
+            "SUMMARY:Early From Feed B\r\nUID:b-early\r\n"
+            "END:VEVENT\r\n",
+            cal_name="Feed B",
+        )
+
+        def get_side_effect(url, *args, **kwargs):
+            if "feed-a" in url:
+                return _mock_response(feed_a)
+            return _mock_response(feed_b)
+
+        mock_get.side_effect = get_side_effect
+
+        events = fetch_from_ical(
+            ["https://example.com/feed-a.ics", "https://example.com/feed-b.ics"]
+        )
+        summaries = [e.summary for e in events]
+        assert "Early From Feed B" in summaries, "Feed B event missing"
+        assert "Late From Feed A" in summaries, "Feed A event missing"
+        # Sorted ascending by start
+        starts = [e.start for e in events]
+        assert starts == sorted(starts), "Merged events not sorted by start time"
+        # Calendar-name attribution preserved per feed
+        by_summary = {e.summary: e.calendar_name for e in events}
+        assert by_summary["Early From Feed B"] == "Feed B"
+        assert by_summary["Late From Feed A"] == "Feed A"
+
+    @patch("src.fetchers.calendar_ical.requests.get")
+    def test_one_feed_failing_does_not_block_others(self, mock_get):
+        """A single ICS URL HTTP failure must not prevent other feeds from rendering."""
+        today = date.today()
+        monday = today - timedelta(days=today.weekday())
+        event_day = monday + timedelta(days=2)
+
+        good_feed = _make_ical_response(
+            "BEGIN:VEVENT\r\n"
+            f"DTSTART:{event_day.strftime('%Y%m%d')}T120000Z\r\n"
+            f"DTEND:{event_day.strftime('%Y%m%d')}T130000Z\r\n"
+            "SUMMARY:Survived\r\nUID:survived-1\r\n"
+            "END:VEVENT\r\n",
+            cal_name="Good Feed",
+        )
+
+        def get_side_effect(url, *args, **kwargs):
+            if "broken" in url:
+                return _mock_response("", status_code=500)
+            return _mock_response(good_feed)
+
+        mock_get.side_effect = get_side_effect
+
+        events = fetch_from_ical(
+            [
+                "https://example.com/broken.ics",
+                "https://example.com/working.ics",
+            ]
+        )
+        summaries = [e.summary for e in events]
+        assert summaries == ["Survived"], (
+            f"Working feed lost when sibling failed: got {summaries!r}"
+        )
+
+    @patch("src.fetchers.calendar_ical.requests.get")
     def test_mixed_tz_events_in_single_feed(self, mock_get):
         """Events with different timezones in same feed should all parse."""
         today = date.today()
