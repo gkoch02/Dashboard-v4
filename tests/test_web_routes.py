@@ -191,6 +191,45 @@ def test_image_theme_404_when_missing(client):
     assert resp.status_code == 404
 
 
+def test_image_theme_serves_existing_preview(client, app, tmp_path):
+    output_dir = Path(app.config["OUTPUT_DIR"])
+    png_bytes = (
+        b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+        b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc\xf8\x0f\x00"
+        b"\x00\x01\x01\x00\x05\x18\xd8N\x00\x00\x00\x00IEND\xaeB`\x82"
+    )
+    (output_dir / "theme_monthly.png").write_bytes(png_bytes)
+    resp = client.get("/image/theme/monthly")
+    assert resp.status_code == 200
+    assert resp.content_type == "image/png"
+    # Theme previews are cacheable (max_age=3600).
+    assert "max-age=3600" in resp.headers.get("Cache-Control", "")
+
+
+def test_image_theme_rejects_uppercase_name(client):
+    """The allowlist is lowercase-only — uppercase characters must be rejected."""
+    resp = client.get("/image/theme/Default")
+    assert resp.status_code == 404
+
+
+def test_image_theme_rejects_special_chars(client):
+    """Hyphens and dots are not in the [a-z0-9_] allowlist."""
+    for name in ("foo-bar", "foo.bar", "foo bar"):
+        resp = client.get(f"/image/theme/{name}")
+        assert resp.status_code in (404, 400), f"Should reject {name!r}"
+
+
+def test_image_theme_does_not_serve_outside_output_dir(client, app, tmp_path):
+    """A file matching the theme_<name>.png pattern outside OUTPUT_DIR must
+    not be served, even if the safe-name check passes."""
+    # Place a PNG one level above OUTPUT_DIR to confirm the route does not
+    # accidentally read from a sibling directory.
+    sibling_png = tmp_path / "theme_evil.png"
+    sibling_png.write_bytes(b"\x89PNG\r\n\x1a\n")
+    resp = client.get("/image/theme/evil")
+    assert resp.status_code == 404
+
+
 # ---------------------------------------------------------------------------
 # Log routes
 # ---------------------------------------------------------------------------

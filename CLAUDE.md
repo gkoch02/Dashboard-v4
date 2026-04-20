@@ -85,17 +85,18 @@ src/
     ├── moon.py                # Moon phase calculator
     ├── primitives.py          # Shared draw utilities (truncation, wrapping, colors, fmt_time,
     │                          #   events_for_day, deg_to_compass)
-    ├── themes/                # themes (22): standard week-view (default, terminal,
+    ├── themes/                # themes (23): standard week-view (default, terminal,
     │                          #   minimalist, old_fashioned, today, fantasy); full-screen
     │                          #   focused (qotd, qotd_invert, fuzzyclock, fuzzyclock_invert,
     │                          #   weather, moonphase, moonphase_invert); specialized views
-    │                          #   (timeline, year_pulse, sunrise, air_quality, scorecard,
-    │                          #   tides); photo overlay (photo); utility (message, diags)
+    │                          #   (timeline, year_pulse, monthly, sunrise, air_quality,
+    │                          #   scorecard, tides); photo overlay (photo); utility (message, diags)
     └── components/            # One file per UI region: header, week_view, weather_panel,
                                #   weather_full, birthday_bar, today_view, info_panel, qotd_panel,
                                #   fuzzyclock_panel, diags_panel, air_quality_panel,
                                #   moonphase_panel, message_panel, timeline_panel,
-                               #   year_pulse_panel, sunrise_panel, scorecard_panel, tides_panel
+                               #   year_pulse_panel, monthly_panel, sunrise_panel,
+                               #   scorecard_panel, tides_panel
 └── web/                       # Optional Flask web UI (install: pip install -r requirements-web.txt)
     ├── __main__.py            # Entry point: python -m src.web [--config web.yaml] [--port 8080]
     ├── app.py                 # Flask application factory (create_app); registers all blueprints
@@ -149,7 +150,7 @@ Fetchers, caching, circuit breaking, and staleness are all per-source (calendar,
 ### Theme system
 Three-layer design: **ComponentRegion** (bounding box) → **ThemeLayout** (canvas + regions + draw order + `canvas_mode`) → **ThemeStyle** (colors, fonts, spacing). Components receive region + style and draw only within bounds. Themes are frozen dataclasses.
 
-`ThemeLayout.canvas_mode` is `"1"` (1-bit, default — all 22 built-in themes) or `"L"` (8-bit greyscale, opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle` (`bg=1` is near-black in L mode, not white). For Waveshare, the final L→`"1"` conversion is handled by `quantize_for_display()` in `render/quantize.py` and is controlled by `display.quantization_mode` (`threshold` / `floyd_steinberg` / `ordered`). For Inky, the final image is mapped to the limited Spectra 6 palette instead of being quantized to 1-bit.
+`ThemeLayout.canvas_mode` is `"1"` (1-bit, default — all 23 built-in themes) or `"L"` (8-bit greyscale, opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle` (`bg=1` is near-black in L mode, not white). For Waveshare, the final L→`"1"` conversion is handled by `quantize_for_display()` in `render/quantize.py` and is controlled by `display.quantization_mode` (`threshold` / `floyd_steinberg` / `ordered`). For Inky, the final image is mapped to the limited Spectra 6 palette instead of being quantized to 1-bit.
 
 Two rotation cadences are available: `theme: random_daily` (alias: `random`) picks once per day after midnight and persists to `state/random_theme_state.json`; `theme: random_hourly` picks once per hour and persists to `state/random_theme_hourly_state.json`. Both use the same `random_theme.include` / `random_theme.exclude` lists. The concrete theme name is resolved in `services/theme.py` before `load_theme()` is called — `load_theme()` itself never receives a pseudo-theme name.
 
@@ -229,6 +230,7 @@ Components are pure functions: `draw_*(draw, data, region, style) -> None`. No g
 |---|---|---|
 | `canvas_mode` | `"1"` | PIL image mode for the internal canvas. `"1"` = 1-bit bilevel (all built-in themes). `"L"` = 8-bit greyscale (opt-in for new themes). L-mode themes must use `fg=0, bg=255` in `ThemeStyle`. |
 | `background_fn` | `None` | Optional callable `(Image, ThemeLayout, ThemeStyle) -> None` executed BEFORE component rendering. Receives the raw PIL Image so it can paste photo/grayscale content beneath UI elements. Used by the `photo` theme to dither and paste a user photo onto the canvas. |
+| `prefer_color_on_inky` | `False` | When `True` AND `canvas_mode="L"` AND `display.provider: inky`, the canvas is rendered in RGB so the component can draw tuple-`fg`/`bg` colors directly (used by the `monthly` theme's heatmap palette). Ignored on Waveshare and on `"1"`-mode themes. |
 
 ### `ThemeStyle` fields
 
@@ -277,7 +279,7 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - Inky Impression panels do not support partial refresh. For `display.provider: inky`, non-fuzzyclock themes are limited to one hardware refresh per hour; `fuzzyclock` and `fuzzyclock_invert` bypass that limit; `--force-full-refresh` also bypasses it
 - Default canvas: 800×480; scaled via LANCZOS to match display resolution
 - LANCZOS resize produces greyscale pixels; those are quantized to 1-bit by `quantize_for_display()`. The default `threshold` mode differs from the previous hard `.convert("1")` which used Floyd-Steinberg by Pillow default — set `display.quantization_mode: "floyd_steinberg"` to restore the old resize behavior if needed
-- `canvas_mode = "L"` themes must use `bg=255` (not `bg=1`) in `ThemeStyle`; `bg=1` is near-black in L mode. All 21 built-in themes use `canvas_mode="1"` (default) and are unaffected
+- `canvas_mode = "L"` themes must use `bg=255` (not `bg=1`) in `ThemeStyle`; `bg=1` is near-black in L mode. All 23 built-in themes use `canvas_mode="1"` (default) and are unaffected
 - Image hash comparison (`last_image_hash.txt`) skips eInk writes when content unchanged
 - Inky throttle state persists in `state/inky_refresh_state.json`
 - Health marker written to `output/last_success.txt` on every successful run (ISO timestamp)
@@ -329,3 +331,4 @@ default to `None` and fall back gracefully so adding a new field never breaks ex
 - `contacts_email` in `GoogleConfig` is required when `birthdays.source` is `"contacts"` — the service account must have domain-wide delegation, and this field specifies whose contacts to read via the People API
 - Inky Spectra 6 color mapping: `_INKY_THEME_KEY_COLORS` in `canvas.py` assigns a `(primary, secondary)` palette index pair to each theme. When `display.provider: inky`, `_resolve_style()` remaps `fg`/`bg` to Inky palette indices and fills unset accent roles (`accent_info` → blue, `accent_warn` → yellow, `accent_alert` → red, `accent_good` → green, `accent_primary`/`accent_secondary` → per-theme key colors). Palette indices: 0=black, 1=white, 2=red, 3=blue, 4=yellow, 5=green
 - `accent_primary` and `accent_secondary` on `ThemeStyle` are general-purpose accent fills; `primary_accent_fill()` and `secondary_accent_fill()` methods return `fg` when the accent is `None` (monochrome fallback). Components should call these methods rather than reading the fields directly
+- `monthly` theme uses the `monthly` region on `ThemeLayout` and dispatches via `draw_monthly()` in `monthly_panel.py`. The grid is Sunday-first and always renders a six-row layout (cells outside the current month are blanked). On Inky it opts into the RGB canvas path via `prefer_color_on_inky=True` and uses a 5-step heatmap palette (`(255,249,235)` → `(175,28,28)`); on Waveshare the same density is shown via a 1-bit outlined meter (`_draw_monochrome_density_indicator`). `monthly` is included in the random rotation pool. Typography: DM Sans family (`dm_bold`/`dm_semibold`/`dm_medium`/`dm_regular`)

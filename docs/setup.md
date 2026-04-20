@@ -6,6 +6,7 @@
 - [ICS Feed (No GCP Required)](#ics-feed-no-gcp-required)
 - [Birthday Configuration](#birthday-configuration)
 - [PurpleAir Air Quality (Optional)](#purpleair-air-quality-optional)
+- [Photo Theme (Optional)](#photo-theme-optional)
 - [Raspberry Pi Reference](#raspberry-pi-reference)
 - [Web UI (Optional)](web-ui.md)
 - [Supported Displays](#supported-displays)
@@ -196,6 +197,57 @@ The sensor is polled at the interval set by `cache.air_quality_fetch_interval` (
 
 If either `api_key` or `sensor_id` is missing or empty, the source is silently skipped —
 no errors, no circuit breaker entry.
+
+---
+
+## Photo Theme (Optional)
+
+Display a custom image as a full-canvas wallpaper instead of dashboard data. Useful for
+ambient frames, art rotations, or seasonal wallpapers.
+
+### Step 1 — Pick an image
+
+Any JPEG or PNG works. Higher-resolution sources dither more cleanly than ones already
+near the display's native resolution. The image is automatically resized to fit the
+canvas (LANCZOS), so you do not need to pre-crop it.
+
+Copy the file somewhere persistent on the Pi, for example:
+
+```bash
+mkdir -p ~/dashboard-photos
+cp ~/Downloads/family-portrait.jpg ~/dashboard-photos/
+```
+
+### Step 2 — Enable the theme in config.yaml
+
+```yaml
+theme: photo
+photo:
+  path: "/home/pi/dashboard-photos/family-portrait.jpg"
+```
+
+That's it — the next refresh will paint the dithered photo across the full display. The
+photo theme renders edge-to-edge with no header bar.
+
+### How rendering works
+
+| Backend | Pipeline |
+|---|---|
+| `waveshare` | Greyscale → resize → Floyd-Steinberg dither to 1-bit black/white |
+| `inky` | Greyscale + saturation blending → resize → Spectra 6 palette mapping |
+
+Dark-canvas variants invert the greyscale source so bright regions of the photo stay
+white on the eInk panel rather than rendering as solid black.
+
+### Tips
+
+- Portraits and high-contrast scenes dither best on Waveshare's 1-bit panel.
+- For Inky Spectra 6, photos with naturally warm or limited palettes (sunsets, sepia
+  prints) match the panel's color gamut more faithfully than full-color modern photos.
+- Run `make dry --theme photo` (or `venv/bin/python -m src.main --dry-run --theme photo`)
+  to preview the dithered output in `output/latest.png` before deploying to the Pi.
+- The `photo` theme is **excluded** from the random rotation pool — pick it explicitly
+  via `theme: photo` rather than relying on randomization.
 
 ---
 

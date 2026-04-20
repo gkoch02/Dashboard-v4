@@ -93,6 +93,112 @@ def test_all_editable_fields_have_yaml_paths():
         assert isinstance(path, tuple) and len(path) >= 1, f"Invalid path for {key!r}"
 
 
+# YAML key path → dataclass attribute path on Config. Most entries map directly
+# (e.g. ("display", "show_weather") → cfg.display.show_weather). Exceptions are
+# listed explicitly. theme_schedule is verified separately because it's a list.
+_YAML_TO_ATTR_OVERRIDES: dict[tuple, tuple] = {
+    ("logging", "level"): ("log_level",),
+}
+
+# Sample values used to write each editable field and read it back. The values
+# are intentionally distinct from the dataclass defaults so a silent dropout is
+# detectable.
+_SAMPLE_VALUES: dict[str, object] = {
+    "title": "ZZZ-roundtrip-title",
+    "theme": "minimalist",
+    "timezone": "America/Los_Angeles",
+    "log_level": "DEBUG",
+    "display.show_weather": False,
+    "display.show_birthdays": False,
+    "display.show_info_panel": False,
+    "display.week_days": 5,
+    "display.enable_partial_refresh": True,
+    "display.max_partials_before_full": 99,
+    "schedule.quiet_hours_start": 21,
+    "schedule.quiet_hours_end": 7,
+    "weather.latitude": 37.7749,
+    "weather.longitude": -122.4194,
+    "weather.units": "metric",
+    "birthdays.source": "calendar",
+    "birthdays.lookahead_days": 60,
+    "birthdays.calendar_keyword": "ZZZ-Birthday-Marker",
+    "filters.exclude_calendars": ["ZZZ-cal-a"],
+    "filters.exclude_keywords": ["ZZZ-kw-a"],
+    "filters.exclude_all_day": True,
+    "cache.weather_ttl_minutes": 11,
+    "cache.events_ttl_minutes": 12,
+    "cache.birthdays_ttl_minutes": 13,
+    "cache.weather_fetch_interval": 14,
+    "cache.events_fetch_interval": 15,
+    "cache.birthdays_fetch_interval": 16,
+    "cache.air_quality_ttl_minutes": 17,
+    "cache.air_quality_fetch_interval": 18,
+    "cache.max_failures": 19,
+    "cache.cooldown_minutes": 20,
+    "cache.quote_refresh": "hourly",
+    "random_theme.include": ["minimalist"],
+    "random_theme.exclude": ["fantasy"],
+}
+
+
+def _resolve_attr_path(yaml_path: tuple) -> tuple:
+    return _YAML_TO_ATTR_OVERRIDES.get(yaml_path, yaml_path)
+
+
+def _read_attr(cfg, attr_path: tuple):
+    obj = cfg
+    for segment in attr_path:
+        obj = getattr(obj, segment)
+    return obj
+
+
+def test_editable_fields_round_trip_through_load_config(tmp_path):
+    """Every EDITABLE_FIELD_PATHS entry must write to a YAML key that
+    load_config() reads back into the corresponding dataclass attribute.
+
+    Catches: a config field rename that leaves a stale entry pointing at an
+    ignored YAML key (the silent-write-no-effect bug).
+    """
+    from src.config import load_config
+
+    # Sanity: every editable field has a sample value (theme_schedule is special).
+    skip_keys = {"theme_schedule"}
+    missing = set(EDITABLE_FIELD_PATHS) - skip_keys - set(_SAMPLE_VALUES)
+    assert not missing, f"Sample values missing for: {sorted(missing)}"
+
+    p = tmp_path / "config.yaml"
+    raw = _apply_to_raw({}, _SAMPLE_VALUES)
+    p.write_text(yaml.dump(raw, default_flow_style=False, sort_keys=False))
+
+    cfg = load_config(str(p))
+
+    for api_path, value in _SAMPLE_VALUES.items():
+        yaml_path = EDITABLE_FIELD_PATHS[api_path]
+        attr_path = _resolve_attr_path(yaml_path)
+        actual = _read_attr(cfg, attr_path)
+        assert actual == value, (
+            f"{api_path!r} did not round-trip: wrote {value!r} via YAML "
+            f"path {yaml_path}, read {actual!r} from cfg.{'.'.join(attr_path)}"
+        )
+
+
+def test_editable_field_theme_schedule_round_trips(tmp_path):
+    """theme_schedule is a list-of-dicts and is handled separately by load_config."""
+    from src.config import load_config
+
+    p = tmp_path / "config.yaml"
+    raw = _apply_to_raw(
+        {},
+        {"theme_schedule": [{"time": "06:00", "theme": "default"}]},
+    )
+    p.write_text(yaml.dump(raw, default_flow_style=False, sort_keys=False))
+
+    cfg = load_config(str(p))
+    assert len(cfg.theme_schedule.entries) == 1
+    assert cfg.theme_schedule.entries[0].time == "06:00"
+    assert cfg.theme_schedule.entries[0].theme == "default"
+
+
 # ---------------------------------------------------------------------------
 # _load_raw_yaml
 # ---------------------------------------------------------------------------

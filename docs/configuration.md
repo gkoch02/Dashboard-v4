@@ -35,12 +35,19 @@ google:
   calendar_id: "primary"
   additional_calendars: []
   # contacts_email: "you@yourdomain.com"  # required for birthdays.source: "contacts"
+                                          # — the user whose Google Contacts the
+                                          # service account reads via the People API
+                                          # (requires domain-wide delegation; see
+                                          # setup.md → Birthday Configuration)
   daily_quota_warning: 500         # log warning when daily API calls exceed this
 
   # ICS feed alternative — when set, service_account_path is ignored for events.
   # Get the URL: Google Calendar → Settings → [calendar] → "Secret address in iCal format"
   # ical_url: "https://calendar.google.com/calendar/ical/.../.../basic.ics"
-  # additional_ical_urls: []
+  # additional_ical_urls: []        # optional extra ICS URLs; events are merged
+                                    # with `ical_url`. Per-feed failure is non-fatal:
+                                    # any feed that returns an HTTP error is logged
+                                    # as a warning and skipped while the others render.
 
 weather:
   api_key: ""
@@ -65,6 +72,10 @@ schedule:
 timezone: "local"                  # IANA name or "local"
 title: "Home Dashboard"            # text shown in the header bar
 theme: "default"                   # default | terminal | minimalist | old_fashioned | today | fantasy | moonphase | moonphase_invert | qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | air_quality | message | diags | timeline | year_pulse | monthly | sunrise | scorecard | tides | photo | random | random_daily | random_hourly
+
+# photo:                           # only used when theme: photo (see setup.md → Photo theme)
+#   path: "/home/pi/wallpaper.jpg" # JPEG or PNG; converted to greyscale and dithered
+                                   # (Floyd-Steinberg on Waveshare; Spectra-6 palette mapping on Inky)
 
 random_theme:                      # only used when theme: random_daily or random_hourly
   include: []                      # allowlist (empty = all themes eligible)
