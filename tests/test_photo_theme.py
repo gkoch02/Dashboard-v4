@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from PIL import Image
@@ -26,6 +27,7 @@ from src.config import DisplayConfig
 from src.dummy_data import generate_dummy_data
 from src.render.canvas import render_dashboard
 from src.render.primitives import load_and_dither_image
+from src.render.quantize import blend_inky_palette
 from src.render.theme import AVAILABLE_THEMES, ThemeLayout, ThemeStyle, load_theme
 from src.render.themes.photo import _draw_photo_background, photo_theme
 
@@ -167,8 +169,6 @@ class TestDrawPhotoBackground:
     ):
         """If PIL's FS quantize produces pixels outside the blended palette, the
         photo theme should fall back to the Bayer path."""
-        from unittest.mock import patch
-
         canvas = self._make_canvas(mode="RGB")
         layout = self._make_layout()
         style = self._make_style(path=str(grey_png))
@@ -177,21 +177,8 @@ class TestDrawPhotoBackground:
         # so the "set(fs_result.getdata()) <= blended_set" check fails.
         bad_fs = Image.new("RGB", (800, 480), (42, 42, 42))
 
-        # We patch quantize() on the opened image so the FS result goes through bad_fs.
-        real_image_class = Image.Image
-
-        class _WrappedImg:
-            def __init__(self, inner):
-                self._inner = inner
-
-            def __getattr__(self, name):
-                return getattr(self._inner, name)
-
-            def quantize(self, **kwargs):
-                return bad_fs.convert("P")
-
         with patch.object(
-            real_image_class,
+            Image.Image,
             "quantize",
             lambda self, **kw: bad_fs.convert("P"),
         ):
@@ -199,15 +186,11 @@ class TestDrawPhotoBackground:
                 _draw_photo_background(canvas, layout, style)
 
         # After the fallback, the canvas pixels must all be blended palette colours.
-        from src.render.quantize import blend_inky_palette
-
         palette_set = set(blend_inky_palette(0.25))
         assert set(canvas.getdata()) <= palette_set
 
     def test_exception_during_load_is_logged_and_swallowed(self, caplog, grey_png: Path):
         """An unexpected exception inside the dither path should log and not propagate."""
-        from unittest.mock import patch
-
         canvas = self._make_canvas()
         layout = self._make_layout()
         style = self._make_style(path=str(grey_png))

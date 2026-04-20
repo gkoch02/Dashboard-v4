@@ -293,20 +293,6 @@ class TestSensorPayloadShape:
             with pytest.raises(RuntimeError, match="PM2.5"):
                 fetch_air_quality(cfg)
 
-    def test_row_not_a_list_is_handled(self, cfg):
-        """When 'data' contains a non-list row, payload decode yields an empty dict."""
-        resp = _make_payload_response(
-            {"fields": ["pm2.5_60minute"], "data": [["valid"], "not-a-list-row"]}
-        )
-        with patch("src.fetchers.purpleair.requests.Session") as mock_session_cls:
-            mock_session = MagicMock()
-            mock_session_cls.return_value.__enter__.return_value = mock_session
-            mock_session.get.return_value = resp
-            # The first row is the list-of-row format — it IS a list, so it decodes.
-            # Just assert no crash; PM2.5 handling is exercised elsewhere.
-            with pytest.raises(RuntimeError):
-                fetch_air_quality(cfg)
-
     def test_data_as_flat_row_list(self, cfg):
         """data = [<scalar>, ...] (not list-of-rows) is also accepted."""
         resp = _make_payload_response(

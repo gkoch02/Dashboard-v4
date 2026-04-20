@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from src.config import ThemeScheduleConfig, ThemeScheduleEntry
 from src.web.routes.status import (
     _describe_theme_mode,
     _overall_health,
@@ -143,6 +144,7 @@ def test_overall_health_warn_source_does_not_replace_bad_status():
 
 
 def test_overall_health_caps_issues_at_four():
+    # Matches the issues[:4] slice in src/web/routes/status.py — update both together.
     sources = {
         f"src_{i}": _bad_source() for i in range(6)
     }
@@ -156,8 +158,8 @@ def test_overall_health_caps_issues_at_four():
 
 
 def _cfg(theme="default", entries=()):
-    schedule = SimpleNamespace(
-        entries=[SimpleNamespace(time=t, theme=th) for t, th in entries]
+    schedule = ThemeScheduleConfig(
+        entries=[ThemeScheduleEntry(time=t, theme=th) for t, th in entries]
     )
     return SimpleNamespace(theme=theme, theme_schedule=schedule)
 

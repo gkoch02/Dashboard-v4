@@ -1,6 +1,7 @@
 """Tests for the P2 config editor — config_editor.py and /api/config routes."""
 
 import json
+import logging
 from pathlib import Path
 from unittest.mock import patch
 
@@ -13,6 +14,7 @@ from src.web.config_editor import (
     EDITABLE_FIELD_PATHS,
     _apply_to_raw,
     _load_raw_yaml,
+    _write_raw_yaml,
     apply_patch,
     get_config_for_web,
     list_config_backups,
@@ -517,9 +519,8 @@ def test_load_raw_yaml_returns_empty_for_empty_file(tmp_path):
 def test_load_raw_yaml_swallows_parse_error(tmp_path, caplog):
     p = tmp_path / "broken.yaml"
     p.write_text(":::not valid yaml:::\n- [unbalanced\n")
-    import logging as _logging
 
-    with caplog.at_level(_logging.WARNING, logger="src.web.config_editor"):
+    with caplog.at_level(logging.WARNING, logger="src.web.config_editor"):
         result = _load_raw_yaml(str(p))
     assert result == {}
     assert any("Could not load" in rec.message for rec in caplog.records)
@@ -570,8 +571,6 @@ def test_apply_patch_warnings_do_not_block_save(tmp_path):
 
 def test_write_raw_yaml_creates_backup_timestamp_on_repeat_save(tmp_path):
     """A second save with an existing .bak should rotate it to a timestamped file."""
-    from src.web.config_editor import _write_raw_yaml
-
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text("title: Original\n")
 
@@ -592,8 +591,6 @@ def test_write_raw_yaml_creates_backup_timestamp_on_repeat_save(tmp_path):
 
 def test_write_raw_yaml_cleans_up_tempfile_on_yaml_dump_failure(tmp_path):
     """If yaml.dump raises during the atomic write, the .tmp file must be removed."""
-    from src.web.config_editor import _write_raw_yaml
-
     cfg_path = tmp_path / "config.yaml"
 
     def _boom(*args, **kwargs):
@@ -610,16 +607,12 @@ def test_write_raw_yaml_cleans_up_tempfile_on_yaml_dump_failure(tmp_path):
 
 def test_write_raw_yaml_backup_io_error_is_non_fatal(tmp_path, caplog):
     """A failing backup step should log a warning but allow the save to proceed."""
-    import logging as _logging
-
-    from src.web.config_editor import _write_raw_yaml
-
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text("title: Original\n")
 
     # Force Path.read_bytes (the backup copy step) to raise — the save must still
     # succeed after logging a warning.
-    with caplog.at_level(_logging.WARNING, logger="src.web.config_editor"):
+    with caplog.at_level(logging.WARNING, logger="src.web.config_editor"):
         with patch(
             "src.web.config_editor.Path.read_bytes",
             side_effect=OSError("cannot read source for backup"),

@@ -136,8 +136,11 @@ def test_cli_set_password_prints_hash(capsys):
         "getpass.getpass", side_effect=["hello", "hello"]
     ):
         runpy.run_module("src.web.auth", run_name="__main__")
-    out = capsys.readouterr().out
+    out = capsys.readouterr().out.strip().splitlines()[-1]
     assert out.startswith("scrypt:")
+    # The printed hash must validate against the original password.
+    assert check_password("hello", out) is True
+    assert check_password("wrong", out) is False
 
 
 def test_cli_set_password_mismatch_exits_1(capsys):
