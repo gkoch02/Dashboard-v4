@@ -137,19 +137,13 @@ def test_main_warns_on_unreadable_config(tmp_path, fake_app, caplog):
 
 def test_main_falls_back_to_flask_when_waitress_missing(tmp_path, fake_app, caplog):
     """When `import waitress` fails, fall back to app.run() with a warning."""
-    import builtins
-
-    real_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "waitress":
-            raise ImportError("waitress not installed")
-        return real_import(name, *args, **kwargs)
-
+    # Setting sys.modules["waitress"] = None forces Python's import machinery
+    # to raise ImportError for `from waitress import serve` without intercepting
+    # any other imports inside main().
     with (
         _patch_create_app(fake_app),
         patch("sys.argv", ["src.web"]),
-        patch("builtins.__import__", side_effect=fake_import),
+        patch.dict("sys.modules", {"waitress": None}),
         caplog.at_level(logging.WARNING),
     ):
         main()

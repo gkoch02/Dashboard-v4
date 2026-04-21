@@ -118,15 +118,51 @@ class TestResolveRenderMode:
 
 
 class TestResolveStyleInkyMono:
-    def test_inky_l_render_uses_grayscale_accent_resolution(self):
-        """When provider=inky AND render_mode is not RGB, falls into the L-mode branch."""
+    def test_inky_l_render_resolves_none_accents_to_fg(self):
+        """On Inky+L, None accents fall back to style.fg (greyscale path, not Spectra 6)."""
+        from dataclasses import replace as dc_replace
+
         theme = default_theme()
+        # Force all accents to None so we can observe the fallback.
+        bare_style = dc_replace(
+            theme.style,
+            accent_info=None,
+            accent_warn=None,
+            accent_alert=None,
+            accent_good=None,
+            accent_primary=None,
+            accent_secondary=None,
+        )
+        theme = dc_replace(theme, style=bare_style)
+
         cfg = DisplayConfig(provider="inky", model="impression_7_3_2025")
-        # render_mode != "RGB" → exercise the trailing `replace(...)` branch
         resolved = _resolve_style(theme, render_mode="L", config=cfg)
-        # All accent fields should be resolved; the function returns a ThemeStyle
-        assert resolved is not theme.style
-        assert hasattr(resolved, "accent_info")
+
+        # L-mode greyscale fallback: every accent resolves to style.fg (not to a
+        # Spectra 6 palette tuple — that would be the RGB branch).
+        for field in (
+            "accent_info",
+            "accent_warn",
+            "accent_alert",
+            "accent_good",
+            "accent_primary",
+            "accent_secondary",
+        ):
+            assert getattr(resolved, field) == theme.style.fg, field
+
+    def test_inky_l_render_preserves_valid_grayscale_values(self):
+        """Explicit greyscale ints in [0..255] pass through unchanged on Inky+L."""
+        from dataclasses import replace as dc_replace
+
+        theme = default_theme()
+        custom_style = dc_replace(theme.style, accent_info=128, accent_warn=200)
+        theme = dc_replace(theme, style=custom_style)
+
+        cfg = DisplayConfig(provider="inky", model="impression_7_3_2025")
+        resolved = _resolve_style(theme, render_mode="L", config=cfg)
+
+        assert resolved.accent_info == 128
+        assert resolved.accent_warn == 200
 
 
 # ---------------------------------------------------------------------------
@@ -192,17 +228,16 @@ class TestRenderDashboardInkyPaths:
 
 
 def test_render_dashboard_inky_with_l_layout_no_color_preference():
-    """Render an L-mode theme on Inky WITHOUT prefer_color_on_inky → render_mode stays L."""
-    theme = load_theme("monthly")
-    # Override prefer_color_on_inky to False to exercise the L branch on Inky
+    """An L-mode layout on Inky WITHOUT prefer_color_on_inky keeps render_mode="L"."""
     from dataclasses import replace as dc_replace
 
-    layout = dc_replace(theme.layout, prefer_color_on_inky=False)
-    theme = dc_replace(theme, layout=layout)
+    base = default_theme()
+    # Synthesize an L-mode layout with prefer_color_on_inky explicitly False.
+    l_layout = dc_replace(base.layout, canvas_mode="L", prefer_color_on_inky=False)
+    l_style = dc_replace(base.style, fg=0, bg=255)
+    theme = dc_replace(base, layout=l_layout, style=l_style)
 
     cfg = DisplayConfig(provider="inky", model="impression_7_3_2025")
     img = render_dashboard(_empty_data(), cfg, title="Test", theme=theme)
-    # Canvas should remain in L since prefer_color_on_inky was False.
-    # Inky path skips quantize so the image stays in its rendered mode.
-    assert img.mode in {"L", "RGB"}  # tolerant: confirm no crash and a sane mode
-    assert isinstance(img, Image.Image)
+    # Inky path skips quantization → image stays in the rendered L mode.
+    assert img.mode == "L"

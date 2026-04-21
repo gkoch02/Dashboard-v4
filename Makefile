@@ -37,7 +37,7 @@ test: _check-venv
 	$(VENV) -m pytest tests/ -v
 
 coverage: _check-venv
-	$(VENV) -m pytest --cov=src --cov-report=term-missing --cov-report=html
+	$(VENV) -m pytest --cov-report=html
 
 lint: _check-venv
 	$(VENV) -m ruff check src/ tests/

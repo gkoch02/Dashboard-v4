@@ -285,23 +285,19 @@ class TestTimelinePanel:
         )
         assert img.mode == "1"
 
-    def test_minutes_from_start_with_date_input(self):
-        """_minutes_from_start should accept a date (not datetime) — covers line 194."""
+    def test_minutes_from_start_past_day_clamps_to_zero(self):
+        """A datetime on a previous day clamps to 0 (start of visible window)."""
         from src.render.components.timeline_panel import _minutes_from_start
 
-        # When `dt` is a date object equal to today, the (hour - _START_HOUR) calc
-        # would crash on a date — but the dt_date == today branch falls through.
-        # Use a date != today to exercise both the date assignment AND the < today branch.
-        result = _minutes_from_start(date(2026, 4, 4), date(2026, 4, 5))
-        assert result == 0  # earlier date → 0
+        result = _minutes_from_start(datetime(2026, 4, 4, 14, 0), date(2026, 4, 5))
+        assert result == 0
 
-    def test_minutes_from_start_future_date_returns_end_of_window(self):
-        """A future date should return _VISIBLE_HOURS * 60 — covers line 197 else branch."""
+    def test_minutes_from_start_future_day_clamps_to_window_end(self):
+        """A datetime on a future day clamps to _VISIBLE_HOURS * 60 (end of window)."""
         from src.render.components.timeline_panel import _minutes_from_start
 
         result = _minutes_from_start(datetime(2026, 4, 6, 8, 0), date(2026, 4, 5))
-        # 14 visible hours × 60 = 840
-        assert result == 14 * 60
+        assert result == 14 * 60  # _VISIBLE_HOURS * 60
 
 
 # ---------------------------------------------------------------------------
