@@ -12,8 +12,6 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from PIL import Image
-
 from src.config import DisplayConfig
 from src.data.models import DashboardData
 from src.render.canvas import (
@@ -24,7 +22,7 @@ from src.render.canvas import (
     render_dashboard,
 )
 from src.render.quantize import INKY_SPECTRA6_PALETTE
-from src.render.theme import default_theme, load_theme
+from src.render.theme import default_theme
 
 # ---------------------------------------------------------------------------
 # _resolve_inky_explicit_color
