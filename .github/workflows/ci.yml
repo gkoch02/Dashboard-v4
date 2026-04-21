@@ -6,9 +6,17 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,9 +29,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.9", "3.11"]
+        python-version: ["3.9", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,6 +45,7 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -43,3 +54,21 @@ jobs:
           cache: "pip"
       - run: pip install -e ".[dev]"
       - run: python -m mypy src/
+
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -e ".[dev]"
+      - name: Seed config from example
+        run: cp config/config.example.yaml config/config.yaml
+      - name: Validate example config
+        run: python -m src.main --check-config
+      - name: Render dummy dashboard
+        run: python -m src.main --dry-run --dummy
