@@ -43,6 +43,8 @@ def _load_last_morning_refresh(state_dir: str) -> _date | None:
     try:
         raw = path.read_text()
         payload = json.loads(raw)
+        if not isinstance(payload, dict):
+            return None
         value = payload.get("last_refresh_date")
         if not isinstance(value, str):
             return None

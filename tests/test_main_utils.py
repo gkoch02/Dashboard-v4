@@ -359,6 +359,15 @@ class TestLoadLastMorningRefresh:
         (tmp_path / "morning_refresh_state.json").write_text("not json")
         assert _load_last_morning_refresh(str(tmp_path)) is None
 
+    def test_non_object_json_returns_none(self, tmp_path):
+        from src.services.run_policy import _load_last_morning_refresh
+
+        # Valid JSON but not a dict — must not raise AttributeError
+        (tmp_path / "morning_refresh_state.json").write_text("[]")
+        assert _load_last_morning_refresh(str(tmp_path)) is None
+        (tmp_path / "morning_refresh_state.json").write_text('"2026-04-23"')
+        assert _load_last_morning_refresh(str(tmp_path)) is None
+
     def test_missing_key_returns_none(self, tmp_path):
         from src.services.run_policy import _load_last_morning_refresh
 

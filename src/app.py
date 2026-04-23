@@ -116,7 +116,7 @@ class DashboardApp:
             now=now,
             theme_name=theme_name,
         )
-        if force_full_from_morning:
+        if force_full_from_morning and not self.args.dry_run:
             record_morning_refresh(now, self.cfg.state_dir)
         self.output.write_health_marker()
         logger.info("Done")
