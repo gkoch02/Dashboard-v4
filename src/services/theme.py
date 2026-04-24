@@ -41,17 +41,17 @@ def resolve_theme_name(
     4. ``cfg.theme`` — static config value (may be ``"random"``).
     """
     if override_theme is not None:
-        theme_name = override_theme
+        theme_name: str = override_theme
     else:
-        theme_name = None
+        theme_name = ""
         rules = getattr(getattr(cfg, "theme_rules", None), "rules", None) or []
         if rules and now is not None:
             from src.services.theme_rules import resolve_rule_theme
 
-            theme_name = resolve_rule_theme(rules, now, data)
-        if theme_name is None and now is not None and cfg.theme_schedule.entries:
-            theme_name = _resolve_scheduled_theme(cfg.theme_schedule.entries, now)
-        if theme_name is None:
+            theme_name = resolve_rule_theme(rules, now, data) or ""
+        if not theme_name and now is not None and cfg.theme_schedule.entries:
+            theme_name = _resolve_scheduled_theme(cfg.theme_schedule.entries, now) or ""
+        if not theme_name:
             theme_name = cfg.theme
 
     if theme_name in ("random", "random_daily"):

@@ -580,6 +580,76 @@ class TestRun:
         assert mock_resolve.call_args_list[0].kwargs.get("data") is None
         assert mock_resolve.call_args_list[1].kwargs.get("data") is not None
 
+    def test_monthly_rule_widens_event_window_pre_fetch(self, tmp_path):
+        """If a rule can flip to `monthly`, the pre-fetch event window is sized for monthly.
+
+        Without this, a weather-dependent rule that resolves to `monthly` would
+        render the month grid with only 7 days of calendar events.
+        """
+        from src.config import ThemeRule, ThemeRuleCondition
+
+        app = self._make_full_app(tmp_path, dummy=True, theme=None)
+        app.cfg.theme = "default"
+        app.cfg.theme_rules.rules = [
+            ThemeRule(when=ThemeRuleCondition(weather="rain"), theme="monthly"),
+        ]
+        fake_data = MagicMock()
+        fake_data.events = []
+        from PIL import Image
+
+        fake_image = Image.new("1", (800, 480), 1)
+
+        with (
+            patch("src.app.should_skip_refresh", return_value=False),
+            patch("src.app.should_force_full_refresh", return_value=False),
+            patch("src.app.generate_dummy_data", return_value=fake_data) as mock_gen,
+            patch("src.app.render_dashboard", return_value=fake_image),
+            # Pre-fetch resolves to "default"; post-fetch flips to "monthly".
+            patch(
+                "src.app.resolve_theme_name",
+                side_effect=["default", "monthly"],
+            ),
+            patch.object(app.output, "publish"),
+            patch.object(app.output, "write_health_marker"),
+        ):
+            app.run()
+
+        # Dummy data must have been generated with a month-sized window
+        # (event_window_days is typically 35 for a six-week grid).
+        kwargs = mock_gen.call_args.kwargs
+        assert kwargs["event_window_days"] > 7
+        assert kwargs["event_window_start"] is not None
+
+    def test_no_monthly_rule_keeps_default_week_window(self, tmp_path):
+        """Default path with no monthly rule uses the 7-day window."""
+        from src.config import ThemeRule, ThemeRuleCondition
+
+        app = self._make_full_app(tmp_path, dummy=True, theme=None)
+        app.cfg.theme = "default"
+        app.cfg.theme_rules.rules = [
+            ThemeRule(when=ThemeRuleCondition(weather="rain"), theme="weather"),
+        ]
+        fake_data = MagicMock()
+        fake_data.events = []
+        from PIL import Image
+
+        fake_image = Image.new("1", (800, 480), 1)
+
+        with (
+            patch("src.app.should_skip_refresh", return_value=False),
+            patch("src.app.should_force_full_refresh", return_value=False),
+            patch("src.app.generate_dummy_data", return_value=fake_data) as mock_gen,
+            patch("src.app.render_dashboard", return_value=fake_image),
+            patch("src.app.resolve_theme_name", return_value="default"),
+            patch.object(app.output, "publish"),
+            patch.object(app.output, "write_health_marker"),
+        ):
+            app.run()
+
+        kwargs = mock_gen.call_args.kwargs
+        assert kwargs["event_window_days"] == 7
+        assert kwargs["event_window_start"] is None
+
     def test_rule_change_post_fetch_logs_transition(self, tmp_path, caplog):
         """When a rule flips the theme between phases, the transition is logged."""
         import logging

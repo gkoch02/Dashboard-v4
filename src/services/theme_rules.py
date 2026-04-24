@@ -26,34 +26,39 @@ def _listify(val) -> list[str]:
     return [str(val).lower()]
 
 
-def _current_daypart(now: datetime, weather) -> str | None:
+def _current_daypart(now: datetime, weather) -> str:
     """Return the daypart bucket for *now*.
 
-    When sunrise/sunset are known, ``dawn`` is [sunrise-90min, sunrise+90min]
-    and ``dusk`` is [sunset-60min, sunset+60min].  Otherwise fixed clock ranges
-    are used.
+    When sunrise/sunset are known:
+    - ``dawn``:  [sunrise-90min, sunrise+90min]
+    - ``dusk``:  [sunset-60min, sunset+60min]
+    - ``morning``:   after dawn, before local noon
+    - ``afternoon``: after local noon, before dusk
+    - ``night``: before dawn or after dusk
+
+    Otherwise fixed clock ranges are used.  Rules always match against the
+    more specific ``morning``/``afternoon`` values; callers that configure
+    ``daypart: day`` get a broader match (day = morning ∪ afternoon) handled
+    at the rule level.
     """
     hour = now.hour + now.minute / 60
+    now_min = hour * 60
     if weather is not None and weather.sunrise and weather.sunset:
-        # Normalize to naive in the current tz for comparison
-        now_naive = now.replace(tzinfo=None)
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
         sr = weather.sunrise.replace(tzinfo=None) if weather.sunrise.tzinfo else weather.sunrise
         ss = weather.sunset.replace(tzinfo=None) if weather.sunset.tzinfo else weather.sunset
-        sr_min = (
-            sr - now_naive.replace(hour=0, minute=0, second=0, microsecond=0)
-        ).total_seconds() / 60
-        ss_min = (
-            ss - now_naive.replace(hour=0, minute=0, second=0, microsecond=0)
-        ).total_seconds() / 60
-        now_min = hour * 60
+        sr_min = (sr - midnight).total_seconds() / 60
+        ss_min = (ss - midnight).total_seconds() / 60
         if abs(now_min - sr_min) <= 90:
             return "dawn"
         if abs(now_min - ss_min) <= 60:
             return "dusk"
         if sr_min <= now_min <= ss_min:
-            return "day"
+            # Split day at local noon so ``morning``/``afternoon`` buckets work
+            # even when sunrise/sunset data is available.
+            return "morning" if now_min < 12 * 60 else "afternoon"
         return "night"
-    # Fallback: fixed clock ranges
+    # Fallback: fixed clock ranges (no sunrise/sunset data available)
     if 5 <= hour < 7:
         return "dawn"
     if 7 <= hour < 12:
@@ -122,10 +127,12 @@ def _rule_matches(rule, now: datetime, data: DashboardData | None) -> bool:
     # Daypart
     if when.daypart is not None:
         dp = _current_daypart(now, weather)
-        if dp is None:
-            return False
         want = _listify(when.daypart)
-        if dp not in want:
+        # ``day`` is an alias for morning ∪ afternoon so users can configure
+        # a simple "daytime" rule without enumerating both halves.
+        if "day" in want and dp in ("morning", "afternoon"):
+            pass
+        elif dp not in want:
             return False
 
     # Season

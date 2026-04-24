@@ -90,7 +90,13 @@ class DashboardApp:
         configured_theme = self.args.theme if self.args.theme is not None else self.cfg.theme
         # Phase 1: pre-fetch resolve (no data) — used to size the calendar event window.
         pre_theme = resolve_theme_name(self.cfg, self.args.theme, now=now, data=None)
-        event_window_start, event_window_days = self._event_window_for_theme(pre_theme, now)
+        # If any rule can later resolve to "monthly" post-fetch, pre-size the event
+        # window for monthly now; the extra calendar events are cheap and avoid a
+        # re-fetch when a weather rule flips to monthly.
+        window_theme = (
+            "monthly" if pre_theme != "monthly" and self._rules_can_pick_monthly() else pre_theme
+        )
+        event_window_start, event_window_days = self._event_window_for_theme(window_theme, now)
 
         data = self._load_data(now, force_full, pre_theme, event_window_start, event_window_days)
         data = self._apply_filters(data)
@@ -188,6 +194,15 @@ class DashboardApp:
         grid_start = weeks[0][0]
         grid_end = weeks[-1][-1] + timedelta(days=1)
         return grid_start, (grid_end - grid_start).days
+
+    def _rules_can_pick_monthly(self) -> bool:
+        """Return True when any ``theme_rules`` entry could resolve to ``monthly``.
+
+        Used pre-fetch to widen the calendar event window so the monthly grid
+        has complete data if a weather-dependent rule later flips the theme to
+        monthly (after the pre-fetch resolve already picked a non-monthly theme).
+        """
+        return any(rule.theme == "monthly" for rule in self.cfg.theme_rules.rules)
 
     def _apply_filters(self, data):
         if (
