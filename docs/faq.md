@@ -152,20 +152,28 @@ pure math and always work.
 ### What is `theme_rules`?
 
 `theme_rules` picks a theme based on live context — weather, time-of-day,
-season, or weekday. Rules fire *before* `theme_schedule` so they can override
-the time-of-day schedule when, for example, a storm alert arrives.
+season, weekday, or today's calendar state. Rules fire *before* `theme_schedule`
+so they can override the time-of-day schedule when, for example, a storm alert
+arrives or your calendar is empty.
 
 ```yaml
 theme_rules:
   - when: { weather_alert_present: true }
     theme: "message"
+  - when: { calendar: "birthday_today" }
+    theme: "today"
+  - when: { calendar: ["empty", "done"] }
+    theme: "qotd"
   - when: { weather: ["rain", "snow", "thunderstorm"] }
     theme: "weather"
   - when: { daypart: "night", weather: "clear" }
     theme: "moonphase"
 ```
 
-First match wins. See [Themes → Context-aware theme rules](themes.md#context-aware-theme-rules)
+First match wins. Calendar states are: `empty` (no events today), `done` (all
+events ended), `active` (currently in an event), `upcoming_soon` (event in next
+30 min), `busy` (5+ events today), `birthday_today` (birthday on today's date).
+See [Themes → Context-aware theme rules](themes.md#context-aware-theme-rules)
 for the full condition reference.
 
 ### How do I force a full eInk refresh?

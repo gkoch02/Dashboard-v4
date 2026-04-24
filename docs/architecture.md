@@ -34,7 +34,7 @@ CLI (main.py)
      ├─ resolve theme name (two phases: once pre-fetch for event window,
      │   once post-fetch so weather-dependent rules can fire)
      │   ├─ CLI --theme override (highest priority)
-     │   ├─ theme_rules (weather / daypart / season / weekday)
+     │   ├─ theme_rules (weather / daypart / season / weekday / calendar)
      │   ├─ theme_schedule entries (time-based)
      │   └─ cfg.theme / random_daily / random_hourly
      │
@@ -81,7 +81,7 @@ CLI (main.py)
 ### Services (orchestration policy)
 - **`services/run_policy.py`** — Quiet hours, morning startup detection
 - **`services/theme.py`** — Theme name resolution (CLI → rules → schedule → cfg.theme / random)
-- **`services/theme_rules.py`** — Context-aware rule evaluator (weather / daypart / season / weekday)
+- **`services/theme_rules.py`** — Context-aware rule evaluator (weather / daypart / season / weekday / calendar)
 - **`services/output.py`** — Publish to display or PNG, write health marker
 
 ### Rendering
