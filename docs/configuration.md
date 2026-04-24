@@ -98,6 +98,10 @@ random_theme:                      # only used when theme: random_daily or rando
 # theme_rules:                     # context-aware rules; evaluated BEFORE theme_schedule
 #   - when: { weather_alert_present: true }
 #     theme: "message"
+#   - when: { calendar: "birthday_today" }
+#     theme: "today"
+#   - when: { calendar: ["empty", "done"] }
+#     theme: "qotd"
 #   - when: { weather: ["rain", "snow", "thunderstorm"] }
 #     theme: "weather"
 #   - when: { daypart: "night", weather: "clear" }
@@ -136,11 +140,11 @@ logging:
 The concrete theme used for each render is resolved in this order (highest wins):
 
 1. `--theme` CLI override
-2. `theme_rules` — first matching context rule (weather / daypart / season / weekday). See [Context-aware theme rules](themes.md#context-aware-theme-rules).
+2. `theme_rules` — first matching context rule (weather / daypart / season / weekday / calendar). See [Context-aware theme rules](themes.md#context-aware-theme-rules).
 3. `theme_schedule` — latest HH:MM entry whose time ≤ now.
 4. `theme` — the static config value (may be `random`, `random_daily`, `random_hourly`).
 
-Rules that reference weather data silently skip on first boot (no cached weather), so the resolver falls through cleanly. If any rule can resolve to `monthly`, the calendar event window is pre-sized for the month grid so the view has complete data when the rule fires.
+Rules that reference weather or calendar data silently skip on first boot (no cached data), so the resolver falls through cleanly. If any rule can resolve to `monthly`, the calendar event window is pre-sized for the month grid so the view has complete data when the rule fires.
 
 ---
 

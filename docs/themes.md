@@ -94,12 +94,18 @@ The active entry is the last row whose `time` is less than or equal to the curre
 
 ## Context-aware theme rules
 
-`theme_rules` evaluates live context (weather, time-of-day, season, weekday) and picks a theme when a condition matches. Rules fire **before** `theme_schedule`, so they can override the time-of-day schedule when the conditions warrant it.
+`theme_rules` evaluates live context (weather, time-of-day, season, weekday, calendar) and picks a theme when a condition matches. Rules fire **before** `theme_schedule`, so they can override the time-of-day schedule when the conditions warrant it.
 
 ```yaml
 theme_rules:
   - when: { weather_alert_present: true }
     theme: "message"
+  - when: { calendar: "birthday_today" }
+    theme: "today"
+  - when: { calendar: "upcoming_soon" }
+    theme: "today"
+  - when: { calendar: ["empty", "done"] }
+    theme: "qotd"
   - when: { weather: ["rain", "snow", "thunderstorm"] }
     theme: "weather"
   - when: { daypart: "night", weather: "clear" }
@@ -119,8 +125,22 @@ Supported conditions:
 | `daypart` | `"dawn"`, `"morning"`, `"afternoon"`, `"dusk"`, `"night"`, or `"day"` (scalar or list) | With weather data: `dawn` = sunrise ±90min, `dusk` = sunset ±60min, `morning` = after dawn before local noon, `afternoon` = after noon before dusk, `night` = otherwise. `day` is a convenience alias for morning ∪ afternoon. Without weather data, fixed clock ranges are used. |
 | `season` | `"spring"`, `"summer"`, `"fall"`/`"autumn"`, `"winter"` (scalar or list) | N-hemisphere meteorological buckets by month. |
 | `weekday` | `"weekend"`, `"weekday"`, or a day name (scalar or list) | E.g. `"monday"`. |
+| `calendar` | `"empty"`, `"done"`, `"active"`, `"upcoming_soon"`, `"busy"`, `"birthday_today"` (scalar or list) | Today's calendar state — see below. States can overlap; a rule listing any matching state fires. |
 
-Rules that reference weather data silently skip on the first boot (no cached weather yet), so the system falls through to `theme_schedule` / `cfg.theme` until weather is available. If any rule could resolve to `monthly`, the calendar event window is pre-sized for the month grid so the view has complete data whenever the rule fires.
+Calendar states:
+
+| Value | Fires when… |
+|---|---|
+| `empty` | No events cover today (no timed events today, no all-day events spanning today). |
+| `done` | There's at least one timed event today and all of them have ended. |
+| `active` | Currently inside a timed event (`start <= now < end`). All-day events don't trigger this. |
+| `upcoming_soon` | The next timed event starts within the next 30 minutes. |
+| `busy` | 5 or more events cover today (timed + spanning all-day combined). |
+| `birthday_today` | At least one birthday's month/day matches today. |
+
+All-day events use the iCal inclusive-start / exclusive-end convention, so a vacation stored as `2026-04-22` → `2026-04-25` covers April 22, 23, and 24.
+
+Rules that reference weather or calendar data silently skip on the first boot (no cached data yet), so the system falls through to `theme_schedule` / `cfg.theme` until data is available. A calendar fetch failure with no usable cache is treated the same way — event-derived rules don't fire on false-positive "empty" days during outages. If any rule could resolve to `monthly`, the calendar event window is pre-sized for the month grid so the view has complete data whenever the rule fires.
 
 ---
 
