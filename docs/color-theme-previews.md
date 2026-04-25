@@ -6,7 +6,7 @@
 - [Standard preview set](#standard-preview-set)
 - [Inky color preview set](#inky-color-preview-set)
 - [Output files](#output-files)
-- [Customer-facing gallery](#customer-facing-gallery)
+- [Visual gallery](#visual-gallery)
 - [Notes and limitations](#notes-and-limitations)
 
 ---
@@ -125,13 +125,11 @@ Timestamped dry runs are also written automatically:
 
 ---
 
-## Customer-facing gallery
+## Visual gallery
 
-If you want a simple browsable page that shows the current preview image for every theme, use
-[Color Themes](color-themes.md).
-
-That page is intended as the visual catalog. This page is the operational guide for generating
-or refreshing the preview assets.
+For a browsable page showing the current preview image for every theme, see
+[Color Themes](color-themes.md). That page is the visual catalog; this one is
+the operational guide for generating or refreshing the preview assets.
 
 ---
 

@@ -82,12 +82,13 @@ This path needs no hardware, API keys, or credentials.
 ## Project structure
 
 ```text
-Dashboard-v4/
+home-dashboard/
 ├── config/          # example config, web config template, bundled quotes
 ├── deploy/          # systemd units and setup helpers
 ├── docs/            # operator and contributor docs
 ├── fonts/           # bundled fonts
-├── output/          # previews and logs
+├── output/          # previews, logs, and image-hash marker
+├── state/           # runtime state (cache, breaker, sync tokens, theme state)
 ├── src/             # application code
 ├── tests/           # pytest suite
 ├── CONTRIBUTING.md

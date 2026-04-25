@@ -2,9 +2,7 @@
 
 # Color Themes
 
-Audience: operators browsing the current preview gallery.
-
-This page is gallery-only. For theme behavior, random rotation, and configuration, use [Themes](themes.md). For preview generation workflows, use [Color Theme Previews](color-theme-previews.md).
+This page is a **visual gallery only** — it shows the current Inky-rendered preview for every built-in theme. For theme behavior, random rotation, and configuration, see [Themes](themes.md). To regenerate these previews after a theme change, see [Color Theme Previews](color-theme-previews.md).
 
 - [Air Quality](#air-quality)
 - [Astronomy](#astronomy)

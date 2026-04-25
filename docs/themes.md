@@ -2,12 +2,7 @@
 
 # Themes
 
-Audience: operators choosing a display style, and contributors verifying the live theme inventory.
-
-Use this page for:
-- picking a theme
-- understanding random rotation and scheduled switching
-- checking which built-in themes are currently available
+Use this page to pick a theme, set up scheduled or context-aware switching, or browse the catalog of built-in themes.
 
 - [Switching themes](#switching-themes)
 - [Random rotation](#random-rotation)
@@ -26,8 +21,16 @@ Use this page for:
 Set one concrete theme in `config.yaml`:
 
 ```yaml
-theme: terminal   # default | terminal | minimalist | old_fashioned | today | fantasy | moonphase | moonphase_invert | qotd | qotd_invert | weather | fuzzyclock | fuzzyclock_invert | air_quality | astronomy | message | diags | timeline | year_pulse | monthly | sunrise | scorecard | tides | photo | countdown | random | random_daily | random_hourly
+theme: terminal
 ```
+
+Valid values:
+
+- **Week-view**: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`
+- **Full-screen focused**: `qotd`, `qotd_invert`, `weather`, `fuzzyclock`, `fuzzyclock_invert`, `moonphase`, `moonphase_invert`, `photo`
+- **Specialized**: `air_quality`, `astronomy`, `timeline`, `year_pulse`, `monthly`, `sunrise`, `scorecard`, `tides`
+- **Utility**: `countdown`, `message`, `diags`
+- **Rotation**: `random_daily` (alias `random`), `random_hourly`
 
 Or override it from the CLI:
 
