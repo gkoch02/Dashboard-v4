@@ -9,7 +9,7 @@ How to regenerate the per-theme preview PNGs that are embedded in
 - [Overview](#overview)
 - [Standard preview set](#standard-preview-set)
 - [Inky color preview set](#inky-color-preview-set)
-- [Diagonal split previews](#diagonal-split-previews)
+- [Combined split previews](#combined-split-previews)
 - [Output files](#output-files)
 - [Notes and limitations](#notes-and-limitations)
 
@@ -109,13 +109,15 @@ This is the most accurate way to review:
 
 ---
 
-## Diagonal split previews
+## Combined split previews
 
 [Themes](themes.md) embeds one image per theme rather than two, by combining each
-Waveshare and Inky pair into a single PNG split along the anti-diagonal — top-left
-triangle is the Waveshare render, bottom-right triangle is the Inky render. After
-regenerating both `theme_<theme>.png` and `theme_<theme>_inky.png`, rebuild the
-combined images with:
+Waveshare and Inky pair into a single PNG. The split orientation is chosen per
+theme to keep both backends' distinguishing pixels visible — full-canvas centered
+themes use a vertical cut, themes with strong horizontal banding use a horizontal
+cut, and the rest fall back to the original anti-diagonal cut. After regenerating
+both `theme_<theme>.png` and `theme_<theme>_inky.png`, rebuild the combined images
+with:
 
 ```bash
 make previews-split
@@ -129,6 +131,24 @@ Pillow, so it runs against any Python environment with the project deps installe
 python3 scripts/build_split_previews.py
 ```
 
+### Available split modes
+
+| mode             | Waveshare side       | Inky side             | divider           |
+|------------------|----------------------|-----------------------|-------------------|
+| `anti_diagonal`  | top-left triangle    | bottom-right triangle | TR ↔ BL (default) |
+| `main_diagonal`  | bottom-left triangle | top-right triangle    | TL ↔ BR           |
+| `vertical`       | left half            | right half            | mid-X, top→bottom |
+| `horizontal`     | top half             | bottom half           | mid-Y, left→right |
+
+### Per-theme overrides
+
+The mapping lives at the top of `scripts/build_split_previews.py` as
+`_THEME_SPLIT_MODES`. Themes not listed default to `anti_diagonal`. To change a
+theme's orientation, edit that dict and rerun `make previews-split`. When
+adding a new color theme, cross-reference `_INKY_THEME_KEY_COLORS` in
+`src/render/canvas.py` so themes with a real color story get a mode that
+showcases it.
+
 ---
 
 ## Output files
@@ -141,7 +161,7 @@ Inky color preview set:
 
 - `output/theme_<theme>_inky.png`
 
-Combined diagonal split previews (used by [Themes](themes.md)):
+Combined split previews (used by [Themes](themes.md)):
 
 - `output/theme_<theme>_split.png`
 

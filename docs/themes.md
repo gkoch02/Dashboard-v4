@@ -195,10 +195,14 @@ Rules that reference weather or calendar data silently skip on the first boot (n
 
 ### Theme details and previews
 
-Each theme is shown as a single image split along the diagonal: the top-left
-triangle is the **Waveshare** (1-bit black/white) render, and the bottom-right
-triangle is the **Inky** (Spectra 6 limited-palette color) render. Both halves
-share the same layout — the Inky side just maps to the panel's color palette.
+Each theme is shown as a single image split between two renders: the
+**Waveshare** (1-bit black/white) render on one side and the **Inky** (Spectra 6
+limited-palette color) render on the other. The split orientation is picked
+per theme — diagonal, vertical, or horizontal — so the Inky color treatment
+stays visible no matter where the theme concentrates its accents. Both halves
+share the same layout; the Inky side just maps to the panel's color palette.
+See [Combined split previews](previews.md#combined-split-previews) for the
+list of available orientations and how to retune them.
 
 #### default
 
