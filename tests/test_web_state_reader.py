@@ -9,6 +9,7 @@ from src.web.state_reader import (
     read_breakers,
     read_cache_ages,
     read_host_metrics,
+    read_last_error,
     read_last_success,
     read_log_tail,
     read_quota,
@@ -37,6 +38,65 @@ def test_read_last_success_corrupt(tmp_path):
     (tmp_path / "last_success.txt").write_text("not-a-date")
     result = read_last_success(str(tmp_path))
     assert result["timestamp"] is None
+
+
+# ---------------------------------------------------------------------------
+# read_last_error
+# ---------------------------------------------------------------------------
+
+
+def test_read_last_error_missing(tmp_path):
+    result = read_last_error(str(tmp_path))
+    assert result["timestamp"] is None
+    assert result["exception_type"] is None
+    assert result["message"] is None
+    assert result["is_current"] is False
+
+
+def test_read_last_error_current_when_no_success_yet(tmp_path):
+    payload = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "exception_type": "RuntimeError",
+        "message": "boom",
+    }
+    (tmp_path / "last_error.txt").write_text(json.dumps(payload))
+    result = read_last_error(str(tmp_path))
+    assert result["exception_type"] == "RuntimeError"
+    assert result["message"] == "boom"
+    assert result["is_current"] is True
+
+
+def test_read_last_error_stale_when_success_is_newer(tmp_path):
+    error_payload = {
+        "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat(),
+        "exception_type": "RuntimeError",
+        "message": "old",
+    }
+    (tmp_path / "last_error.txt").write_text(json.dumps(error_payload))
+    (tmp_path / "last_success.txt").write_text(datetime.now(timezone.utc).isoformat())
+    result = read_last_error(str(tmp_path))
+    assert result["is_current"] is False
+
+
+def test_read_last_error_current_when_error_is_newer(tmp_path):
+    (tmp_path / "last_success.txt").write_text(
+        (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat()
+    )
+    error_payload = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "exception_type": "ValueError",
+        "message": "new",
+    }
+    (tmp_path / "last_error.txt").write_text(json.dumps(error_payload))
+    result = read_last_error(str(tmp_path))
+    assert result["is_current"] is True
+
+
+def test_read_last_error_corrupt(tmp_path):
+    (tmp_path / "last_error.txt").write_text("not-json")
+    result = read_last_error(str(tmp_path))
+    assert result["timestamp"] is None
+    assert result["is_current"] is False
 
 
 # ---------------------------------------------------------------------------
