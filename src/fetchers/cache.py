@@ -96,62 +96,77 @@ def load_cache_blob(cache_dir: str) -> dict | None:
     return _read_cache_file(cache_dir)
 
 
-def _decode_source_block(
-    source: str, raw: dict, *, want_metadata: bool = False
-):
-    """Decode a single source out of an already-parsed cache dict.
-
-    Returns ``(data, fetched_at)`` or ``(data, fetched_at, metadata)`` depending
-    on *want_metadata*. Returns ``None`` when the source is absent or decoding
-    fails. Handles both v2 (per-source blocks) and legacy v1 (flat) layouts.
+def _decode_v2_block(
+    source: str, raw: dict
+) -> tuple[list | WeatherData | AirQualityData | None, datetime, dict] | None:
+    """Decode one source out of a v2 cache dict. Returns (data, fetched_at, metadata)
+    or None on missing source / decode failure.
     """
-    if raw.get("schema_version") == _SCHEMA_VERSION:
-        block = raw.get(source)
-        if not block:
+    block = raw.get(source)
+    if not block:
+        return None
+    try:
+        fetched_at = datetime.fromisoformat(block["fetched_at"])
+        if source == "events":
+            data: list | WeatherData | AirQualityData | None = [
+                _deser_event(e) for e in block.get("data", [])
+            ]
+        elif source == "weather":
+            data = _deser_weather(block["data"]) if block.get("data") else None
+        elif source == "birthdays":
+            data = [_deser_birthday(b) for b in block.get("data", [])]
+        elif source == "air_quality":
+            data = _deser_air_quality(block["data"]) if block.get("data") else None
+        else:
             return None
-        try:
-            fetched_at = datetime.fromisoformat(block["fetched_at"])
-            if source == "events":
-                data: list | WeatherData | AirQualityData | None = [
-                    _deser_event(e) for e in block.get("data", [])
-                ]
-            elif source == "weather":
-                data = _deser_weather(block["data"]) if block.get("data") else None
-            elif source == "birthdays":
-                data = [_deser_birthday(b) for b in block.get("data", [])]
-            elif source == "air_quality":
-                data = _deser_air_quality(block["data"]) if block.get("data") else None
-            else:
-                return None
-            if want_metadata:
-                metadata = {k: v for k, v in block.items() if k not in {"fetched_at", "data"}}
-                return data, fetched_at, metadata
-            return data, fetched_at
-        except Exception as exc:
-            logger.warning("Cache source %r decode failed: %s", source, exc)
-            return None
+        metadata = {k: v for k, v in block.items() if k not in {"fetched_at", "data"}}
+        return data, fetched_at, metadata
+    except Exception as exc:
+        logger.warning("Cache source %r decode failed: %s", source, exc)
+        return None
 
-    # v1 fallback
+
+def _decode_v1_legacy(
+    source: str, raw: dict
+) -> tuple[list | WeatherData | AirQualityData | None, datetime] | None:
+    """Decode the v1 (flat) legacy cache for the given source. Returns None for
+    sources that didn't exist in v1 (currently only ``air_quality``).
+    """
     try:
         legacy = _deserialise_v1(raw)
     except Exception:
         return None
     if source == "events":
-        return (legacy.events, legacy.fetched_at, {}) if want_metadata else (
-            legacy.events,
-            legacy.fetched_at,
-        )
+        return legacy.events, legacy.fetched_at
     if source == "weather":
-        return (legacy.weather, legacy.fetched_at, {}) if want_metadata else (
-            legacy.weather,
-            legacy.fetched_at,
-        )
+        return legacy.weather, legacy.fetched_at
     if source == "birthdays":
-        return (legacy.birthdays, legacy.fetched_at, {}) if want_metadata else (
-            legacy.birthdays,
-            legacy.fetched_at,
-        )
+        return legacy.birthdays, legacy.fetched_at
     return None
+
+
+def _decode_source(
+    source: str, raw: dict
+) -> tuple[list | WeatherData | AirQualityData | None, datetime] | None:
+    """Decode (data, fetched_at) for *source* from a v2 or v1 cache dict."""
+    if raw.get("schema_version") == _SCHEMA_VERSION:
+        result = _decode_v2_block(source, raw)
+        return None if result is None else (result[0], result[1])
+    return _decode_v1_legacy(source, raw)
+
+
+def _decode_source_with_metadata(
+    source: str, raw: dict
+) -> tuple[list | WeatherData | AirQualityData | None, datetime, dict] | None:
+    """Decode (data, fetched_at, metadata) for *source* from a v2 or v1 cache dict.
+
+    v1 cache files have no per-source metadata; ``metadata`` is always ``{}``
+    on the v1 path.
+    """
+    if raw.get("schema_version") == _SCHEMA_VERSION:
+        return _decode_v2_block(source, raw)
+    legacy = _decode_v1_legacy(source, raw)
+    return None if legacy is None else (legacy[0], legacy[1], {})
 
 
 def load_cached_source(
@@ -169,7 +184,7 @@ def load_cached_source(
     raw = _read_cache_file(cache_dir)
     if raw is None:
         return None
-    return _decode_source_block(source, raw)
+    return _decode_source(source, raw)
 
 
 def load_cached_source_with_metadata(
@@ -184,21 +199,25 @@ def load_cached_source_with_metadata(
     raw = _read_cache_file(cache_dir)
     if raw is None:
         return None
-    return _decode_source_block(source, raw, want_metadata=True)
+    return _decode_source_with_metadata(source, raw)
 
 
-def load_cached_source_from_blob(source: str, raw: dict | None):
+def load_cached_source_from_blob(
+    source: str, raw: dict | None
+) -> tuple[list | WeatherData | AirQualityData | None, datetime] | None:
     """Decode a single source from a pre-loaded cache blob (no I/O)."""
     if raw is None:
         return None
-    return _decode_source_block(source, raw)
+    return _decode_source(source, raw)
 
 
-def load_cached_source_with_metadata_from_blob(source: str, raw: dict | None):
+def load_cached_source_with_metadata_from_blob(
+    source: str, raw: dict | None
+) -> tuple[list | WeatherData | AirQualityData | None, datetime, dict] | None:
     """Decode a single source plus metadata from a pre-loaded cache blob (no I/O)."""
     if raw is None:
         return None
-    return _decode_source_block(source, raw, want_metadata=True)
+    return _decode_source_with_metadata(source, raw)
 
 
 def save_source(
