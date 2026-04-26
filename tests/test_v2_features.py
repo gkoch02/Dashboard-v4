@@ -276,7 +276,8 @@ class TestPerSourceCache:
             data, fetched_at = result
             assert len(data) == 1
             assert data[0].summary == "Evt"
-            assert fetched_at == ts
+            # Naive timestamps written to disk are normalised to UTC on read-back.
+            assert fetched_at == ts.replace(tzinfo=timezone.utc)
 
     def test_load_cached_source_weather(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -2,7 +2,7 @@
 
 import json
 import tempfile
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -136,7 +136,8 @@ class TestCacheRoundtrip:
 
         assert result is not None
         events, fetched_at, metadata = result
-        assert fetched_at == data.fetched_at
+        # Naive timestamps written to disk are normalised to UTC on read-back.
+        assert fetched_at == data.fetched_at.replace(tzinfo=timezone.utc)
         assert len(events) == 1
         assert metadata == {"window_start": "2024-03-10", "window_days": 35}
 
@@ -530,7 +531,8 @@ class TestLoadCachedSourceWithMetadata:
         assert result is not None
         events, fetched_at, metadata = result
         assert events == []
-        assert fetched_at == datetime(2024, 3, 15, 8, 0, 0)
+        # Naive timestamps written to disk are normalised to UTC on read-back.
+        assert fetched_at == datetime(2024, 3, 15, 8, 0, 0, tzinfo=timezone.utc)
         assert metadata == {"sync_token": "token-abc"}
 
     def test_weather_empty_block_returns_none_metadata(self):
@@ -699,7 +701,7 @@ class TestLoadCachedSourceAirQuality:
         assert result is not None
         data, fetched_at = result
         assert data.aqi == 58
-        assert fetched_at == datetime(2024, 3, 15, 9)
+        assert fetched_at == datetime(2024, 3, 15, 9, tzinfo=timezone.utc)
 
     def test_air_quality_empty_data_returns_none(self):
         """v2 air_quality block with data=None deserialises to None."""
@@ -733,7 +735,7 @@ class TestLoadCachedSourceWithMetadataV2Branches:
         assert result is not None
         data, fetched_at, metadata = result
         assert len(data) == 1 and data[0].name == "Dana"
-        assert fetched_at == datetime(2024, 3, 15, 9)
+        assert fetched_at == datetime(2024, 3, 15, 9, tzinfo=timezone.utc)
         assert metadata == {"source_count": 3}
 
 

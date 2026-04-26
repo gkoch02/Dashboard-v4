@@ -94,6 +94,66 @@ class TestCacheReadOncePerFetch:
             f"dashboard_cache.json was opened {counter['opens']}× — expected 1"
         )
 
+    def test_legacy_naive_cached_timestamps_do_not_crash_fetch(self, tmp_path):
+        """A pre-fix cache file with naive `fetched_at` strings must not crash fetch().
+
+        DataPipeline now always uses an aware UTC `self.fetched_at`. Without
+        the deserialiser-level normalisation, subtracting a naive cached_at
+        in _cache_is_recent / _use_cache raises TypeError and aborts fetch()
+        before cache/breaker fallback can engage — leaving users with legacy
+        cache files unable to render at all until they manually delete
+        dashboard_cache.json.
+        """
+        import json
+        from datetime import datetime, timedelta
+
+        # Naive timestamps — what the old code wrote when tz was unset (dummy
+        # mode, tests, or any pipeline created with tz=None).
+        naive_ts = (datetime.now() - timedelta(minutes=10)).isoformat()
+        cache_payload = {
+            "schema_version": 2,
+            "events": {
+                "fetched_at": naive_ts,
+                "data": [],
+                "window_start": None,
+                "window_days": 7,
+            },
+            "weather": {"fetched_at": naive_ts, "data": None},
+            "birthdays": {"fetched_at": naive_ts, "data": []},
+        }
+        (tmp_path / "dashboard_cache.json").write_text(json.dumps(cache_payload))
+
+        cfg = Config()
+        cfg.purpleair = PurpleAirConfig()
+        # Force the breaker-open fallback path so _use_cache() (and therefore
+        # check_staleness on the naive cached_at) is exercised — that's the
+        # exact site that raised TypeError before the fix.
+        cfg.cache.events_fetch_interval = 1
+        cfg.cache.weather_fetch_interval = 1
+        cfg.cache.birthdays_fetch_interval = 1
+        cfg.cache.events_ttl_minutes = 1440
+        cfg.cache.weather_ttl_minutes = 1440
+        cfg.cache.birthdays_ttl_minutes = 1440
+
+        breaker_payload = {
+            src: {
+                "consecutive_failures": 5,
+                "last_failure_at": datetime.now(timezone.utc).isoformat(),
+                "state": "open",
+            }
+            for src in ("events", "weather", "birthdays")
+        }
+        (tmp_path / "dashboard_breaker_state.json").write_text(json.dumps(breaker_payload))
+
+        pipeline = DataPipeline(cfg, cache_dir=str(tmp_path))
+        # Must not raise TypeError on naive-vs-aware subtraction.
+        data = pipeline.fetch()
+
+        # Cache fallback engaged for every source — naive cached values surfaced.
+        assert "events" in data.stale_sources
+        assert "weather" in data.stale_sources
+        assert "birthdays" in data.stale_sources
+
     def test_breaker_open_path_one_open(self, tmp_path):
         """Stale cache + open breakers force _use_cache fallback for every source.
 
