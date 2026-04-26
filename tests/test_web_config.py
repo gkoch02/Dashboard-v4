@@ -784,9 +784,9 @@ def test_post_api_config_reload_failure_still_returns_saved(client, app, caplog)
     raw = yaml.safe_load(Path(app.config["APP_CONFIG_PATH"]).read_text())
     assert raw["title"] == "ReloadBoom"
     # Reload failure is now logged (was silently swallowed previously).
-    assert any(
-        "in-memory config is stale" in r.getMessage() for r in caplog.records
-    ), f"expected reload-failure warning, got records: {[r.getMessage() for r in caplog.records]}"
+    assert any("in-memory config is stale" in r.getMessage() for r in caplog.records), (
+        f"expected reload-failure warning, got records: {[r.getMessage() for r in caplog.records]}"
+    )
 
 
 def test_restore_latest_backup_reload_failure_still_returns_restored(client, app, caplog):
@@ -808,9 +808,7 @@ def test_restore_latest_backup_reload_failure_still_returns_restored(client, app
     # The backup content is still on disk even though the in-memory reload failed.
     assert yaml.safe_load(config_path.read_text())["title"] == "FromBackup"
     # Reload failure logged via the shared helper.
-    assert any(
-        "in-memory config is stale" in r.getMessage() for r in caplog.records
-    )
+    assert any("in-memory config is stale" in r.getMessage() for r in caplog.records)
 
 
 def test_post_api_config_reload_updates_dash_cfg_atomically(client, app):

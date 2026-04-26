@@ -48,9 +48,7 @@ def _refresh_in_memory_config(config_path: str) -> bool:
             "air_quality": new_cfg.cache.air_quality_ttl_minutes,
         }
     except Exception as exc:
-        logger.warning(
-            "Config reload after save failed; in-memory config is stale: %s", exc
-        )
+        logger.warning("Config reload after save failed; in-memory config is stale: %s", exc)
         return False
 
     with config_write_lock():

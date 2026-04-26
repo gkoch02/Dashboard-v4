@@ -286,7 +286,9 @@ class TestCircuitBreakerOpenPath:
 
         cfg = Config()
         with tempfile.TemporaryDirectory() as tmpdir:
-            save_source("weather", _make_weather(), datetime.now(timezone.utc) - timedelta(hours=3), tmpdir)
+            save_source(
+                "weather", _make_weather(), datetime.now(timezone.utc) - timedelta(hours=3), tmpdir
+            )
             breaker = CircuitBreaker(state_dir=tmpdir)
             for _ in range(cfg.cache.max_failures):
                 breaker.record_failure("weather")
