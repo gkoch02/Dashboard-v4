@@ -128,35 +128,48 @@ class TestCircuitBreaker:
         result = cb.should_attempt("weather")
         assert result is True  # invalid timestamp → expired → half_open → True
 
-    def test_cooldown_with_legacy_naive_timestamp_honored(self, tmp_state_dir):
+    def test_cooldown_with_legacy_naive_timestamp_honored(self, tmp_state_dir, monkeypatch):
         """A naive ISO timestamp must be treated as UTC (not local) for cooldown math.
 
         Regression: previously _cooldown_expired() called astimezone(UTC) on the
-        naive value, which Python interprets as system local time and skews the
-        elapsed-minutes calculation by the local UTC offset. With cooldown=30,
-        this could cause the breaker to reopen prematurely on hosts in non-UTC
-        zones.
+        naive value, which Python interprets as system local time. On a host
+        ahead of UTC (e.g. Tokyo, +9h), a naive failure 5 minutes old would be
+        shifted ~9h into the past, falsely satisfying the 30-minute cooldown
+        and re-hammering the failing API.
+
+        Pin TZ to a non-UTC zone with a positive offset so the buggy and fixed
+        paths produce diverging results — a UTC-only CI host masks the bug.
         """
-        from datetime import datetime, timezone
+        import time
+        from datetime import datetime, timedelta, timezone
 
         from src.fetchers.circuit_breaker import BreakerState
 
-        cb = CircuitBreaker(max_failures=3, cooldown_minutes=30, state_dir=tmp_state_dir)
-        # Naive timestamp written 5 minutes ago in UTC (legacy format).
-        five_min_ago = datetime.now(timezone.utc).replace(tzinfo=None)
-        five_min_ago = five_min_ago.replace(minute=(five_min_ago.minute - 5) % 60)
-        # Reconstruct simply using arithmetic to avoid wrap edge cases.
-        from datetime import timedelta
+        if not hasattr(time, "tzset"):
+            import pytest
 
-        five_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).replace(tzinfo=None)
-        cb._states["weather"] = BreakerState(
-            consecutive_failures=3,
-            last_failure_at=five_min_ago.isoformat(),
-            state="open",
-        )
-        # Cooldown is 30 min; only 5 min have actually elapsed → still OPEN.
-        assert cb.should_attempt("weather") is False
-        assert cb._states["weather"].state == "open"
+            pytest.skip("time.tzset() unavailable on this platform")
+
+        monkeypatch.setenv("TZ", "Asia/Tokyo")  # UTC+9
+        time.tzset()
+        try:
+            cb = CircuitBreaker(max_failures=3, cooldown_minutes=30, state_dir=tmp_state_dir)
+            # Naive timestamp captured 5 minutes ago in UTC (legacy format).
+            five_min_ago = (datetime.now(timezone.utc) - timedelta(minutes=5)).replace(tzinfo=None)
+            cb._states["weather"] = BreakerState(
+                consecutive_failures=3,
+                last_failure_at=five_min_ago.isoformat(),
+                state="open",
+            )
+            # Buggy code (astimezone(UTC) on naive) reads this as Tokyo-local,
+            # shifts ~9h backward in UTC, age becomes ~545 min, cooldown
+            # appears expired → should_attempt returns True (incorrect).
+            # Fixed code (replace(tzinfo=UTC)) keeps age at 5 min → still OPEN.
+            assert cb.should_attempt("weather") is False
+            assert cb._states["weather"].state == "open"
+        finally:
+            monkeypatch.delenv("TZ", raising=False)
+            time.tzset()
 
     def test_save_uses_atomic_write(self, tmp_state_dir):
         """A power-loss simulation mid-write must not corrupt the breaker state file.
