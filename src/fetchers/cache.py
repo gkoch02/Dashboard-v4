@@ -11,12 +11,11 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import tempfile
 import threading
 from datetime import date, datetime
 from pathlib import Path
 
+from src._io import atomic_write_json
 from src.data.models import (
     AirQualityData,
     Birthday,
@@ -248,7 +247,7 @@ def save_source(
         raw[source] = block
 
         try:
-            _atomic_write_json(path, raw)
+            atomic_write_json(path, raw, indent=2)
             logger.debug("Cache source %r written to %s", source, path)
         except Exception as exc:
             logger.warning("Cache write failed for source %r: %s", source, exc)
@@ -258,23 +257,10 @@ def save_cache(data: DashboardData, cache_dir: str) -> None:
     """Persist full DashboardData to the cache file (v2 format)."""
     path = Path(cache_dir) / _CACHE_FILENAME
     try:
-        Path(cache_dir).mkdir(parents=True, exist_ok=True)
-        _atomic_write_json(path, _serialise(data))
+        atomic_write_json(path, _serialise(data), indent=2)
         logger.debug("Cache written to %s", path)
     except Exception as exc:
         logger.warning("Cache write failed: %s", exc)
-
-
-def _atomic_write_json(path: Path, data: dict) -> None:
-    """Write JSON to *path* atomically via a temp file + rename."""
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w") as f:
-            json.dump(data, f, indent=2)
-        os.replace(tmp, path)
-    except BaseException:
-        os.unlink(tmp)
-        raise
 
 
 # ---------------------------------------------------------------------------

@@ -158,11 +158,31 @@ class TestCircuitBreaker:
         assert cb.should_attempt("weather") is False
         assert cb._states["weather"].state == "open"
 
+    def test_save_uses_atomic_write(self, tmp_state_dir):
+        """A power-loss simulation mid-write must not corrupt the breaker state file.
+
+        Triggers an exception inside the atomic-write tempfile path; the failure
+        is swallowed by _save() and the existing on-disk state remains intact.
+        """
+        from unittest.mock import patch
+
+        cb = CircuitBreaker(state_dir=tmp_state_dir)
+        # Seed a known-good state on disk first.
+        cb.record_failure("weather")
+        path = cb._state_dir / "dashboard_breaker_state.json"
+        good = path.read_text()
+        # Simulate a write crash inside atomic_write_json.
+        with patch("src._io.os.fdopen", side_effect=OSError("disk full")):
+            cb.record_failure("weather")  # _save() must not raise
+        # Original file is unchanged (atomic write didn't replace it).
+        assert path.read_text() == good
+
     def test_save_exception_does_not_propagate(self, tmp_state_dir):
         """_save() exception is silently swallowed (lines 137-138)."""
         from unittest.mock import patch
 
         cb = CircuitBreaker(state_dir=tmp_state_dir)
-        # Patch json.dump to raise so that _save() hits the exception handler
-        with patch("src.fetchers.circuit_breaker.json.dump", side_effect=OSError("disk full")):
+        # Patch json.dump in the shared atomic-write helper so that _save() hits
+        # the exception handler.
+        with patch("src._io.json.dump", side_effect=OSError("disk full")):
             cb.record_failure("weather")  # triggers _save(), should not raise

@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from src._io import atomic_write_json
+
 logger = logging.getLogger(__name__)
 
 _STATE_FILENAME = "dashboard_breaker_state.json"
@@ -141,7 +143,6 @@ class CircuitBreaker:
 
     def _save(self) -> None:
         path = self._state_dir / _STATE_FILENAME
-        self._state_dir.mkdir(parents=True, exist_ok=True)
         try:
             raw = {}
             for source, st in self._states.items():
@@ -150,7 +151,6 @@ class CircuitBreaker:
                     "last_failure_at": st.last_failure_at,
                     "state": st.state,
                 }
-            with open(path, "w") as f:
-                json.dump(raw, f, indent=2)
+            atomic_write_json(path, raw, indent=2)
         except Exception as exc:
             logger.warning("Could not save breaker state: %s", exc)

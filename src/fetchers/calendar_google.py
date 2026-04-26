@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import tempfile
 from datetime import date, datetime, timedelta, timezone, tzinfo
 from pathlib import Path
 from typing import Any
@@ -22,6 +20,7 @@ from google_auth_httplib2 import AuthorizedHttp
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from src._io import atomic_write_json
 from src.config import GoogleConfig
 from src.data.models import CalendarEvent
 
@@ -104,15 +103,7 @@ def _save_sync_state(state: dict, cache_dir: str) -> None:
     """Persist per-calendar sync state atomically."""
     path = Path(cache_dir) / _SYNC_STATE_FILENAME
     try:
-        Path(cache_dir).mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=cache_dir, suffix=".tmp")
-        try:
-            with os.fdopen(fd, "w") as f:
-                json.dump(state, f, indent=2)
-            os.replace(tmp, path)
-        except BaseException:
-            os.unlink(tmp)
-            raise
+        atomic_write_json(path, state, indent=2)
     except Exception as exc:
         logger.warning("Sync state write failed: %s", exc)
 

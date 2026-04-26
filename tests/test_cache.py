@@ -395,7 +395,7 @@ class TestSaveSourceEdgeCases:
         with tempfile.TemporaryDirectory() as tmpdir:
             with caplog.at_level(logging.WARNING, logger="src.fetchers.cache"):
                 with patch(
-                    "src.fetchers.cache._atomic_write_json",
+                    "src.fetchers.cache.atomic_write_json",
                     side_effect=OSError("disk full"),
                 ):
                     save_source("events", [], datetime(2024, 3, 15, 9), tmpdir)
@@ -410,7 +410,7 @@ class TestSaveCacheEdgeCases:
         with tempfile.TemporaryDirectory() as tmpdir:
             with caplog.at_level(logging.WARNING, logger="src.fetchers.cache"):
                 with patch(
-                    "src.fetchers.cache._atomic_write_json",
+                    "src.fetchers.cache.atomic_write_json",
                     side_effect=OSError("no space"),
                 ):
                     save_cache(data, tmpdir)
@@ -662,10 +662,10 @@ class TestAtomicWriteCleanup:
                 raise OSError("write failed")
 
             with patch("os.fdopen", side_effect=patched_fdopen):
-                from src.fetchers.cache import _atomic_write_json
+                from src._io import atomic_write_json
 
                 with pytest.raises(OSError):
-                    _atomic_write_json(path, {"key": "value"})
+                    atomic_write_json(path, {"key": "value"})
             # The temp file should not remain (was cleaned up)
             tmp_files = list(Path(tmpdir).glob("*.tmp"))
             assert len(tmp_files) == 0
@@ -679,10 +679,10 @@ class TestAtomicWriteCleanup:
                 raise KeyboardInterrupt
 
             with patch("os.fdopen", side_effect=patched_fdopen):
-                from src.fetchers.cache import _atomic_write_json
+                from src._io import atomic_write_json
 
                 with pytest.raises(KeyboardInterrupt):
-                    _atomic_write_json(path, {"key": "value"})
+                    atomic_write_json(path, {"key": "value"})
             assert list(Path(tmpdir).glob("*.tmp")) == []
 
 
