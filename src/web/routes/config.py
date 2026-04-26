@@ -14,8 +14,8 @@ from flask import Blueprint, current_app, jsonify, render_template, request
 
 from src.config import load_config
 from src.web.config_editor import (
-    _write_lock,
     apply_patch,
+    config_write_lock,
     get_config_for_web,
     list_config_backups,
     restore_latest_backup,
@@ -33,10 +33,11 @@ _RANDOM_THEMES = frozenset({"random", "random_daily", "random_hourly"})
 def _refresh_in_memory_config(config_path: str) -> bool:
     """Reload DASH_CFG and SOURCE_TTLS in lockstep.
 
-    Stages the new values first, then assigns both keys back-to-back under
-    `_write_lock` so a concurrent reader never sees a half-applied state.
-    Returns True on success; logs a warning and returns False on failure
-    (the in-memory config stays at the last-loaded version until restart).
+    Stages the new values first, then assigns both keys back-to-back inside
+    ``config_write_lock()`` so a concurrent reader never sees a half-applied
+    state. Returns True on success; logs a warning and returns False on
+    failure (the in-memory config stays at the last-loaded version until
+    restart).
     """
     try:
         new_cfg = load_config(config_path)
@@ -52,7 +53,7 @@ def _refresh_in_memory_config(config_path: str) -> bool:
         )
         return False
 
-    with _write_lock:
+    with config_write_lock():
         current_app.config["DASH_CFG"] = new_cfg
         current_app.config["SOURCE_TTLS"] = new_ttls
     return True
