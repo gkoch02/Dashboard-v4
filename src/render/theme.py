@@ -268,6 +268,7 @@ class Theme:
 # Registry mapping theme name → (module_path, factory_function_name).
 # To add a new theme, add an entry here — AVAILABLE_THEMES is derived automatically.
 _THEME_REGISTRY: dict[str, tuple[str, str]] = {
+    "agenda": ("src.render.themes.agenda", "agenda_theme"),
     "terminal": ("src.render.themes.terminal", "terminal_theme"),
     "minimalist": ("src.render.themes.minimalist", "minimalist_theme"),
     "old_fashioned": ("src.render.themes.old_fashioned", "old_fashioned_theme"),

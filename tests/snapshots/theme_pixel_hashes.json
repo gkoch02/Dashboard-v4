@@ -3,6 +3,7 @@
     "pillow_version": "12.2.0"
   },
   "themes": {
+    "agenda": "df7758210e71c876862ce3251c91230348eb5a9f38241b77a0138b3283e1d609",
     "air_quality": "d204e9eb6ea23b5a54ca15af196cd7fa7081b15aba6317f032714960084a9134",
     "astronomy": "36673c81cb93ff28970e947626922b33ca5a82b1cdb34e2c7e71877fbecb7f3b",
     "countdown": "c3eea65a32c49ab79f8dd3ccda34f8a0b0755d5158be8fd66a133197240cd84c",
