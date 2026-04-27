@@ -25,7 +25,7 @@ theme: terminal
 
 Valid values:
 
-- **Week-view**: `default`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`
+- **Week-view**: `default`, `agenda`, `terminal`, `minimalist`, `old_fashioned`, `today`, `fantasy`
 - **Full-screen focused**: `qotd`, `qotd_invert`, `weather`, `fuzzyclock`, `fuzzyclock_invert`, `moonphase`, `moonphase_invert`, `photo`
 - **Specialized**: `air_quality`, `astronomy`, `timeline`, `year_pulse`, `monthly`, `sunrise`, `scorecard`, `tides`
 - **Utility**: `countdown`, `message`, `diags`
@@ -153,6 +153,7 @@ Rules that reference weather or calendar data silently skip on the first boot (n
 | Theme | Best for | Notes |
 |---|---|---|
 | `default` | general family wall display | Classic 7-day layout with bottom weather, birthdays, and quote panels |
+| `agenda` | high-visibility, legible from afar | Bold DM Sans, dominant 7-day grid, slim weather + birthdays strip; red Inky accent |
 | `terminal` | high-contrast retro look | Inverted black canvas with a distinct multi-font system |
 | `minimalist` | clean editorial layout | Border-light, dense, hides birthdays |
 | `old_fashioned` | decorative print-inspired display | Serif-heavy broadsheet layout |
@@ -209,6 +210,12 @@ list of available orientations and how to retune them.
 Classic layout. Black text on white with a 7-day calendar grid and three bottom panels.
 
 [![Default theme — Waveshare/Inky split](../output/theme_default_split.png)](../output/theme_default_split.png)
+
+#### agenda
+
+High-visibility week view designed to be read from across a room. Dominant 7-day grid in heavy DM Sans Bold with a slim weather + birthdays strip at the bottom (no quote panel); red today/accent on Inky.
+
+[![Agenda theme — Waveshare/Inky split](../output/theme_agenda_split.png)](../output/theme_agenda_split.png)
 
 #### terminal
 

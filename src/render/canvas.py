@@ -51,6 +51,7 @@ _INKY_GREEN = 5
 
 _INKY_THEME_KEY_COLORS: dict[str, tuple[int, int]] = {
     "default": (_INKY_BLUE, _INKY_RED),
+    "agenda": (_INKY_RED, _INKY_BLACK),
     "terminal": (_INKY_GREEN, _INKY_YELLOW),
     "minimalist": (_INKY_BLUE, _INKY_RED),
     "old_fashioned": (_INKY_RED, _INKY_YELLOW),
