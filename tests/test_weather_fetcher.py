@@ -413,3 +413,71 @@ class TestSunriseSunset:
         result = fetch_weather(cfg)
         assert result.sunrise is None
         assert result.sunset is None
+
+    @patch("src.fetchers.weather.requests.Session")
+    def test_forecast_skips_day_when_all_slots_lack_main_key(self, mock_session_cls, cfg):
+        """Forecast days where every slot lacks the 'main' key are dropped silently."""
+        # Day +1 has only malformed slots (no "main" key); day +2 is healthy.
+        bad_slots = []
+        for hour in [6, 12, 18]:
+            base = datetime(2024, 3, 15, hour, 0, tzinfo=timezone.utc)
+            from datetime import timedelta
+
+            dt = base + timedelta(days=1)
+            bad_slots.append({"dt": int(dt.timestamp())})  # no "main", no "weather"
+        good_slots = [_make_slot(h, day_offset=2) for h in (6, 12, 18)]
+
+        current_resp = MagicMock()
+        current_resp.json.return_value = _mock_current_response()
+        current_resp.raise_for_status = MagicMock()
+        forecast_resp = MagicMock()
+        forecast_resp.json.return_value = {"list": bad_slots + good_slots}
+        forecast_resp.raise_for_status = MagicMock()
+        alerts_resp = MagicMock()
+        alerts_resp.json.return_value = {}
+        alerts_resp.raise_for_status = MagicMock()
+
+        session = MagicMock()
+        session.get.side_effect = [current_resp, forecast_resp, alerts_resp]
+        mock_session_cls.return_value.__enter__ = MagicMock(return_value=session)
+        mock_session_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = fetch_weather(cfg)
+        # The malformed day was skipped; only the healthy day made it through.
+        assert len(result.forecast) == 1
+
+    @patch("src.fetchers.weather.requests.Session")
+    def test_forecast_skips_day_when_midday_slot_has_empty_weather(self, mock_session_cls, cfg):
+        """A day whose midday slot has an empty 'weather' list is dropped silently."""
+        # Build slots for one future day where every slot has empty weather.
+        from datetime import timedelta
+
+        slots = []
+        for hour in [6, 12, 18]:
+            base = datetime(2024, 3, 15, hour, 0, tzinfo=timezone.utc)
+            dt = base + timedelta(days=1)
+            slots.append(
+                {
+                    "dt": int(dt.timestamp()),
+                    "main": {"temp": 50.0, "temp_max": 55.0, "temp_min": 45.0},
+                    "weather": [],  # empty → forecast row is skipped
+                }
+            )
+
+        current_resp = MagicMock()
+        current_resp.json.return_value = _mock_current_response()
+        current_resp.raise_for_status = MagicMock()
+        forecast_resp = MagicMock()
+        forecast_resp.json.return_value = {"list": slots}
+        forecast_resp.raise_for_status = MagicMock()
+        alerts_resp = MagicMock()
+        alerts_resp.json.return_value = {}
+        alerts_resp.raise_for_status = MagicMock()
+
+        session = MagicMock()
+        session.get.side_effect = [current_resp, forecast_resp, alerts_resp]
+        mock_session_cls.return_value.__enter__ = MagicMock(return_value=session)
+        mock_session_cls.return_value.__exit__ = MagicMock(return_value=False)
+
+        result = fetch_weather(cfg)
+        assert result.forecast == []

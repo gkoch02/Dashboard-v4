@@ -132,3 +132,38 @@ class TestMeteorShowers:
         shower, days = next_meteor_shower(date(2026, 12, 23))
         assert shower.name == "Quadrantids"
         assert days > 0
+
+    def test_next_shower_skips_always_invalid_peak_dates(self, monkeypatch):
+        """A shower with an impossible (month, day) — e.g. Feb 30 — is skipped.
+
+        Exercises the first-arm ValueError path: ``date(year, peak_month, peak_day)``
+        raises immediately and the loop ``continue``s without reaching the rollover.
+        """
+        from src import astronomy
+
+        bogus = astronomy.MeteorShower("Imaginarids", 2, 30, 999)
+        monkeypatch.setattr(astronomy, "METEOR_SHOWERS", [bogus, *METEOR_SHOWERS])
+
+        shower, days = astronomy.next_meteor_shower(date(2026, 4, 23))
+        # Bogus entry was skipped silently; real lookup still works.
+        assert shower.name == "Eta Aquariids"
+        assert days >= 0
+
+    def test_next_shower_handles_leap_day_rollover(self, monkeypatch):
+        """A Feb-29 shower in a leap year correctly skips the non-leap rollover.
+
+        Exercises the rollover-arm ValueError path: ``date(year, 2, 29)`` succeeds
+        in the current (leap) year, but its peak is in the past so the loop tries
+        ``date(year + 1, 2, 29)`` — which fails because year+1 is not a leap year.
+        """
+        from src import astronomy
+
+        leap_only = astronomy.MeteorShower("Leapids", 2, 29, 999)
+        monkeypatch.setattr(astronomy, "METEOR_SHOWERS", [leap_only, *METEOR_SHOWERS])
+
+        # 2024 is leap, 2025 is not. Today is past Feb 29 2024 so the year-N
+        # peak is in the past → triggers the year-(N+1) rollover, which fails.
+        shower, days = astronomy.next_meteor_shower(date(2024, 3, 15))
+        # Leapids was skipped on rollover; nearest real shower is Lyrids (Apr 22).
+        assert shower.name == "Lyrids"
+        assert days >= 0
