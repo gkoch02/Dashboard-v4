@@ -447,9 +447,7 @@ class TestSunriseSunset:
         assert len(result.forecast) == 1
 
     @patch("src.fetchers.weather.requests.Session")
-    def test_forecast_skips_day_when_midday_slot_has_empty_weather(
-        self, mock_session_cls, cfg
-    ):
+    def test_forecast_skips_day_when_midday_slot_has_empty_weather(self, mock_session_cls, cfg):
         """A day whose midday slot has an empty 'weather' list is dropped silently."""
         # Build slots for one future day where every slot has empty weather.
         from datetime import timedelta
