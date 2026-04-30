@@ -403,6 +403,29 @@ class TestYearPulsePanel:
         # Should not raise
         _build_countdowns(data, today)
 
+    def test_birthday_already_past_this_year_rolls_to_next(self):
+        """Birthday earlier in the year already passed → next_occ rolls to next year."""
+        from src.render.components.year_pulse_panel import _build_countdowns
+
+        today = date(2026, 4, 5)
+        # Birthday in January — already passed this year
+        bdays = [Birthday(name="Early", date=date(1990, 1, 15), age=35)]
+        data = DashboardData(events=[], birthdays=bdays)
+        # 120-day horizon doesn't reach next January, so the result is empty,
+        # but the year-rollover line still executes inside _build_countdowns.
+        result = _build_countdowns(data, today)
+        assert result == []
+
+    def test_renders_with_default_region(self):
+        """Calling draw_year_pulse with region=None falls back to a default region."""
+        from src.render.components.year_pulse_panel import draw_year_pulse
+
+        draw, img = self._make_draw()
+        # No region= kwarg → exercises the `if region is None` default path.
+        draw_year_pulse(draw, self._make_data(), date(2026, 4, 5))
+        pixels = list(img.tobytes())
+        assert not all(p == 255 for p in pixels), "Panel is blank"
+
 
 class TestMonthlyPanel:
     def test_month_grid_is_six_weeks(self):

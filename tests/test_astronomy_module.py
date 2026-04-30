@@ -132,3 +132,22 @@ class TestMeteorShowers:
         shower, days = next_meteor_shower(date(2026, 12, 23))
         assert shower.name == "Quadrantids"
         assert days > 0
+
+    def test_next_shower_skips_invalid_peak_dates(self, monkeypatch):
+        """A shower with an impossible (month, day) — e.g. Feb 30 — is skipped.
+
+        Exercises both ValueError arms in ``next_meteor_shower``: the initial
+        ``date(year, ...)`` build and the year-rollover ``date(year + 1, ...)``
+        build.  Querying late in the year forces the rollover branch on the
+        invalid entry.
+        """
+        from src import astronomy
+
+        bogus = astronomy.MeteorShower("Imaginarids", 2, 30, 999)
+        monkeypatch.setattr(astronomy, "METEOR_SHOWERS", [bogus, *METEOR_SHOWERS])
+
+        # Late-year query: bogus shower's Feb-30 fails on the year-N attempt,
+        # then fails again on the year-(N+1) rollover — exercising both arms.
+        shower, days = astronomy.next_meteor_shower(date(2026, 12, 30))
+        assert shower.name == "Quadrantids"
+        assert days > 0

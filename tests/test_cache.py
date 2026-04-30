@@ -687,6 +687,30 @@ class TestAtomicWriteCleanup:
                     atomic_write_json(path, {"key": "value"})
             assert list(Path(tmpdir).glob("*.tmp")) == []
 
+    def test_unlink_oserror_during_cleanup_is_swallowed(self):
+        """If unlinking the temp file also fails, the original error still propagates.
+
+        Exercises the OSError-on-cleanup arm in atomic_write_json: the primary write
+        fails, then the cleanup unlink raises OSError too — the helper swallows the
+        cleanup failure and re-raises the original exception.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "test.json"
+
+            def patched_fdopen(fd, *args, **kwargs):
+                raise OSError("write failed")
+
+            def patched_unlink(*args, **kwargs):
+                raise OSError("unlink failed too")
+
+            with patch("os.fdopen", side_effect=patched_fdopen):
+                with patch("os.unlink", side_effect=patched_unlink):
+                    from src._io import atomic_write_json
+
+                    # Original write error propagates; the unlink OSError is swallowed.
+                    with pytest.raises(OSError, match="write failed"):
+                        atomic_write_json(path, {"key": "value"})
+
 
 class TestLoadCachedSourceAirQuality:
     """Cover the air_quality branch in load_cached_source (non-metadata variant)."""

@@ -4,7 +4,10 @@ from PIL import ImageFont
 
 from src.render.fonts import (
     bold,
+    cinzel_regular,
+    cinzel_semibold,
     medium,
+    nucore,
     regular,
     semibold,
     weather_icon,
@@ -28,6 +31,15 @@ class TestFontAccessors:
 
     def test_weather_icon(self):
         assert isinstance(weather_icon(20), ImageFont.FreeTypeFont)
+
+    def test_cinzel_regular(self):
+        assert isinstance(cinzel_regular(12), ImageFont.FreeTypeFont)
+
+    def test_cinzel_semibold(self):
+        assert isinstance(cinzel_semibold(12), ImageFont.FreeTypeFont)
+
+    def test_nucore(self):
+        assert isinstance(nucore(12), ImageFont.FreeTypeFont)
 
     def test_caching_returns_same_object(self):
         """@lru_cache should return the same object on repeated calls."""

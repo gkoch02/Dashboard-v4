@@ -1,8 +1,11 @@
 """Edge-case tests for ICS feed fetching (src/fetchers/calendar_ical.py)."""
 
+import sys
 import zoneinfo
 from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.fetchers.calendar_ical import _parse_ical_event, _url_hostname, fetch_from_ical
 
@@ -448,3 +451,13 @@ class TestAdditionalCoverage:
         events = fetch_from_ical(["https://example.com/cal.ics"])  # no tz argument
         assert len(events) == 1
         assert events[0].summary == "Floating Event"
+
+
+class TestIcalendarMissing:
+    def test_fetch_from_ical_raises_when_icalendar_unavailable(self, monkeypatch):
+        """If the icalendar package can't be imported, raise a helpful RuntimeError."""
+        # Force the local `from icalendar import ...` to raise ImportError without
+        # affecting other tests that import the module at file scope.
+        monkeypatch.setitem(sys.modules, "icalendar", None)
+        with pytest.raises(RuntimeError, match="icalendar"):
+            fetch_from_ical(["https://example.com/cal.ics"])
